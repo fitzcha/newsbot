@@ -39,7 +39,7 @@ for word in keywords:
             time.sleep(3) 
             
             response = google_genai.models.generate_content(
-                model="gemini-2.0-flash", 
+                model="gemini-1.5-flash", 
                 contents=f"너는 모빌리티 전략가야. 이 뉴스를 PM 관점에서 1문장 요약해줘: {news['title']}"
             )
             daily_report["articles"].append({"keyword": word, "title": news['title'], "summary": response.text})
@@ -51,7 +51,7 @@ for word in keywords:
 time.sleep(5)
 if all_news_text:
     agent_response = google_genai.models.generate_content(
-        model="gemini-2.0-flash", 
+        model="gemini-1.5-flash", 
         contents=f"다음은 오늘의 모빌리티 뉴스 목록이야. 전체 트렌드를 파악해서 PM에게 오늘 가장 주목해야 할 핵심 이슈 1개와 권장 액션을 제안해줘:\n{all_news_text}"
     )
     daily_report["agent_brief"] = agent_response.text
