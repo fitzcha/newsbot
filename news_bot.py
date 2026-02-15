@@ -1,6 +1,7 @@
 import os
 import json
 import gspread
+import time  # 👈 시간 지연을 위해 추가
 from google import genai
 from gnews import GNews
 from oauth2client.service_account import ServiceAccountCredentials
@@ -19,7 +20,8 @@ client = gspread.authorize(creds)
 sheet = client.open("Mobility_Policy_Manager").sheet1 
 
 # 3. 키워드 가져오기
-keywords = [k for k in sheet.col_values(1) if k.strip()]
+raw_keywords = sheet.col_values(1)
+keywords = [k for k in raw_keywords if k.strip()]
 
 # 4. 뉴스 수집 및 Agentic AI 분석
 google_genai = genai.Client(api_key=GEMINI_KEY)
@@ -29,16 +31,24 @@ daily_report = {"date": TODAY, "articles": [], "agent_brief": ""}
 all_news_text = ""
 
 for word in keywords:
+    print(f"'{word}' 키워드 분석 중...")
     news_results = google_news.get_news(word)
     for news in news_results:
-        response = google_genai.models.generate_content(
-            model="gemini-2.0-flash", 
-            contents=f"너는 모빌리티 전략가야. 이 뉴스를 PM 관점에서 1문장 요약해줘: {news['title']}"
-        )
-        daily_report["articles"].append({"keyword": word, "title": news['title'], "summary": response.text})
-        all_news_text += f"[{word}] {news['title']}\n"
+        try:
+            # 💤 너무 빨리 요청하지 않도록 3초씩 쉬어갑니다.
+            time.sleep(3) 
+            
+            response = google_genai.models.generate_content(
+                model="gemini-2.0-flash", 
+                contents=f"너는 모빌리티 전략가야. 이 뉴스를 PM 관점에서 1문장 요약해줘: {news['title']}"
+            )
+            daily_report["articles"].append({"keyword": word, "title": news['title'], "summary": response.text})
+            all_news_text += f"[{word}] {news['title']}\n"
+        except Exception as e:
+            print(f"요류 발생: {e}")
 
-# 🤖 Agentic AI Step: 오늘의 전체 브리핑 생성
+# 🤖 Agentic AI Briefing 생성 전에도 잠시 쉽니다.
+time.sleep(5)
 if all_news_text:
     agent_response = google_genai.models.generate_content(
         model="gemini-2.0-flash", 
@@ -46,21 +56,21 @@ if all_news_text:
     )
     daily_report["agent_brief"] = agent_response.text
 
-# 5. 기존 데이터와 합쳐서 저장 (Archive 방식)
+# 5. 결과 저장
 file_path = "data.json"
 if os.path.exists(file_path):
     with open(file_path, "r", encoding="utf-8") as f:
-        full_data = json.load(f)
+        try:
+            full_data = json.load(f)
+        except:
+            full_data = []
 else:
     full_data = []
 
-# 중복 날짜 방지 후 추가
 full_data = [d for d in full_data if d['date'] != TODAY]
 full_data.insert(0, daily_report)
 
 with open(file_path, "w", encoding="utf-8") as f:
     json.dump(full_data, f, ensure_ascii=False, indent=2)
 
-# ⭐ 키워드 목록도 별도 저장 (UI에서 태그로 보여주기 위해)
-with open("keywords.json", "w", encoding="utf-8") as f:
-    json.dump(keywords, f, ensure_ascii=False, indent=2)
+print("분석 완료 및 저장 성공!")
