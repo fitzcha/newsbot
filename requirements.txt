@@ -1,0 +1,4 @@
+google-genai
+gspread
+gnews
+oauth2client
