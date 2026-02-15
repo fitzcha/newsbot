@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobility Intelligence Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+    <div class="max-w-5xl mx-auto px-4 py-12">
+        <header class="mb-12 border-b border-gray-200 pb-8 flex justify-between items-end">
+            <div>
+                <h1 class="text-3xl font-bold text-blue-600 mb-2">🚗 Mobility Intelligence</h1>
+                <p class="text-gray-500 italic">"PM 피츠(Fitz)를 위한 데일리 마켓 분석 리포트"</p>
+            </div>
+            <div class="text-right text-sm text-gray-400">
+                실시간 데이터: data.json 연동 중
+            </div>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-4 mb-8">
+            <input type="text" id="searchInput" onkeyup="filterNews()" placeholder="키워드나 인사이트 검색..." 
+                   class="flex-1 p-4 border border-gray-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+        </div>
+
+        <div id="news-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <p class="text-center text-gray-500 py-20 col-span-full animate-pulse">데이터를 불러오는 중입니다...</p>
+        </div>
+    </div>
+
+    <script>
+        async function loadNews() {
+            try {
+                // 깃허브 액션이 만든 data.json을 가져옵니다.
+                const response = await fetch('./data.json');
+                const data = await response.json();
+                const container = document.getElementById('news-container');
+                container.innerHTML = '';
+
+                if (data.length === 0) {
+                    container.innerHTML = '<p class="col-span-full text-center py-20 text-gray-400">오늘의 새로운 뉴스가 아직 없습니다.</p>';
+                    return;
+                }
+
+                data.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 news-card";
+                    card.innerHTML = `
+                        <div class="flex items-center gap-2 mb-4">
+                            <span class="bg-blue-50 text-blue-600 text-xs font-bold px-3 py-1 rounded-full border border-blue-100">#${item.keyword}</span>
+                        </div>
+                        <h3 class="text-lg font-bold mb-4 leading-snug text-gray-800">${item.title}</h3>
+                        <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-50">
+                            <p class="text-sm text-gray-700 leading-relaxed">
+                                <span class="font-bold text-blue-600">💡 PM Insight:</span> ${item.summary}
+                            </p>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+                document.getElementById('news-container').innerHTML = '<p class="col-span-full text-center py-20 text-red-400">데이터(data.json)를 찾을 수 없습니다. 배포가 완료될 때까지 잠시만 기다려주세요!</p>';
+            }
+        }
+
+        function filterNews() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.getElementsByClassName('news-card');
+            Array.from(cards).forEach(card => {
+                const text = card.textContent.toLowerCase();
+                card.style.display = text.includes(input) ? "block" : "none";
+            });
+        }
+
+        loadNews();
+    </script>
+</body>
+</html>
