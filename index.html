@@ -18,13 +18,14 @@
                 <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl">🤖</div>
                 <h2 class="text-xl font-bold text-slate-800">Agentic AI Briefing</h2>
             </div>
-            <p id="agent-content" class="text-slate-600 leading-relaxed text-lg whitespace-pre-wrap"></p>
+            <p id="agent-content" class="text-slate-600 leading-relaxed text-lg whitespace-pre-wrap font-medium"></p>
         </section>
 
         <section class="mb-12 bg-slate-100/50 border border-slate-200 rounded-3xl p-8">
             <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Policy Management (A열 키워드)</h2>
             <div id="tag-container" class="flex flex-wrap gap-3 mb-6">
-                </div>
+                <p class="text-slate-400 text-sm">태그 불러오는 중...</p>
+            </div>
             <div class="flex gap-2">
                 <input type="text" id="newKeyword" placeholder="새 키워드 추가..." class="flex-1 p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
                 <button onclick="addKeyword()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-700 transition">추가</button>
@@ -32,7 +33,7 @@
         </section>
 
         <section>
-            <div class="flex items-center justify-between mb-8">
+            <div class="flex items-center justify-between mb-8 border-b border-slate-200 pb-4">
                 <h2 class="text-2xl font-bold text-slate-800">News Archive</h2>
                 <select id="dateSelector" onchange="renderNews()" class="p-3 bg-white border border-slate-200 rounded-xl shadow-sm outline-none font-bold text-blue-600">
                     </select>
@@ -43,16 +44,21 @@
     </div>
 
     <script>
-        const GAS_URL = https://script.google.com/macros/s/AKfycbzMXPLU9vzu1u6-A1UmGJDJ1bn-RnJCCIieHzV7ualx7k6ywXgd_yz73E-MJEK6DLJe/exec
+        // ⚠️ 주의: 피츠님이 성공하신 그 주소를 여기에 넣으세요! 완료
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbzMXPLU9vzu1u6-A1UmGJDJ1bn-RnJCCIieHzV7ualx7k6ywXgd_yz73E-MJEK6DLJe/exec"; 
         let allData = [];
 
-        // 1. 데이터 로드 및 날짜 설정
         async function init() {
             try {
+                // 1. 구글 시트에서 태그 목록 가져오기
+                loadTags();
+
+                // 2. data.json에서 뉴스 데이터 가져오기
                 const response = await fetch('./data.json');
                 allData = await response.json();
                 
                 const dateSelector = document.getElementById('dateSelector');
+                dateSelector.innerHTML = '';
                 allData.forEach((day, index) => {
                     const opt = document.createElement('option');
                     opt.value = index;
@@ -60,65 +66,75 @@
                     dateSelector.appendChild(opt);
                 });
 
-                loadTags();
                 renderNews();
-            } catch (e) { console.error("데이터 로드 실패"); }
+            } catch (e) { 
+                console.error("데이터 로드 실패", e); 
+                document.getElementById('news-container').innerHTML = "<p class='col-span-full text-center py-10 text-slate-400'>아직 데이터가 생성되지 않았습니다. 잠시만 기다려주세요.</p>";
+            }
         }
 
-        // 2. 태그(키워드) 목록 불러오기 (구글 시트 실시간)
         async function loadTags() {
-            const res = await fetch(GAS_URL);
-            const keywords = await res.json();
-            const container = document.getElementById('tag-container');
-            container.innerHTML = '';
-            keywords.forEach(word => {
-                const tag = document.createElement('div');
-                tag.className = "group flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-full shadow-sm hover:border-red-200 transition cursor-default";
-                tag.innerHTML = `
-                    <span class="font-bold text-slate-700 text-sm">${word}</span>
-                    <button onclick="deleteKeyword('${word}')" class="text-slate-300 group-hover:text-red-500 transition">✕</button>
-                `;
-                container.appendChild(tag);
-            });
+            try {
+                const res = await fetch(GAS_URL);
+                const keywords = await res.json();
+                const container = document.getElementById('tag-container');
+                container.innerHTML = '';
+                keywords.forEach(word => {
+                    const tag = document.createElement('div');
+                    tag.className = "group flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-full shadow-sm hover:border-red-200 transition cursor-default";
+                    tag.innerHTML = `
+                        <span class="font-bold text-slate-700 text-sm">${word}</span>
+                        <button onclick="deleteKeyword('${word}')" class="text-slate-300 group-hover:text-red-500 transition">✕</button>
+                    `;
+                    container.appendChild(tag);
+                });
+            } catch(e) { console.log("태그 로드 실패"); }
         }
 
-        // 3. 키워드 추가/삭제 (구글 시트 전송)
         async function addKeyword() {
             const word = document.getElementById('newKeyword').value;
             if(!word) return;
+            // 구글 시트에 추가 요청 (POST)
             await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: "add", keyword: word}) });
-            location.reload();
+            alert(`'${word}' 키워드가 추가되었습니다. 내일 아침 리포트에 반영됩니다.`);
+            loadTags();
+            document.getElementById('newKeyword').value = '';
         }
 
         async function deleteKeyword(word) {
             if(!confirm(`'${word}' 키워드를 삭제할까요?`)) return;
             await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: "delete", keyword: word}) });
-            location.reload();
+            loadTags();
         }
 
-        // 4. 선택된 날짜의 뉴스 렌더링
         function renderNews() {
             const index = document.getElementById('dateSelector').value;
+            if (!allData[index]) return;
+            
             const dayData = allData[index];
             
-            // Agent Briefing 노출
+            // AI 브리핑 업데이트
             const agentZone = document.getElementById('agent-zone');
             if(dayData.agent_brief) {
                 agentZone.classList.remove('hidden');
                 document.getElementById('agent-content').textContent = dayData.agent_brief;
+            } else {
+                agentZone.classList.add('hidden');
             }
 
-            // 뉴스 카드 생성
+            // 뉴스 카드 업데이트
             const container = document.getElementById('news-container');
             container.innerHTML = '';
             dayData.articles.forEach(art => {
                 const card = document.createElement('div');
-                card.className = "bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300";
+                card.className = "bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between";
                 card.innerHTML = `
-                    <span class="text-[10px] font-black text-blue-500 uppercase tracking-tighter mb-2 block">${art.keyword}</span>
-                    <h3 class="text-lg font-bold mb-4 text-slate-800 leading-snug">${art.title}</h3>
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                        <p class="text-sm text-slate-600 leading-relaxed">${art.summary}</p>
+                    <div>
+                        <span class="text-[10px] font-black text-blue-500 uppercase tracking-tighter mb-2 block">#${art.keyword}</span>
+                        <h3 class="text-lg font-bold mb-4 text-slate-800 leading-snug">${art.title}</h3>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 mt-auto">
+                        <p class="text-sm text-slate-600 leading-relaxed"><span class="font-bold text-blue-600">PM Insight:</span> ${art.summary}</p>
                     </div>
                 `;
                 container.appendChild(card);
