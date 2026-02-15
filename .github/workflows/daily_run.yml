@@ -14,7 +14,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: ambassadors/setup-python@v4
+        uses: actions/setup-python@v4 # 👈 여기가 수정되었습니다!
         with:
           python-version: '3.9'
 
@@ -36,9 +36,8 @@ jobs:
           git commit -m "Update news data" || echo "No changes to commit"
           git push
 
-      # 📢 여기서부터 알림 단계입니다. (들여쓰기 확인 필수!)
       - name: Send Report Email
-        if: always() # 성공/실패 여부와 상관없이 무조건 실행
+        if: always()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
