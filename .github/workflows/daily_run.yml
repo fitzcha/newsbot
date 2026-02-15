@@ -2,29 +2,57 @@ name: Daily News Bot Run
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 매일 아침 9시(한국시간)에 실행
-  workflow_dispatch: # 원할 때 수동으로도 실행 가능
+    - cron: '0 0 * * *' # 매일 아침 9시 (KST)
+  workflow_dispatch: # 수동 실행 버튼
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: ambassadors/setup-python@v4
         with:
           python-version: '3.9'
+
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+
       - name: Run news bot
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_SHEETS_JSON: ${{ secrets.GOOGLE_SHEETS_JSON }}
         run: python news_bot.py
-      - name: Commit results
+
+      - name: Commit and Push changes
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add data.json
-          git commit -m "Update news data" || exit 0
+          git config --global user.name "actions-user"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "Update news data" || echo "No changes to commit"
           git push
+
+      # 📢 여기서부터 알림 단계입니다. (들여쓰기 확인 필수!)
+      - name: Send Report Email
+        if: always() # 성공/실패 여부와 상관없이 무조건 실행
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "🚗 Newsbot 리포트: ${{ job.status == 'success' && '✅ 작업 성공' || '🚨 작업 실패' }}"
+          body: |
+            피츠님, 오늘 Newsbot 작업 결과입니다.
+            
+            - 상태: ${{ job.status }}
+            
+            실패했다면 API 한도 초과(429 에러) 때문일 확률이 높습니다.
+            성공했다면 아래 주소에서 리포트를 확인하세요!
+            👉 https://newsbot-smoky.vercel.app/
+          to: ${{ secrets.MAIL_USERNAME }}
+          from: Newsbot Assistant
