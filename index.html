@@ -11,31 +11,23 @@
         :root { --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; --black: #000; --white: #fff; }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; line-height: 1.6; }
         .container { max-width: 850px; margin: 0 auto; }
-        
-        /* 상단 네비게이션 및 유저 바 */
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .auth-card { background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 25px; border: 1px solid #eee; }
         .auth-btn { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--primary); background: #fff; color: var(--primary); cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s; }
         .auth-btn:hover { background: #f0f7ff; }
         .auth-btn.active { background: var(--primary); color: #fff; }
-
-        /* 키워드 매니저 (권한별 상태 변화) */
         .keyword-manager { background: #fff; padding: 22px; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 6px solid #ccc; }
         .master-mode { border-top-color: var(--black); }
         .user-mode { border-top-color: var(--primary); }
-        
         .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
         .tag { background: #eef2f7; padding: 7px 15px; border-radius: 25px; font-size: 0.85em; color: var(--primary); font-weight: 600; display: flex; align-items: center; border: 1px solid #d1d9e6; }
         .remove-btn { margin-left: 9px; cursor: pointer; color: #ff4d4f; font-weight: bold; font-size: 1.1em; }
         .notice { font-size: 0.8em; color: #777; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
-
-        /* AI 리포트 컴포넌트 */
         .briefing-box { background: #343a40; color: #fff; padding: 25px; border-radius: 14px; margin-bottom: 35px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .ai-badge { font-size: 0.7em; background: var(--black); color: var(--white); padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-right: 12px; vertical-align: middle; border: 1px solid #444; text-transform: uppercase; }
         .news-card { background: #fff; padding: 22px; border-radius: 14px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #eee; }
         .active-pm { border-left-color: var(--primary); }
         .active-ba { border-left-color: #28a745; }
-        
         .input-group { display: flex; gap: 12px; margin-top: 18px; }
         input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 0.95em; outline: none; }
         input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,123,255,0.1); }
@@ -56,23 +48,23 @@
         <p style="font-size:0.9em; color:#666;">이메일을 입력하시면 6자리 초대 코드가 발송됩니다.</p>
         <div id="otp-request">
             <div class="input-group">
-                <input type="email" id="email-input" placeholder="이메일 주소 (예: example@gmail.com)">
+                <input type="email" id="email-input" placeholder="이메일 주소">
                 <button class="auth-btn active" onclick="sendOtp()">코드 받기</button>
             </div>
         </div>
         <div id="otp-verify" style="display:none; margin-top:15px;">
             <div class="input-group">
-                <input type="text" id="otp-token" placeholder="이메일로 온 6자리 숫자 입력">
+                <input type="text" id="otp-token" placeholder="6자리 숫자 입력">
                 <button class="auth-btn active" style="background:#28a745; border:none;" onclick="verifyOtp()">인증 및 입장</button>
             </div>
         </div>
     </section>
 
     <section id="manager-card" class="keyword-manager">
-        <strong id="kw-title" style="font-size:1.1em;">📌 마스터 추천 키워드 (Public View)</strong>
+        <strong id="kw-title" style="font-size:1.1em;">📌 마스터 추천 키워드 (Public)</strong>
         <div id="tag-list" class="tag-list"></div>
         <div id="kw-controls" style="display:none;" class="input-group">
-            <input type="text" id="new-kw" placeholder="분석하고 싶은 키워드 입력">
+            <input type="text" id="new-kw" placeholder="관심 키워드 입력 (최대 5개)">
             <button class="auth-btn active" onclick="addKw()">추가</button>
         </div>
         <p id="kw-notice" class="notice">💡 로그인 시 본인만의 개인화 키워드 설정이 가능합니다.</p>
@@ -91,32 +83,28 @@
 </div>
 
 <script>
-    // Supabase 프로젝트 설정
     const SUPABASE_URL = 'https://zrlpwmpbrvohautldcon.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G';
     const MASTER_EMAIL = 'positivecha@gmail.com';
 
-    // Supabase 클라이언트 초기화
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
     let fullData = [];
     let currentRole = 'PM';
     let currentUser = null;
-    let userKeywords = []; // 사용자의 고유 키워드 목록
+    let userKeywords = [];
 
     async function init() {
-        // 1. 세션 확인
         const { data: { user } } = await supabaseClient.auth.getUser();
         currentUser = user;
         
-        // 2. 공용 데이터 로드
-        const res = await fetch('data.json');
-        fullData = await res.json();
+        try {
+            const res = await fetch('data.json');
+            fullData = await res.json();
+            const select = document.getElementById('date-select');
+            select.innerHTML = fullData.map(d => `<option value="${d.date}">${d.date}</option>`).join('');
+        } catch(e) { console.error("Data load failed", e); }
         
-        const select = document.getElementById('date-select');
-        select.innerHTML = fullData.map(d => `<option value="${d.date}">${d.date}</option>`).join('');
-        
-        // 3. 로그인 상태라면 개인 키워드 로드
         if (currentUser) {
             await fetchUserKeywords();
         }
@@ -125,56 +113,69 @@
         render();
     }
 
-    // [DB] 키워드 로드 함수
     async function fetchUserKeywords() {
         if (!currentUser) return;
         const { data, error } = await supabaseClient
             .from('user_settings')
             .select('keywords')
             .eq('id', currentUser.id)
-            .single();
+            .maybeSingle();
 
         if (data) userKeywords = data.keywords || [];
     }
 
-    // [DB] 키워드 추가 함수
+    // [중요] 키워드 5개 제한 로직이 포함된 추가 함수
     async function addKw() {
         const newKw = document.getElementById('new-kw').value.trim();
         if (!newKw || !currentUser) return;
-        if (userKeywords.includes(newKw)) return alert("이미 등록된 키워드입니다.");
+
+        // 안전장치: 5개 초과 시 차단
+        if (userKeywords.length >= 5) {
+            alert("⚠️ 키워드는 최대 5개까지만 등록할 수 있습니다.\n중요한 키워드에 집중해 주세요!");
+            return;
+        }
+
+        if (userKeywords.includes(newKw)) {
+            alert("이미 등록된 키워드입니다.");
+            return;
+        }
 
         const updatedKeywords = [...userKeywords, newKw];
+        
+        // DB 저장 (id, email, keywords 컬럼 필요)
         const { error } = await supabaseClient
             .from('user_settings')
-            .upsert({ id: currentUser.id, keywords: updatedKeywords, email: currentUser.email });
+            .upsert({ 
+                id: currentUser.id, 
+                keywords: updatedKeywords, 
+                email: currentUser.email,
+                role: 'PM' // 기본값 설정
+            });
 
-        if (error) alert("저장 실패: " + error.message);
-        else {
+        if (error) {
+            alert("저장 실패: " + error.message);
+        } else {
             userKeywords = updatedKeywords;
             document.getElementById('new-kw').value = '';
             renderTags();
-            alert(`'${newKw}' 키워드가 추가되었습니다. 내일 오전 리포트부터 적용됩니다.`);
         }
     }
 
-    // [DB] 키워드 삭제 함수
     async function removeKw(targetKw) {
-        if (!confirm(`'${targetKw}' 키워드를 삭제하시겠습니까?`)) return;
-
+        if (!confirm(`'${targetKw}'를 삭제하시겠습니까?`)) return;
         const updatedKeywords = userKeywords.filter(k => k !== targetKw);
         const { error } = await supabaseClient
             .from('user_settings')
             .update({ keywords: updatedKeywords })
             .eq('id', currentUser.id);
 
-        if (error) alert("삭제 실패: " + error.message);
+        if (error) alert("삭제 실패");
         else {
             userKeywords = updatedKeywords;
             renderTags();
         }
     }
 
-    // UI 업데이트 (마스터 vs 테스터)
     function updateUI() {
         const display = document.getElementById('user-display');
         const kwTitle = document.getElementById('kw-title');
@@ -184,36 +185,35 @@
 
         if (currentUser) {
             const userId = currentUser.email.split('@')[0];
-            display.innerHTML = `<span style="font-size:0.9em; margin-right:12px;">👤 <b>${userId}</b>님 환영합니다</span><button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
+            display.innerHTML = `<span style="font-size:0.9em; margin-right:12px;">👤 <b>${userId}</b>님</span><button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
             kwControls.style.display = "flex";
             
             if (currentUser.email === MASTER_EMAIL) {
-                kwTitle.innerHTML = "👑 마스터 키워드 관리 <small>(Public)</small>";
+                kwTitle.innerHTML = "👑 마스터 키워드 관리";
                 managerCard.classList.add('master-mode');
             } else {
                 kwTitle.innerText = "👤 나의 개인화 키워드";
                 managerCard.classList.add('user-mode');
-                kwNotice.innerText = "💡 설정하신 키워드로 분석된 개별 뉴스레터가 메일로 발송됩니다.";
+                kwNotice.innerText = "💡 설정하신 키워드로 분석된 리포트가 내일 오전 발송됩니다.";
             }
         }
         renderTags();
     }
 
     function renderTags() {
-        const displayKeywords = currentUser ? userKeywords : (fullData[0].tracked_keywords || []);
+        const displayKeywords = currentUser ? userKeywords : (fullData[0]?.tracked_keywords || []);
         const isEditable = !!currentUser;
         document.getElementById('tag-list').innerHTML = displayKeywords.map(k => `
             <span class="tag">#${k} ${isEditable ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>
         `).join('');
     }
 
-    // [인증] OTP 발송 및 확인
     async function sendOtp() {
         const email = document.getElementById('email-input').value;
         const { error } = await supabaseClient.auth.signInWithOtp({ email });
-        if (error) alert("발송 에러: " + error.message);
+        if (error) alert(error.message);
         else {
-            alert("초대 코드가 발송되었습니다! 메일함을 확인해주세요.");
+            alert("코드가 발송되었습니다.");
             document.getElementById('otp-request').style.display = 'none';
             document.getElementById('otp-verify').style.display = 'block';
         }
@@ -223,7 +223,7 @@
         const email = document.getElementById('email-input').value;
         const token = document.getElementById('otp-token').value;
         const { error } = await supabaseClient.auth.verifyOtp({ email, token, type: 'email' });
-        if (error) alert("인증 실패: " + error.message);
+        if (error) alert("인증 실패");
         else location.reload();
     }
 
@@ -252,7 +252,7 @@
         const brief = currentRole === 'PM' ? day.pm_brief : day.ba_brief;
         document.getElementById('briefing-box').innerHTML = `
             <h4 style="margin:0 0 15px 0;"><span class="ai-badge">AI Analysis</span> ${date} 브리핑</h4>
-            <div style="font-size:1em; line-height:1.8; color:#eee;">${marked.parse(brief || '데이터를 분석 중입니다...')}</div>
+            <div style="font-size:1em; line-height:1.8; color:#eee;">${marked.parse(brief || '분석 중...')}</div>
         `;
 
         document.getElementById('news-list').innerHTML = day.articles.map(a => `
@@ -261,8 +261,8 @@
                     <span style="font-weight:bold; color:var(--primary); font-size:0.95em;">#${a.keyword}</span>
                     <a href="${a.url}" target="_blank" style="font-size:0.85em; text-decoration:none; color:var(--primary); font-weight:bold;">원문보기 ↗</a>
                 </div>
-                <h3 style="margin:0 0 15px 0; font-size:1.15em;">${a.title}</h3>
-                <div style="background:#f9f9f9; padding:18px; border-radius:10px; font-size:0.95em; border: 1px solid #f0f0f0;">
+                <h3 style="margin:0 0 10px 0; font-size:1.1em;">${a.title}</h3>
+                <div style="background:#f9f9f9; padding:15px; border-radius:10px; font-size:0.95em;">
                     ${marked.parse(currentRole === 'PM' ? a.pm_summary : a.ba_summary)}
                 </div>
             </div>
