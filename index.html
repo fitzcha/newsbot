@@ -38,4 +38,118 @@
 <body>
 
 <div class="container">
-    <h1>Fitz Intelligence <small style="font-size: 0.4em; color
+    <h1>Fitz Intelligence <small style="font-size: 0.4em; color: #888;">v3.2</small></h1>
+
+    <section class="keyword-manager">
+        <strong>📌 현재 수집 키워드</strong>
+        <div id="tag-list" class="tag-container">
+            </div>
+        <div class="add-keyword">
+            <input type="text" id="new-keyword" placeholder="추가할 키워드 입력">
+            <button class="btn-add" onclick="addKeyword()">추가</button>
+        </div>
+        <p style="font-size: 0.8em; color: #999; margin-top: 10px;">* 추가/삭제 시 구글 시트와 동기화됩니다. (GAS 브릿지 필요)</p>
+    </section>
+
+    <section class="date-filter">
+        <strong>📅 리포트 조회:</strong>
+        <select id="date-select" onchange="renderByDate()">
+            </select>
+    </section>
+
+    <div class="role-tabs">
+        <button id="tab-pm" class="role-btn active" onclick="setRole('PM')">PM (기획/동향)</button>
+        <button id="tab-ba" class="role-btn" onclick="setRole('BA')">BA (사업/수익)</button>
+    </div>
+
+    <div id="ai-briefing-box" style="margin-bottom: 20px;"></div>
+    <div id="news-list"></div>
+</div>
+
+<script>
+    let currentRole = 'PM';
+    let fullData = [];
+    let keywords = []; // 실제로는 GAS 등을 통해 시트에서 가져와야 함
+
+    // 데이터 로드
+    async function init() {
+        try {
+            const res = await fetch('data.json');
+            fullData = await res.json();
+            
+            // 날짜 선택기 채우기
+            const dateSelect = document.getElementById('date-select');
+            dateSelect.innerHTML = fullData.map(d => `<option value="${d.date}">${d.date}</option>`).join('');
+            
+            // 임시 키워드 목록 (실제 구현 시 시트 데이터 연동)
+            keywords = [...new Set(fullData[0].articles.map(a => a.keyword))];
+            renderKeywords();
+            renderByDate();
+        } catch (e) { console.error("Data load failed", e); }
+    }
+
+    // 키워드 태그 렌더링
+    function renderKeywords() {
+        const list = document.getElementById('tag-list');
+        list.innerHTML = keywords.map(k => `
+            <div class="tag">${k} <span class="remove-btn" onclick="removeKeyword('${k}')">×</span></div>
+        `).join('');
+    }
+
+    function addKeyword() {
+        const val = document.getElementById('new-keyword').value;
+        if(val) {
+            keywords.push(val);
+            document.getElementById('new-keyword').value = '';
+            renderKeywords();
+            // TODO: GAS API를 호출하여 구글 시트 업데이트 로직 추가
+        }
+    }
+
+    function removeKeyword(word) {
+        keywords = keywords.filter(k => k !== word);
+        renderKeywords();
+        // TODO: GAS API를 호출하여 구글 시트 업데이트 로직 추가
+    }
+
+    function setRole(role) {
+        currentRole = role;
+        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(`tab-${role.toLowerCase()}`).classList.add('active');
+        renderByDate();
+    }
+
+    // 날짜별 데이터 렌더링
+    function renderByDate() {
+        const selectedDate = document.getElementById('date-select').value;
+        const dayData = fullData.find(d => d.date === selectedDate);
+        if(!dayData) return;
+
+        // 브리핑 출력
+        const briefContent = currentRole === 'PM' ? dayData.pm_brief : dayData.ba_brief;
+        document.getElementById('ai-briefing-box').innerHTML = `
+            <div style="background:#eef2f7; padding:15px; border-radius:10px; border-left:5px solid var(--primary);">
+                <strong>[${selectedDate} ${currentRole} 전략 브리핑]</strong><br>${briefContent}
+            </div>
+        `;
+
+        // 뉴스 목록 출력
+        const list = document.getElementById('news-list');
+        list.innerHTML = dayData.articles.map(a => `
+            <div class="news-card active-role">
+                <div class="card-header">
+                    <span class="tag" style="border:none; background:#eee;">#${a.keyword}</span>
+                    <a href="${a.url}" target="_blank" class="news-link">원문보기 ↗</a>
+                </div>
+                <h4 style="margin:0 0 10px 0;">${a.title}</h4>
+                <div class="summary-box">
+                    <strong>[${currentRole} 분석]</strong> ${currentRole === 'PM' ? a.pm_summary : a.ba_summary}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    init();
+</script>
+</body>
+</html>
