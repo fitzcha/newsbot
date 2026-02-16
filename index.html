@@ -5,149 +5,130 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fitz Intelligence v3.2</title>
     <style>
-        :root { --primary: #007bff; --bg: #f4f7f6; --card: #ffffff; }
-        body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 850px; margin: 0 auto; }
+        :root { --primary: #007bff; --bg: #f0f2f5; --white: #ffffff; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #1c1e21; }
+        .container { max-width: 800px; margin: 0 auto; }
         
-        /* 키워드 태그 관리 섹션 */
-        .keyword-manager { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .tag-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-        .tag { background: #eef2f7; padding: 5px 12px; border-radius: 20px; display: flex; align-items: center; font-size: 0.9em; border: 1px solid #d1d9e6; }
-        .tag .remove-btn { margin-left: 8px; cursor: pointer; color: #ff4d4f; font-weight: bold; }
-        .add-keyword { margin-top: 15px; display: flex; gap: 10px; }
-        .add-keyword input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; }
-        .btn-add { background: var(--primary); color: #fff; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; }
+        /* 키워드 태그 섹션 */
+        .keyword-box { background: var(--white); padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+        .tag { background: #e7f3ff; color: var(--primary); padding: 6px 12px; border-radius: 20px; font-size: 0.9em; font-weight: 500; display: flex; align-items: center; }
+        .tag .remove { margin-left: 8px; cursor: pointer; color: #dc3545; }
+        .add-input { display: flex; gap: 8px; margin-top: 15px; }
+        .add-input input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .add-input button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
 
-        /* 날짜 선택기 */
-        .date-filter { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; background: #fff; padding: 15px; border-radius: 12px; }
-        .date-filter select { padding: 8px; border-radius: 6px; border: 1px solid #ddd; font-size: 1em; }
+        /* 필터링 및 직군 선택 */
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .date-picker select { padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-weight: bold; }
+        .role-switch { background: #fff; padding: 5px; border-radius: 30px; display: flex; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .role-btn { padding: 8px 25px; border: none; background: none; border-radius: 25px; cursor: pointer; transition: 0.3s; font-weight: 600; }
+        .role-btn.active { background: var(--primary); color: white; }
 
-        /* 직군 선택 UI */
-        .role-tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 25px; }
-        .role-btn { padding: 10px 30px; border: 1px solid #ddd; background: #fff; border-radius: 30px; cursor: pointer; transition: 0.3s; }
-        .role-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: bold; }
-
-        /* 뉴스 카드 디자인 */
-        .news-card { background: var(--card); padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 6px solid #ddd; }
-        .news-card.active-role { border-left-color: var(--primary); }
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .news-link { font-size: 0.8em; color: var(--primary); text-decoration: none; padding: 4px 10px; border: 1px solid var(--primary); border-radius: 6px; }
-        .summary-box { background: #f9f9f9; padding: 12px; border-radius: 8px; font-size: 0.95em; line-height: 1.6; }
+        /* 리포트 카드 */
+        .briefing-card { background: #fff; padding: 20px; border-radius: 12px; border-left: 6px solid var(--primary); margin-bottom: 25px; }
+        .news-item { background: var(--white); padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; }
+        .news-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .origin-link { font-size: 0.8em; color: var(--primary); text-decoration: none; font-weight: bold; border: 1px solid var(--primary); padding: 2px 8px; border-radius: 5px; }
+        .origin-link:hover { background: var(--primary); color: white; }
+        .summary-box { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Fitz Intelligence <small style="font-size: 0.4em; color: #888;">v3.2</small></h1>
+    <h1>Fitz Intelligence <small style="font-size: 0.4em;">v3.2</small></h1>
 
-    <section class="keyword-manager">
-        <strong>📌 현재 수집 키워드</strong>
-        <div id="tag-list" class="tag-container">
-            </div>
-        <div class="add-keyword">
-            <input type="text" id="new-keyword" placeholder="추가할 키워드 입력">
-            <button class="btn-add" onclick="addKeyword()">추가</button>
+    <section class="keyword-box">
+        <strong>📌 추적 중인 키워드</strong>
+        <div id="tag-list" class="tag-list"></div>
+        <div class="add-input">
+            <input type="text" id="keyword-input" placeholder="키워드 추가">
+            <button onclick="addTag()">추가</button>
         </div>
-        <p style="font-size: 0.8em; color: #999; margin-top: 10px;">* 추가/삭제 시 구글 시트와 동기화됩니다. (GAS 브릿지 필요)</p>
     </section>
 
-    <section class="date-filter">
-        <strong>📅 리포트 조회:</strong>
-        <select id="date-select" onchange="renderByDate()">
-            </select>
-    </section>
-
-    <div class="role-tabs">
-        <button id="tab-pm" class="role-btn active" onclick="setRole('PM')">PM (기획/동향)</button>
-        <button id="tab-ba" class="role-btn" onclick="setRole('BA')">BA (사업/수익)</button>
+    <div class="controls">
+        <div class="date-picker">
+            <select id="date-select" onchange="render()"></select>
+        </div>
+        <div class="role-switch">
+            <button id="btn-PM" class="role-btn active" onclick="switchRole('PM')">PM 모드</button>
+            <button id="btn-BA" class="role-btn" onclick="switchRole('BA')">BA 모드</button>
+        </div>
     </div>
 
-    <div id="ai-briefing-box" style="margin-bottom: 20px;"></div>
+    <div id="briefing-box"></div>
     <div id="news-list"></div>
 </div>
 
 <script>
-    let currentRole = 'PM';
     let fullData = [];
-    let keywords = []; // 실제로는 GAS 등을 통해 시트에서 가져와야 함
+    let currentRole = 'PM';
 
-    // 데이터 로드
     async function init() {
         try {
             const res = await fetch('data.json');
             fullData = await res.json();
             
-            // 날짜 선택기 채우기
-            const dateSelect = document.getElementById('date-select');
-            dateSelect.innerHTML = fullData.map(d => `<option value="${d.date}">${d.date}</option>`).join('');
+            if (fullData.length === 0) throw new Error("데이터가 비어있습니다.");
+
+            // 날짜 선택기 초기화
+            const select = document.getElementById('date-select');
+            select.innerHTML = fullData.map(d => `<option value="${d.date}">${d.date}</option>`).join('');
             
-            // 임시 키워드 목록 (실제 구현 시 시트 데이터 연동)
-            keywords = [...new Set(fullData[0].articles.map(a => a.keyword))];
-            renderKeywords();
-            renderByDate();
-        } catch (e) { console.error("Data load failed", e); }
-    }
-
-    // 키워드 태그 렌더링
-    function renderKeywords() {
-        const list = document.getElementById('tag-list');
-        list.innerHTML = keywords.map(k => `
-            <div class="tag">${k} <span class="remove-btn" onclick="removeKeyword('${k}')">×</span></div>
-        `).join('');
-    }
-
-    function addKeyword() {
-        const val = document.getElementById('new-keyword').value;
-        if(val) {
-            keywords.push(val);
-            document.getElementById('new-keyword').value = '';
-            renderKeywords();
-            // TODO: GAS API를 호출하여 구글 시트 업데이트 로직 추가
+            renderTags();
+            render();
+        } catch (e) {
+            document.getElementById('news-list').innerHTML = `<h3>⚠️ 데이터를 불러올 수 없습니다: ${e.message}</h3>`;
         }
     }
 
-    function removeKeyword(word) {
-        keywords = keywords.filter(k => k !== word);
-        renderKeywords();
-        // TODO: GAS API를 호출하여 구글 시트 업데이트 로직 추가
-    }
-
-    function setRole(role) {
+    function switchRole(role) {
         currentRole = role;
         document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`tab-${role.toLowerCase()}`).classList.add('active');
-        renderByDate();
+        document.getElementById(`btn-${role}`).classList.add('active');
+        render();
     }
 
-    // 날짜별 데이터 렌더링
-    function renderByDate() {
+    function renderTags() {
+        if (fullData.length === 0) return;
+        const keywords = [...new Set(fullData[0].articles.map(a => a.keyword))];
+        document.getElementById('tag-list').innerHTML = keywords.map(k => `
+            <span class="tag">${k} <span class="remove" onclick="removeTag('${k}')">×</span></span>
+        `).join('');
+    }
+
+    function render() {
         const selectedDate = document.getElementById('date-select').value;
         const dayData = fullData.find(d => d.date === selectedDate);
-        if(!dayData) return;
+        if (!dayData) return;
 
-        // 브리핑 출력
-        const briefContent = currentRole === 'PM' ? dayData.pm_brief : dayData.ba_brief;
-        document.getElementById('ai-briefing-box').innerHTML = `
-            <div style="background:#eef2f7; padding:15px; border-radius:10px; border-left:5px solid var(--primary);">
-                <strong>[${selectedDate} ${currentRole} 전략 브리핑]</strong><br>${briefContent}
+        // 브리핑 렌더링
+        const brief = currentRole === 'PM' ? dayData.pm_brief : dayData.ba_brief;
+        document.getElementById('briefing-box').innerHTML = `
+            <div class="briefing-card">
+                <strong>[${selectedDate} ${currentRole} 전략 브리핑]</strong><br>${brief || '브리핑 준비 중...'}
             </div>
         `;
 
-        // 뉴스 목록 출력
-        const list = document.getElementById('news-list');
-        list.innerHTML = dayData.articles.map(a => `
-            <div class="news-card active-role">
-                <div class="card-header">
-                    <span class="tag" style="border:none; background:#eee;">#${a.keyword}</span>
-                    <a href="${a.url}" target="_blank" class="news-link">원문보기 ↗</a>
+        // 뉴스 목록 렌더링
+        document.getElementById('news-list').innerHTML = dayData.articles.map(a => `
+            <div class="news-item">
+                <div class="news-header">
+                    <span style="font-weight:bold; color:#666;">#${a.keyword}</span>
+                    <a href="${a.url}" target="_blank" class="origin-link">원문보기 ↗</a>
                 </div>
                 <h4 style="margin:0 0 10px 0;">${a.title}</h4>
                 <div class="summary-box">
-                    <strong>[${currentRole} 분석]</strong> ${currentRole === 'PM' ? a.pm_summary : a.ba_summary}
+                    <strong>[${currentRole} 관점]</strong> ${currentRole === 'PM' ? a.pm_summary : a.ba_summary}
                 </div>
             </div>
         `).join('');
     }
+
+    function addTag() { alert("키워드 수정은 연결된 구글 시트에서 가능합니다."); }
+    function removeTag(k) { alert(`'${k}' 키워드 삭제는 구글 시트에서 진행해 주세요.`); }
 
     init();
 </script>
