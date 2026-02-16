@@ -3,86 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitz Intelligence v3.6</title>
+    <title>Fitz Intelligence v3.8 | Invitation Only</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <style>
-        :root { --primary: #007bff; --bg: #f8f9fa; --black: #000; --white: #fff; }
+        :root { --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; --black: #000; }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
         .container { max-width: 850px; margin: 0 auto; }
         
-        /* 키워드 관리 섹션 */
-        .keyword-manager { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        /* 헤더 및 유저 컨트롤 */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .auth-card { background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .auth-btn { padding: 8px 18px; border-radius: 8px; border: 1px solid var(--primary); background: #fff; color: var(--primary); cursor: pointer; font-weight: bold; font-size: 0.9em; }
+        .auth-btn.active { background: var(--primary); color: #fff; }
+
+        /* 키워드 태그 */
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
         .tag { background: #eef2f7; padding: 6px 14px; border-radius: 20px; font-size: 0.85em; color: var(--primary); font-weight: 600; display: flex; align-items: center; border: 1px solid #d1d9e6; }
         .remove-btn { margin-left: 8px; cursor: pointer; color: #ff4d4f; font-weight: bold; }
-        .notice { font-size: 0.75em; color: #888; margin-top: 12px; font-style: italic; }
 
-        /* 필터 및 직군 선택 */
-        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .role-btn { padding: 10px 25px; border-radius: 25px; border: 1px solid #ddd; background: #fff; cursor: pointer; transition: 0.3s; }
-        .role-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: bold; }
-
-        /* 브리핑 카드 */
+        /* 브리핑 및 카드 UI */
         .briefing-box { background: #343a40; color: #fff; padding: 25px; border-radius: 12px; margin-bottom: 30px; }
-        /* AI 배지 커스텀 */
-        .ai-badge { font-size: 0.7em; background: var(--black); color: var(--white); padding: 3px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; vertical-align: middle; border: 1px solid #444; }
-
-        /* 뉴스 카드 */
+        .ai-badge { background: var(--black); color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 0.7em; font-weight: bold; margin-right: 10px; border: 1px solid #444; }
         .news-card { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 5px solid #eee; }
-        .active-pm { border-left-color: var(--primary); }
-        .active-ba { border-left-color: #28a745; }
-        .news-link { font-size: 0.8em; text-decoration: none; color: var(--primary); font-weight: bold; border: 1px solid var(--primary); padding: 2px 8px; border-radius: 5px; }
+        
+        /* 입력 폼 스타일 */
+        .input-group { display: flex; gap: 10px; margin-top: 15px; }
+        input { flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95em; }
+        .btn-submit { background: var(--primary); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div class="top-bar">
+        <h1>Fitz Intelligence <small style="font-size:0.4em; color:#999;">v3.8</small></h1>
+        <div id="user-display">
+            <button class="auth-btn" id="login-toggle" onclick="toggleAuthSection()">베타 신청 / 로그인</button>
+        </div>
+    </div>
+
+    <section id="auth-section" class="auth-card" style="display:none;">
+        <h3>🔑 VIP 초대 코드 인증</h3>
+        <p style="font-size:0.85em; color:#666; margin-bottom: 20px;">이메일을 입력하시면 6자리 초대 코드가 발송됩니다. (정원 10명)</p>
+        
+        <div id="otp-request-area">
+            <div class="input-group">
+                <input type="email" id="email-input" placeholder="이메일 주소 입력">
+                <button class="btn-submit" onclick="sendOtp()">코드 받기</button>
+            </div>
+        </div>
+
+        <div id="otp-verify-area" style="display:none;">
+            <div class="input-group">
+                <input type="text" id="otp-input" placeholder="이메일로 온 6자리 숫자 입력">
+                <button class="btn-submit" style="background:#28a745;" onclick="verifyOtp()">인증 및 입장</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="auth-card">
+        <strong id="kw-title">📌 마스터 추천 키워드 (Public)</strong>
+        <div id="tag-list" class="tag-list"></div>
+        <div id="kw-edit-area" style="display:none;" class="input-group">
+            <input type="text" id="new-kw" placeholder="새 키워드 추가">
+            <button class="btn-submit" onclick="alert('반영 대기 중 (D+1)')">추가</button>
+        </div>
+        <p id="kw-notice" style="font-size:0.75em; color:#999; margin-top:12px;">💡 로그인 시 본인만의 개인화 키워드 설정이 가능합니다.</p>
+    </section>
+
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h1>Fitz Intelligence <small style="font-size: 0.4em;">v3.6</small></h1>
+        <div class="role-switch">
+            <button id="btn-PM" class="auth-btn active" onclick="setRole('PM')">PM 모드</button>
+            <button id="btn-BA" class="auth-btn" onclick="setRole('BA')">BA 모드</button>
+        </div>
         <select id="date-select" onchange="render()" style="padding:10px; border-radius:8px; border:1px solid #ddd;"></select>
     </div>
 
-    <section class="keyword-manager">
-        <strong>📌 추적 키워드</strong>
-        <div id="tag-list" class="tag-list"></div>
-        <div style="margin-top:15px; display:flex; gap:10px;">
-            <input type="text" id="new-keyword" placeholder="키워드 추가" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;">
-            <button onclick="addKeyword()" style="background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">추가</button>
-        </div>
-        <p class="notice">💡 키워드 추가/삭제 내역은 내일 아침 9시(KST) 작업부터 반영됩니다.</p>
-    </section>
-
-    <div class="controls">
-        <div class="role-switch">
-            <button id="btn-PM" class="role-btn active" onclick="setRole('PM')">PM (기획/동향)</button>
-            <button id="btn-BA" class="role-btn" onclick="setRole('BA')">BA (수익/사업)</button>
-        </div>
-    </div>
-
-    <div id="briefing-container" class="briefing-box"></div>
+    <div id="briefing-box" class="briefing-box"></div>
     <div id="news-list"></div>
 </div>
 
 <script>
+    // 성환님이 제공해주신 Supabase 설정 값
+    const SUPABASE_URL = 'https://zrlpwmpbrvohautldcon.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G';
+    const MASTER_EMAIL = 'positivecha@gmail.com'; // 성환님 마스터 이메일
+
+    const supabase = lib.createClient(SUPABASE_URL, SUPABASE_KEY);
     let fullData = [];
     let currentRole = 'PM';
+    let currentUser = null;
 
+    // 초기화 함수
     async function init() {
-        try {
-            const res = await fetch('data.json');
-            fullData = await res.json();
+        const { data: { user } } = await supabase.auth.getUser();
+        currentUser = user;
+        updateUserUI();
+
+        const res = await fetch('data.json');
+        fullData = await res.json();
+        
+        const select = document.getElementById('date-select');
+        select.innerHTML = fullData.map(d => `<option value="${d.date}">${d.date}</option>`).join('');
+        
+        renderTags();
+        render();
+    }
+
+    // 유저 상태에 따른 UI 변경
+    function updateUserUI() {
+        const display = document.getElementById('user-display');
+        const kwTitle = document.getElementById('kw-title');
+        const kwEdit = document.getElementById('kw-edit-area');
+        const kwNotice = document.getElementById('kw-notice');
+
+        if (currentUser) {
+            display.innerHTML = `<span style="font-size:0.85em; margin-right:10px;"><b>${currentUser.email}</b>님</span><button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
+            kwEdit.style.display = "flex";
             
-            const select = document.getElementById('date-select');
-            select.innerHTML = fullData.map(d => `<option value="${d.date}">${d.date}</option>`).join('');
-            
-            renderTags();
-            render();
-        } catch (e) { document.getElementById('news-list').innerHTML = "<h3>데이터 로드 중...</h3>"; }
+            if (currentUser.email === MASTER_EMAIL) {
+                kwTitle.innerText = "👑 마스터 키워드 관리";
+                kwNotice.innerText = "💡 수정하신 내용은 내일 아침 9시(KST)부터 전체 공개 리포트에 반영됩니다.";
+            } else {
+                kwTitle.innerText = "👤 나의 개인화 키워드";
+                kwNotice.innerText = "💡 나만을 위한 맞춤형 AI 리포트 생성을 준비 중입니다.";
+            }
+        }
+    }
+
+    // OTP 코드 발송 (초대 코드 역할)
+    async function sendOtp() {
+        const email = document.getElementById('email-input').value;
+        if (!email) return alert("이메일을 입력해주세요.");
+        
+        const { error } = await supabase.auth.signInWithOtp({ email });
+        if (error) alert("발송 실패: " + error.message);
+        else {
+            alert("6자리 초대 코드가 이메일로 발송되었습니다!");
+            document.getElementById('otp-request-area').style.display = 'none';
+            document.getElementById('otp-verify-area').style.display = 'block';
+        }
+    }
+
+    // OTP 인증 및 로그인 완료
+    async function verifyOtp() {
+        const email = document.getElementById('email-input').value;
+        const token = document.getElementById('otp-input').value;
+        
+        const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+        if (error) alert("인증 번호가 틀렸습니다: " + error.message);
+        else {
+            alert("인증 성공! VIP 입장을 환영합니다.");
+            location.reload();
+        }
+    }
+
+    function toggleAuthSection() {
+        const section = document.getElementById('auth-section');
+        section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    }
+
+    async function handleLogout() {
+        await supabase.auth.signOut();
+        location.reload();
     }
 
     function setRole(role) {
         currentRole = role;
-        document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.role-switch .auth-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(`btn-${role}`).classList.add('active');
         render();
     }
@@ -90,8 +180,9 @@
     function renderTags() {
         if (!fullData.length) return;
         const keywords = fullData[0].tracked_keywords || [];
+        const isEditable = !!currentUser;
         document.getElementById('tag-list').innerHTML = keywords.map(k => `
-            <span class="tag">#${k} <span class="remove-btn" onclick="removeKeyword('${k}')">×</span></span>
+            <span class="tag">#${k} ${isEditable ? `<span class="remove-btn" style="display:inline" onclick="alert('삭제 요청됨')">×</span>` : ''}</span>
         `).join('');
     }
 
@@ -100,34 +191,24 @@
         const day = fullData.find(d => d.date === date);
         if (!day) return;
 
-        // 브리핑 렌더링 (명칭 변경: '브리핑')
         const brief = currentRole === 'PM' ? day.pm_brief : day.ba_brief;
-        document.getElementById('briefing-container').innerHTML = `
-            <h4 style="margin:0 0 15px 0;"><span class="ai-badge">AI Analysis</span> ${date} ${currentRole} 브리핑</h4>
-            <div style="font-size:0.95em; line-height:1.7;">${marked.parse(brief || '분석 중입니다.')}</div>
+        document.getElementById('briefing-box').innerHTML = `
+            <h4 style="margin:0 0 15px 0;"><span class="ai-badge">AI Analysis</span> ${date} 브리핑</h4>
+            <div style="font-size:0.95em; line-height:1.7;">${marked.parse(brief || '분석 중...')}</div>
         `;
 
         document.getElementById('news-list').innerHTML = day.articles.map(a => `
-            <div class="news-card ${currentRole === 'PM' ? 'active-pm' : 'active-ba'}">
+            <div class="news-card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                     <span style="font-weight:bold; color:var(--primary); font-size:0.9em;">#${a.keyword}</span>
-                    <a href="${a.url}" target="_blank" class="news-link">원문보기 ↗</a>
+                    <a href="${a.url}" target="_blank" style="font-size:0.8em; text-decoration:none; color:var(--primary); font-weight:bold;">원문보기 ↗</a>
                 </div>
                 <h3 style="margin:0 0 15px 0; font-size:1.1em;">${a.title}</h3>
-                <div style="background:#f9f9f9; padding:15px; border-radius:8px; font-size:0.95em;">
+                <div style="background:#f9f9f9; padding:15px; border-radius:8px; font-size:0.95em; line-height:1.6;">
                     ${marked.parse(currentRole === 'PM' ? a.pm_summary : a.ba_summary)}
                 </div>
             </div>
         `).join('');
-    }
-
-    // 키워드 관리 로직 (GAS 연동은 다음 스텝에서)
-    function addKeyword() { 
-        const val = document.getElementById('new-keyword').value;
-        if(val) { alert(`'${val}' 키워드가 추가 대기열에 들어갔습니다. 내일 오전 9시에 반영됩니다.`); } 
-    }
-    function removeKeyword(k) { 
-        alert(`'${k}' 키워드 삭제가 요청되었습니다. 내일 오전 9시에 반영됩니다.`); 
     }
 
     init();
