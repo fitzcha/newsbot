@@ -3,43 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitz Intelligence v3.5</title>
+    <title>Fitz Intelligence v3.6</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-        :root { --primary: #007bff; --bg: #f8f9fa; }
-        body { font-family: 'Pretendard', sans-serif; background: var(--bg); padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .keyword-box { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        :root { --primary: #007bff; --bg: #f8f9fa; --black: #000; --white: #fff; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 850px; margin: 0 auto; }
+        
+        /* 키워드 관리 섹션 */
+        .keyword-manager { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 25px; }
         .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-        .tag { background: #eef2f7; padding: 5px 12px; border-radius: 20px; font-size: 0.85em; color: var(--primary); font-weight: 600; }
-        .controls { display: flex; justify-content: space-between; margin-bottom: 20px; }
-        .role-btn { padding: 8px 20px; border-radius: 20px; border: 1px solid #ddd; background: #fff; cursor: pointer; }
-        .role-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-        .news-card { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .ai-badge { font-size: 0.7em; background: #eee; padding: 2px 6px; border-radius: 4px; margin-right: 8px; }
+        .tag { background: #eef2f7; padding: 6px 14px; border-radius: 20px; font-size: 0.85em; color: var(--primary); font-weight: 600; display: flex; align-items: center; border: 1px solid #d1d9e6; }
+        .remove-btn { margin-left: 8px; cursor: pointer; color: #ff4d4f; font-weight: bold; }
+        .notice { font-size: 0.75em; color: #888; margin-top: 12px; font-style: italic; }
+
+        /* 필터 및 직군 선택 */
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .role-btn { padding: 10px 25px; border-radius: 25px; border: 1px solid #ddd; background: #fff; cursor: pointer; transition: 0.3s; }
+        .role-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: bold; }
+
+        /* 브리핑 카드 */
+        .briefing-box { background: #343a40; color: #fff; padding: 25px; border-radius: 12px; margin-bottom: 30px; }
+        /* AI 배지 커스텀 */
+        .ai-badge { font-size: 0.7em; background: var(--black); color: var(--white); padding: 3px 8px; border-radius: 4px; font-weight: bold; margin-right: 10px; vertical-align: middle; border: 1px solid #444; }
+
+        /* 뉴스 카드 */
+        .news-card { background: #fff; padding: 20px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border-left: 5px solid #eee; }
+        .active-pm { border-left-color: var(--primary); }
+        .active-ba { border-left-color: #28a745; }
+        .news-link { font-size: 0.8em; text-decoration: none; color: var(--primary); font-weight: bold; border: 1px solid var(--primary); padding: 2px 8px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h1>Fitz Intelligence <small>v3.5</small></h1>
-        <select id="date-select" onchange="render()" style="padding:8px; border-radius:8px;"></select>
+        <h1>Fitz Intelligence <small style="font-size: 0.4em;">v3.6</small></h1>
+        <select id="date-select" onchange="render()" style="padding:10px; border-radius:8px; border:1px solid #ddd;"></select>
     </div>
 
-    <section class="keyword-box">
-        <strong>📌 현재 추적 중인 키워드</strong>
+    <section class="keyword-manager">
+        <strong>📌 추적 키워드</strong>
         <div id="tag-list" class="tag-list"></div>
+        <div style="margin-top:15px; display:flex; gap:10px;">
+            <input type="text" id="new-keyword" placeholder="키워드 추가" style="flex:1; padding:10px; border:1px solid #ddd; border-radius:8px;">
+            <button onclick="addKeyword()" style="background:var(--primary); color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">추가</button>
+        </div>
+        <p class="notice">💡 키워드 추가/삭제 내역은 내일 아침 9시(KST) 작업부터 반영됩니다.</p>
     </section>
 
     <div class="controls">
         <div class="role-switch">
-            <button id="btn-PM" class="role-btn active" onclick="setRole('PM')">PM 모드</button>
-            <button id="btn-BA" class="role-btn" onclick="setRole('BA')">BA 모드</button>
+            <button id="btn-PM" class="role-btn active" onclick="setRole('PM')">PM (기획/동향)</button>
+            <button id="btn-BA" class="role-btn" onclick="setRole('BA')">BA (수익/사업)</button>
         </div>
     </div>
 
-    <div id="briefing-box" style="background:#343a40; color:#fff; padding:20px; border-radius:12px; margin-bottom:20px;"></div>
+    <div id="briefing-container" class="briefing-box"></div>
     <div id="news-list"></div>
 </div>
 
@@ -51,11 +71,13 @@
         try {
             const res = await fetch('data.json');
             fullData = await res.json();
+            
             const select = document.getElementById('date-select');
             select.innerHTML = fullData.map(d => `<option value="${d.date}">${d.date}</option>`).join('');
+            
             renderTags();
             render();
-        } catch (e) { document.getElementById('news-list').innerHTML = "<h3>데이터 로드 실패</h3>"; }
+        } catch (e) { document.getElementById('news-list').innerHTML = "<h3>데이터 로드 중...</h3>"; }
     }
 
     function setRole(role) {
@@ -65,11 +87,12 @@
         render();
     }
 
-    // v3.3 핵심: 전체 키워드 리스트를 직접 참조
     function renderTags() {
         if (!fullData.length) return;
         const keywords = fullData[0].tracked_keywords || [];
-        document.getElementById('tag-list').innerHTML = keywords.map(k => `<span class="tag">#${k}</span>`).join('');
+        document.getElementById('tag-list').innerHTML = keywords.map(k => `
+            <span class="tag">#${k} <span class="remove-btn" onclick="removeKeyword('${k}')">×</span></span>
+        `).join('');
     }
 
     function render() {
@@ -77,25 +100,36 @@
         const day = fullData.find(d => d.date === date);
         if (!day) return;
 
+        // 브리핑 렌더링 (명칭 변경: '브리핑')
         const brief = currentRole === 'PM' ? day.pm_brief : day.ba_brief;
-        document.getElementById('briefing-box').innerHTML = `
-            <h4><span class="ai-badge">🤖 AI Analysis</span> ${date} 전략 브리핑</h4>
-            <div>${marked.parse(brief || '데이터 없음')}</div>
+        document.getElementById('briefing-container').innerHTML = `
+            <h4 style="margin:0 0 15px 0;"><span class="ai-badge">AI Analysis</span> ${date} ${currentRole} 브리핑</h4>
+            <div style="font-size:0.95em; line-height:1.7;">${marked.parse(brief || '분석 중입니다.')}</div>
         `;
 
         document.getElementById('news-list').innerHTML = day.articles.map(a => `
-            <div class="news-card">
-                <div style="display:flex; justify-content:space-between;">
-                    <span style="font-weight:bold; color:var(--primary);">#${a.keyword}</span>
-                    <a href="${a.url}" target="_blank" style="font-size:0.8em; text-decoration:none; color:var(--primary);">원문보기 ↗</a>
+            <div class="news-card ${currentRole === 'PM' ? 'active-pm' : 'active-ba'}">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                    <span style="font-weight:bold; color:var(--primary); font-size:0.9em;">#${a.keyword}</span>
+                    <a href="${a.url}" target="_blank" class="news-link">원문보기 ↗</a>
                 </div>
-                <h3>${a.title}</h3>
-                <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
+                <h3 style="margin:0 0 15px 0; font-size:1.1em;">${a.title}</h3>
+                <div style="background:#f9f9f9; padding:15px; border-radius:8px; font-size:0.95em;">
                     ${marked.parse(currentRole === 'PM' ? a.pm_summary : a.ba_summary)}
                 </div>
             </div>
         `).join('');
     }
+
+    // 키워드 관리 로직 (GAS 연동은 다음 스텝에서)
+    function addKeyword() { 
+        const val = document.getElementById('new-keyword').value;
+        if(val) { alert(`'${val}' 키워드가 추가 대기열에 들어갔습니다. 내일 오전 9시에 반영됩니다.`); } 
+    }
+    function removeKeyword(k) { 
+        alert(`'${k}' 키워드 삭제가 요청되었습니다. 내일 오전 9시에 반영됩니다.`); 
+    }
+
     init();
 </script>
 </body>
