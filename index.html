@@ -1,60 +1,122 @@
-<style>
-    .role-selector { background: #f0f4f8; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
-    .btn-role { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 0 5px; }
-    .btn-active { background: #007bff; color: white; font-weight: bold; }
-    .news-link { font-size: 0.8em; color: #007bff; text-decoration: none; margin-left: 10px; }
-</style>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitz Intelligence v3.1</title>
+    <style>
+        :root { --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        /* 헤더 및 설정 섹션 */
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .setup-links { background: #fff; padding: 15px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        /* 직군 선택 UI */
+        .role-selector { text-align: center; margin-bottom: 25px; }
+        .btn-role { padding: 10px 25px; border: 1px solid #ddd; background: #fff; cursor: pointer; border-radius: 20px; transition: 0.3s; margin: 0 5px; }
+        .btn-role.active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: bold; }
+
+        /* 브리핑 카드 */
+        .briefing-card { background: #e9ecef; padding: 20px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; }
+        
+        /* 날짜별 그룹 */
+        .date-group { margin-bottom: 40px; }
+        .date-header { font-size: 1.2em; font-weight: bold; color: #333; border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-bottom: 15px; }
+        
+        /* 뉴스 카드 */
+        .card { background: var(--card); padding: 20px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .keyword-tag { display: inline-block; background: #eee; padding: 2px 10px; border-radius: 5px; font-size: 0.8em; margin-bottom: 10px; }
+        .card h4 { margin: 0 0 10px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+        .news-link { font-size: 0.75em; color: var(--primary); text-decoration: none; border: 1px solid var(--primary); padding: 2px 8px; border-radius: 4px; white-space: nowrap; margin-left: 10px; }
+        .news-link:hover { background: var(--primary); color: #fff; }
+        .summary-text { color: #555; font-size: 0.95em; }
+    </style>
+</head>
+<body>
 
 <div class="container">
     <header>
-        <h1>Fitz Intelligence <small>v3.0</small></h1>
-        <div class="role-selector">
-            <p><strong>내 직군 선택:</strong></p>
-            <button id="btn-pm" class="btn-role btn-active" onclick="setRole('PM')">PM (기획/동향)</button>
-            <button id="btn-ba" class="btn-role" onclick="setRole('BA')">BA (수익/사업)</button>
+        <h1>Fitz Intelligence <small style="font-size: 0.5em; color: #666;">v3.1</small></h1>
+        <div class="setup-links">
+            <a href="https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_HERE" target="_blank" style="text-decoration:none; color:#333; font-size:0.9em;">
+                ⚙️ 키워드 수정/추가 (Google Sheets)
+            </a>
         </div>
     </header>
 
-    <div id="briefing-section" class="briefing-card">
-        <h3>오늘의 AI 전략 브리핑</h3>
-        <p id="ai-briefing">데이터를 불러오는 중...</p>
+    <div class="role-selector">
+        <button id="btn-pm" class="btn-role active" onclick="setRole('PM')">PM 모드</button>
+        <button id="btn-ba" class="btn-role" onclick="setRole('BA')">BA 모드</button>
     </div>
 
-    <div id="news-container"></div>
+    <div id="latest-briefing" class="briefing-card">
+        <h3 id="briefing-title">오늘의 AI 전략 브리핑</h3>
+        <p id="ai-brief-content">분석 데이터를 불러오는 중...</p>
+    </div>
+
+    <div id="archive-container">
+        </div>
 </div>
 
 <script>
-    let currentRole = 'PM'; // 기본값 PM
-    let newsData = [];
+    let currentRole = 'PM';
+    let fullData = [];
 
+    // 1. 직군 변경 시 화면 갱신
     function setRole(role) {
         currentRole = role;
-        document.querySelectorAll('.btn-role').forEach(btn => btn.classList.remove('btn-active'));
-        document.getElementById(`btn-${role.toLowerCase()}`).classList.add('btn-active');
-        renderData(); // 직군 변경 시 즉시 다시 그리기
+        document.querySelectorAll('.btn-role').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`btn-${role.toLowerCase()}`).classList.add('active');
+        renderDashboard();
     }
 
-    async function loadData() {
-        const res = await fetch('data.json');
-        newsData = await res.json();
-        renderData();
+    // 2. 데이터 로드
+    async function init() {
+        try {
+            const response = await fetch('data.json');
+            fullData = await response.json();
+            renderDashboard();
+        } catch (e) {
+            document.getElementById('ai-brief-content').innerText = "데이터 로드 실패. news_bot.py가 정상 작동했는지 확인해주세요.";
+        }
     }
 
-    function renderData() {
-        const latest = newsData[0];
-        // 직군별 브리핑 출력
-        document.getElementById('ai-briefing').innerText = latest[`${currentRole.toLowerCase()}_brief`];
+    // 3. 화면 렌더링 (최신 브리핑 + 날짜별 리스팅)
+    function renderDashboard() {
+        if (!fullData || fullData.length === 0) return;
 
-        const container = document.getElementById('news-container');
-        container.innerHTML = latest.articles.map(article => `
-            <div class="card">
-                <div class="keyword-tag">${article.keyword}</div>
-                <h4>
-                    ${article.title}
-                    <a href="${article.url}" target="_blank" class="news-link">[원문보기]</a> </h4>
-                <p>${currentRole === 'PM' ? article.pm_summary : article.ba_summary}</p>
+        // 최신 브리핑 업데이트
+        const latest = fullData[0];
+        const briefField = currentRole === 'PM' ? 'pm_brief' : 'ba_brief';
+        document.getElementById('ai-brief-content').innerText = latest[briefField] || "해당 직군의 브리핑 데이터가 없습니다.";
+        document.getElementById('briefing-title').innerText = `${latest.date} [${currentRole}] 전략 브리핑`;
+
+        // 날짜별 리스팅 (아카이브)
+        const archiveContainer = document.getElementById('archive-container');
+        archiveContainer.innerHTML = fullData.map(day => `
+            <div class="date-group">
+                <div class="date-header">${day.date}</div>
+                ${day.articles.map(article => `
+                    <div class="card">
+                        <div class="keyword-tag">${article.keyword}</div>
+                        <h4>
+                            <span>${article.title}</span>
+                            <a href="${article.url}" target="_blank" class="news-link">원문보기 ↗</a>
+                        </h4>
+                        <p class="summary-text">
+                            <strong>[${currentRole} 분석]</strong> 
+                            ${currentRole === 'PM' ? article.pm_summary : article.ba_summary}
+                        </p>
+                    </div>
+                `).join('')}
             </div>
         `).join('');
     }
-    loadData();
+
+    init();
 </script>
+
+</body>
+</html>
