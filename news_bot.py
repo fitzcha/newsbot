@@ -1,75 +1,84 @@
-import os, json, gspread, time
+import os, json, time
 from google import genai
 from gnews import GNews
-from oauth2client.service_account import ServiceAccountCredentials
+from supabase import create_client, Client
 from datetime import datetime
 
-# 1. 환경 설정
+# 1. 환경 설정 (GitHub Secrets에 SUPABASE_URL, SUPABASE_KEY 추가 필요)
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
-GOOGLE_JSON = os.environ.get("GOOGLE_SHEETS_JSON")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+MASTER_EMAIL = "positivecha@gmail.com"
 TODAY = datetime.now().strftime("%Y-%m-%d")
 
 # 2. 클라이언트 초기화
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_dict(json.loads(GOOGLE_JSON), scope)
-client = gspread.authorize(creds)
-sheet = client.open("Mobility_Policy_Manager").sheet1 
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 google_genai = genai.Client(api_key=GEMINI_KEY)
-
-# 3. 설정 및 구조화 분석 함수
-keywords = [k for k in sheet.col_values(1) if k.strip()][:5]
 google_news = GNews(language='ko', country='KR', period='2d', max_results=2)
 
-def analyze_by_role(word, title, role="PM"):
-    role_desc = "모빌리티 서비스 기획자(PM)" if role == "PM" else "비즈니스 분석가(BA)"
-    prompt = f"""
-    당신은 {role_desc}입니다. 다음 뉴스 제목을 분석하여 3~5개의 불릿 포인트(•)로 요약하세요.
-    제목: {title}
-    인사이트 중심의 짧은 문장을 사용할 것. 마크다운 형식을 지킬 것.
-    """
+def analyze_news(title, role="PM"):
+    """v3.5에서 정립한 불릿 포인트 기반 스캐닝 최적화 분석"""
+    role_desc = "모빌리티 PM" if role == "PM" else "비즈니스 분석가"
+    prompt = f"당신은 {role_desc}입니다. 뉴스 '{title}'을 3~5개 불릿 포인트로 요약하고 인사이트를 주십시오. 단문으로 작성하세요."
     try:
         res = google_genai.models.generate_content(model="gemini-2.0-flash", contents=prompt)
         return res.text
-    except: return "• 분석 데이터를 생성할 수 없습니다."
+    except: return "• 분석 중 오류 발생"
 
-# 4. 데이터 수집 (v3.3 로직 포함)
-daily_report = {
-    "date": TODAY, 
-    "tracked_keywords": keywords, # 👈 v3.3 핵심: 전체 키워드 저장
-    "articles": [], 
-    "pm_brief": "", 
-    "ba_brief": ""
-}
-news_context = ""
+# 3. 모든 유저 설정 로드
+def get_all_users():
+    # user_settings 테이블에서 모든 유저의 ID, 이메일, 키워드를 가져옴
+    response = supabase.table("user_settings").select("*").execute()
+    return response.data
 
-for word in keywords:
-    print(f"'{word}' 분석 중...")
-    articles = google_news.get_news(word)
-    for news in articles:
-        try:
-            time.sleep(1)
-            pm_sum = analyze_by_role(word, news['title'], "PM")
-            ba_sum = analyze_by_role(word, news['title'], "BA")
-            daily_report["articles"].append({
-                "keyword": word, "title": news['title'], "url": news['url'],
-                "pm_summary": pm_sum, "ba_summary": ba_sum
-            })
-            news_context += f"[{word}] {news['title']}\n"
-        except: continue
+# 4. 실행 메인 로직
+users = get_all_users()
+master_report = {"date": TODAY, "articles": [], "pm_brief": "", "ba_brief": "", "tracked_keywords": []}
 
-# 5. 종합 브리핑 및 저장
-if news_context:
-    for role in ["PM", "BA"]:
-        prompt = f"다음 뉴스 목록을 보고 {role}에게 중요한 전략 3가지를 불릿 포인트로 제안해줘:\n{news_context}"
-        res = google_genai.models.generate_content(model="gemini-2.0-flash", contents=prompt)
-        daily_report[f"{role.lower()}_brief"] = res.text
+print(f"🚀 총 {len(users)}명의 유저 분석을 시작합니다.")
 
-file_path = "data.json"
-try:
-    with open(file_path, "r", encoding="utf-8") as f: full_data = json.load(f)
-except: full_data = []
+for user in users:
+    user_email = user.get('email', 'Unknown')
+    user_keywords = user.get('keywords', [])
+    print(f"--- [{user_email}]님의 키워드 {len(user_keywords)}개 분석 중 ---")
+    
+    user_articles = []
+    
+    for word in user_keywords:
+        news_items = google_news.get_news(word)
+        for news in news_items:
+            pm_sum = analyze_news(news['title'], "PM")
+            ba_sum = analyze_news(news['title'], "BA")
+            
+            article_data = {
+                "keyword": word,
+                "title": news['title'],
+                "url": news['url'],
+                "pm_summary": pm_sum,
+                "ba_summary": ba_sum
+            }
+            user_articles.append(article_data)
+            
+            # 마스터(성환님) 데이터는 공용 대시보드(data.json)를 위해 별도 저장
+            if user_email == MASTER_EMAIL:
+                master_report["articles"].append(article_data)
+                if word not in master_report["tracked_keywords"]:
+                    master_report["tracked_keywords"].append(word)
 
-full_data = [d for d in full_data if d['date'] != TODAY]
-full_data.insert(0, daily_report)
-with open(file_path, "w", encoding="utf-8") as f: json.dump(full_data, f, ensure_ascii=False, indent=2)
-print(f"✅ {TODAY} 엔진 업데이트 완료")
+    # TODO: 여기서 개별 뉴스레터 발송 함수(send_email)를 호출할 예정입니다.
+    print(f"✅ {user_email}님 분석 완료 (기사 {len(user_articles)}건)")
+
+# 5. 마스터 리포트(공개용) 저장
+if master_report["articles"]:
+    # 종합 브리핑 생성 생략(기존 로직 동일) 후 data.json 저장
+    file_path = "data.json"
+    try:
+        with open(file_path, "r", encoding="utf-8") as f: full_data = json.load(f)
+    except: full_data = []
+    
+    full_data = [d for d in full_data if d['date'] != TODAY]
+    full_data.insert(0, master_report)
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(full_data, f, ensure_ascii=False, indent=2)
+
+print("🏁 모든 유저 분석 및 마스터 리포트 갱신 완료!")
