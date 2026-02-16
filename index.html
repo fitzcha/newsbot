@@ -1,147 +1,60 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitz Intelligence v2.0</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-slate-50 text-slate-900 font-sans min-h-screen">
-    <div class="max-w-5xl mx-auto px-4 py-12">
-        <header class="mb-12">
-            <h1 class="text-4xl font-black text-slate-800 mb-2 tracking-tight">🚗 Mobility Intelligence <span class="text-blue-600">v2.0</span></h1>
-            <p class="text-slate-500 font-medium">Agentic AI & Policy Management System</p>
-        </header>
+<style>
+    .role-selector { background: #f0f4f8; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+    .btn-role { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 0 5px; }
+    .btn-active { background: #007bff; color: white; font-weight: bold; }
+    .news-link { font-size: 0.8em; color: #007bff; text-decoration: none; margin-left: 10px; }
+</style>
 
-        <section id="agent-zone" class="mb-12 bg-white border border-blue-100 rounded-3xl p-8 shadow-xl shadow-blue-100/50 hidden">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl">🤖</div>
-                <h2 class="text-xl font-bold text-slate-800">Agentic AI Briefing</h2>
-            </div>
-            <p id="agent-content" class="text-slate-600 leading-relaxed text-lg whitespace-pre-wrap font-medium"></p>
-        </section>
+<div class="container">
+    <header>
+        <h1>Fitz Intelligence <small>v3.0</small></h1>
+        <div class="role-selector">
+            <p><strong>내 직군 선택:</strong></p>
+            <button id="btn-pm" class="btn-role btn-active" onclick="setRole('PM')">PM (기획/동향)</button>
+            <button id="btn-ba" class="btn-role" onclick="setRole('BA')">BA (수익/사업)</button>
+        </div>
+    </header>
 
-        <section class="mb-12 bg-slate-100/50 border border-slate-200 rounded-3xl p-8">
-            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Policy Management (A열 키워드)</h2>
-            <div id="tag-container" class="flex flex-wrap gap-3 mb-6">
-                <p class="text-slate-400 text-sm">태그 불러오는 중...</p>
-            </div>
-            <div class="flex gap-2">
-                <input type="text" id="newKeyword" placeholder="새 키워드 추가..." class="flex-1 p-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500">
-                <button onclick="addKeyword()" class="bg-slate-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-700 transition">추가</button>
-            </div>
-        </section>
-
-        <section>
-            <div class="flex items-center justify-between mb-8 border-b border-slate-200 pb-4">
-                <h2 class="text-2xl font-bold text-slate-800">News Archive</h2>
-                <select id="dateSelector" onchange="renderNews()" class="p-3 bg-white border border-slate-200 rounded-xl shadow-sm outline-none font-bold text-blue-600">
-                    </select>
-            </div>
-            <div id="news-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                </div>
-        </section>
+    <div id="briefing-section" class="briefing-card">
+        <h3>오늘의 AI 전략 브리핑</h3>
+        <p id="ai-briefing">데이터를 불러오는 중...</p>
     </div>
 
-    <script>
-        // ⚠️ 주의: 피츠님이 성공하신 그 주소를 여기에 넣으세요! 완료
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbzMXPLU9vzu1u6-A1UmGJDJ1bn-RnJCCIieHzV7ualx7k6ywXgd_yz73E-MJEK6DLJe/exec"; 
-        let allData = [];
+    <div id="news-container"></div>
+</div>
 
-        async function init() {
-            try {
-                // 1. 구글 시트에서 태그 목록 가져오기
-                loadTags();
+<script>
+    let currentRole = 'PM'; // 기본값 PM
+    let newsData = [];
 
-                // 2. data.json에서 뉴스 데이터 가져오기
-                const response = await fetch('./data.json');
-                allData = await response.json();
-                
-                const dateSelector = document.getElementById('dateSelector');
-                dateSelector.innerHTML = '';
-                allData.forEach((day, index) => {
-                    const opt = document.createElement('option');
-                    opt.value = index;
-                    opt.textContent = day.date;
-                    dateSelector.appendChild(opt);
-                });
+    function setRole(role) {
+        currentRole = role;
+        document.querySelectorAll('.btn-role').forEach(btn => btn.classList.remove('btn-active'));
+        document.getElementById(`btn-${role.toLowerCase()}`).classList.add('btn-active');
+        renderData(); // 직군 변경 시 즉시 다시 그리기
+    }
 
-                renderNews();
-            } catch (e) { 
-                console.error("데이터 로드 실패", e); 
-                document.getElementById('news-container').innerHTML = "<p class='col-span-full text-center py-10 text-slate-400'>아직 데이터가 생성되지 않았습니다. 잠시만 기다려주세요.</p>";
-            }
-        }
+    async function loadData() {
+        const res = await fetch('data.json');
+        newsData = await res.json();
+        renderData();
+    }
 
-        async function loadTags() {
-            try {
-                const res = await fetch(GAS_URL);
-                const keywords = await res.json();
-                const container = document.getElementById('tag-container');
-                container.innerHTML = '';
-                keywords.forEach(word => {
-                    const tag = document.createElement('div');
-                    tag.className = "group flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-full shadow-sm hover:border-red-200 transition cursor-default";
-                    tag.innerHTML = `
-                        <span class="font-bold text-slate-700 text-sm">${word}</span>
-                        <button onclick="deleteKeyword('${word}')" class="text-slate-300 group-hover:text-red-500 transition">✕</button>
-                    `;
-                    container.appendChild(tag);
-                });
-            } catch(e) { console.log("태그 로드 실패"); }
-        }
+    function renderData() {
+        const latest = newsData[0];
+        // 직군별 브리핑 출력
+        document.getElementById('ai-briefing').innerText = latest[`${currentRole.toLowerCase()}_brief`];
 
-        async function addKeyword() {
-            const word = document.getElementById('newKeyword').value;
-            if(!word) return;
-            // 구글 시트에 추가 요청 (POST)
-            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: "add", keyword: word}) });
-            alert(`'${word}' 키워드가 추가되었습니다. 내일 아침 리포트에 반영됩니다.`);
-            loadTags();
-            document.getElementById('newKeyword').value = '';
-        }
-
-        async function deleteKeyword(word) {
-            if(!confirm(`'${word}' 키워드를 삭제할까요?`)) return;
-            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({action: "delete", keyword: word}) });
-            loadTags();
-        }
-
-        function renderNews() {
-            const index = document.getElementById('dateSelector').value;
-            if (!allData[index]) return;
-            
-            const dayData = allData[index];
-            
-            // AI 브리핑 업데이트
-            const agentZone = document.getElementById('agent-zone');
-            if(dayData.agent_brief) {
-                agentZone.classList.remove('hidden');
-                document.getElementById('agent-content').textContent = dayData.agent_brief;
-            } else {
-                agentZone.classList.add('hidden');
-            }
-
-            // 뉴스 카드 업데이트
-            const container = document.getElementById('news-container');
-            container.innerHTML = '';
-            dayData.articles.forEach(art => {
-                const card = document.createElement('div');
-                card.className = "bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between";
-                card.innerHTML = `
-                    <div>
-                        <span class="text-[10px] font-black text-blue-500 uppercase tracking-tighter mb-2 block">#${art.keyword}</span>
-                        <h3 class="text-lg font-bold mb-4 text-slate-800 leading-snug">${art.title}</h3>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 mt-auto">
-                        <p class="text-sm text-slate-600 leading-relaxed"><span class="font-bold text-blue-600">PM Insight:</span> ${art.summary}</p>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        init();
-    </script>
-</body>
-</html>
+        const container = document.getElementById('news-container');
+        container.innerHTML = latest.articles.map(article => `
+            <div class="card">
+                <div class="keyword-tag">${article.keyword}</div>
+                <h4>
+                    ${article.title}
+                    <a href="${article.url}" target="_blank" class="news-link">[원문보기]</a> </h4>
+                <p>${currentRole === 'PM' ? article.pm_summary : article.ba_summary}</p>
+            </div>
+        `).join('');
+    }
+    loadData();
+</script>
