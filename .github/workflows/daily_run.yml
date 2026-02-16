@@ -2,8 +2,10 @@ name: Daily News Bot Run
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 매일 아침 9시 (KST)
-  workflow_dispatch: # 수동 실행 버튼
+    - cron: '0 0 * * *' # 매일 아침 9시 (KST) 실행
+  push:
+    branches: [ "main" ] # 코드를 수정해서 올릴 때마다 즉시 실행
+  workflow_dispatch: # Actions 탭에서 수동으로 실행 가능
 
 jobs:
   build:
@@ -14,7 +16,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v4 # 👈 여기가 수정되었습니다!
+        uses: actions/setup-python@v4 # 어제의 경로 에러 수정 완료
         with:
           python-version: '3.9'
 
@@ -37,7 +39,7 @@ jobs:
           git push
 
       - name: Send Report Email
-        if: always()
+        if: always() # 성공하든 실패하든 무조건 메일 발송
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -49,8 +51,9 @@ jobs:
             피츠님, 오늘 Newsbot 작업 결과입니다.
             
             - 상태: ${{ job.status }}
+            - 실행 시각: ${{ github.event.repository.updated_at }}
             
-            실패했다면 API 한도 초과(429 에러) 때문일 확률이 높습니다.
+            실패했다면 API 한도 초과(429 에러) 혹은 설정 오류일 수 있습니다.
             성공했다면 아래 주소에서 리포트를 확인하세요!
             👉 https://newsbot-smoky.vercel.app/
           to: ${{ secrets.MAIL_USERNAME }}
