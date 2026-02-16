@@ -1,11 +1,10 @@
-name: Daily News Bot Run
+name: Daily News Analysis Bot
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 매일 아침 9시 (KST) 실행
-  push:
-    branches: [ "main" ] # 코드를 수정해서 올릴 때마다 즉시 실행
-  workflow_dispatch: # Actions 탭에서 수동으로 실행 가능
+    # 매일 아침 9시(KST) 실행 (UTC 00:00)
+    - cron: '0 0 * * *'
+  workflow_dispatch: # 수동 실행 버튼 활성화
 
 jobs:
   build:
@@ -16,45 +15,28 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v4 # 어제의 경로 에러 수정 완료
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11' # 👈 3.9의 경고를 없애고 성능을 높인 최신 버전
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt # 👈 resend 등 필요한 패키지 일괄 설치
 
-      - name: Run news bot
+      - name: Run news_bot.py
         env:
+          # GitHub Secrets에서 가져와 봇에게 전달하는 구간
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GOOGLE_SHEETS_JSON: ${{ secrets.GOOGLE_SHEETS_JSON }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         run: python news_bot.py
 
       - name: Commit and Push changes
         run: |
-          git config --global user.name "actions-user"
-          git config --global user.email "actions@github.com"
-          git add .
-          git commit -m "Update news data" || echo "No changes to commit"
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add data.json
+          git commit -m "Update master report: $(date +'%Y-%m-%d')" || echo "No changes to commit"
           git push
-
-      - name: Send Report Email
-        if: always() # 성공하든 실패하든 무조건 메일 발송
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "🚗 Newsbot 리포트: ${{ job.status == 'success' && '✅ 작업 성공' || '🚨 작업 실패' }}"
-          body: |
-            피츠님, 오늘 Newsbot 작업 결과입니다.
-            
-            - 상태: ${{ job.status }}
-            - 실행 시각: ${{ github.event.repository.updated_at }}
-            
-            실패했다면 API 한도 초과(429 에러) 혹은 설정 오류일 수 있습니다.
-            성공했다면 아래 주소에서 리포트를 확인하세요!
-            👉 https://newsbot-smoky.vercel.app/
-          to: ${{ secrets.MAIL_USERNAME }}
-          from: Newsbot Assistant
