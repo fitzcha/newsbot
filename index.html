@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <style>
-        :root { --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; --black: #000; --white: #fff; }
+        :root { --primary: #007bff; --bg: #f8f9fa; --black: #000; --white: #fff; }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; line-height: 1.6; }
         .container { max-width: 850px; margin: 0 auto; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
@@ -16,262 +16,134 @@
         .auth-btn { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--primary); background: #fff; color: var(--primary); cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s; }
         .auth-btn:hover { background: #f0f7ff; }
         .auth-btn.active { background: var(--primary); color: #fff; }
-        
         .keyword-manager { background: #fff; padding: 22px; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 6px solid #ccc; }
         .master-mode { border-top-color: var(--black); }
         .user-mode { border-top-color: var(--primary); }
-        
         .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
         .tag { background: #eef2f7; padding: 7px 15px; border-radius: 25px; font-size: 0.85em; color: var(--primary); font-weight: 600; display: flex; align-items: center; border: 1px solid #d1d9e6; }
         .remove-btn { margin-left: 9px; cursor: pointer; color: #ff4d4f; font-weight: bold; font-size: 1.1em; }
-        
-        .briefing-box { background: #343a40; color: #fff; padding: 25px; border-radius: 14px; margin-bottom: 35px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .ai-badge { font-size: 0.7em; background: var(--black); color: var(--white); padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-right: 12px; vertical-align: middle; border: 1px solid #444; text-transform: uppercase; }
-        
+        .briefing-box { background: #343a40; color: #fff; padding: 25px; border-radius: 14px; margin-bottom: 35px; }
+        .ai-badge { font-size: 0.7em; background: var(--black); color: var(--white); padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-right: 12px; vertical-align: middle; }
         .news-card { background: #fff; padding: 22px; border-radius: 14px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #eee; }
         .active-pm { border-left-color: var(--primary); }
         .active-ba { border-left-color: #28a745; }
-        
         .input-group { display: flex; gap: 12px; margin-top: 18px; }
-        input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 0.95em; outline: none; }
+        input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; }
         .notice { font-size: 0.8em; color: #777; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="top-bar">
-        <h1>Fitz Intelligence <small style="font-size:0.4em; color:#999; letter-spacing: 1px;">v5.0</small></h1>
-        <div id="user-display">
-            <button class="auth-btn" onclick="toggleAuth()">베타 신청 / 로그인</button>
-        </div>
+        <h1>Fitz Intelligence <small style="font-size:0.4em; color:#999;">v5.0</small></h1>
+        <div id="user-display"><button class="auth-btn" onclick="toggleAuth()">베타 신청 / 로그인</button></div>
     </div>
-
     <section id="auth-section" class="auth-card" style="display:none;">
         <h3 style="margin-top:0;">🔑 VIP 초대 코드 인증</h3>
-        <p style="font-size:0.9em; color:#666;">이메일을 입력하시면 6자리 초대 코드가 발송됩니다.</p>
-        <div id="otp-request">
-            <div class="input-group">
-                <input type="email" id="email-input" placeholder="이메일 주소">
-                <button class="auth-btn active" onclick="sendOtp()">코드 받기</button>
-            </div>
-        </div>
-        <div id="otp-verify" style="display:none; margin-top:15px;">
-            <div class="input-group">
-                <input type="text" id="otp-token" placeholder="6자리 숫자 입력">
-                <button class="auth-btn active" style="background:#28a745; border:none;" onclick="verifyOtp()">인증 및 입장</button>
-            </div>
-        </div>
+        <div id="otp-request"><div class="input-group"><input type="email" id="email-input" placeholder="이메일 주소"><button class="auth-btn active" onclick="sendOtp()">코드 받기</button></div></div>
+        <div id="otp-verify" style="display:none; margin-top:15px;"><div class="input-group"><input type="text" id="otp-token" placeholder="6자리 숫자"><button class="auth-btn active" style="background:#28a745; border:none;" onclick="verifyOtp()">인증 및 입장</button></div></div>
     </section>
-
     <section id="manager-card" class="keyword-manager">
-        <strong id="kw-title" style="font-size:1.1em;">📌 마스터 추천 키워드 (Public)</strong>
+        <strong id="kw-title">📌 마스터 추천 키워드 (Public)</strong>
         <div id="tag-list" class="tag-list"></div>
-        <div id="kw-controls" style="display:none;" class="input-group">
-            <input type="text" id="new-kw" placeholder="관심 키워드 입력 (최대 5개)">
-            <button class="auth-btn active" onclick="addKw()">추가</button>
-        </div>
+        <div id="kw-controls" style="display:none;" class="input-group"><input type="text" id="new-kw" placeholder="키워드 입력 (최대 5개)"><button class="auth-btn active" onclick="addKw()">추가</button></div>
         <p id="kw-notice" class="notice">💡 로그인 시 본인만의 개인화 키워드 설정이 가능합니다.</p>
     </section>
-
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
         <div class="role-switch">
             <button id="btn-PM" class="auth-btn active" onclick="setRole('PM')">PM 모드</button>
             <button id="btn-BA" class="auth-btn" onclick="setRole('BA')">BA 모드</button>
         </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-            <span id="db-indicator" style="font-size:0.7em; color:green;">● DB Live</span>
-            <select id="date-select" onchange="fetchDayData()" style="padding:10px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;"></select>
-        </div>
+        <select id="date-select" onchange="fetchDayData()" style="padding:10px; border-radius:10px; border:1px solid #ddd;"></select>
     </div>
-
     <div id="briefing-box" class="briefing-box"></div>
     <div id="news-list"></div>
 </div>
 
 <script>
-    // 1. Supabase 초기 설정
     const SUPABASE_URL = 'https://zrlpwmpbrvohautldcon.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G';
     const MASTER_EMAIL = 'positivecha@gmail.com';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
-    let currentReport = null; // 현재 화면에 뿌려진 리포트 데이터
+    let currentReport = null;
     let currentRole = 'PM';
     let currentUser = null;
     let userKeywords = [];
 
-    // 2. 초기화
     async function init() {
         const { data: { user } } = await supabaseClient.auth.getUser();
         currentUser = user;
-        
-        // Step 1: 날짜 목록 가져오기 (파일 대신 DB 조회)
-        const { data: dates, error } = await supabaseClient
-            .from('reports')
-            .select('report_date')
-            .order('report_date', { ascending: false });
-
+        const { data: dates } = await supabaseClient.from('reports').select('report_date').order('report_date', { ascending: false });
         if (dates && dates.length > 0) {
-            const select = document.getElementById('date-select');
-            select.innerHTML = dates.map(d => `<option value="${d.report_date}">${d.report_date}</option>`).join('');
-            await fetchDayData(); // 최신 날짜 데이터 로드
+            document.getElementById('date-select').innerHTML = dates.map(d => `<option value="${d.report_date}">${d.report_date}</option>`).join('');
+            await fetchDayData();
         }
-
-        if (currentUser) {
-            await fetchUserKeywords();
-        }
-        
+        if (currentUser) await fetchUserKeywords();
         updateUI();
     }
 
-    // 3. DB에서 특정 날짜 데이터 로드
     async function fetchDayData() {
-        const selectedDate = document.getElementById('date-select').value;
-        const { data, error } = await supabaseClient
-            .from('reports')
-            .select('*')
-            .eq('report_date', selectedDate)
-            .single();
-
-        if (data) {
-            currentReport = data.content; // DB의 JSONB 컬럼 구조에 맞춤
-            render();
-        }
+        const date = document.getElementById('date-select').value;
+        const { data } = await supabaseClient.from('reports').select('*').eq('report_date', date).single();
+        if (data) { currentReport = data.content; render(); }
     }
 
-    // 4. 키워드 관리 로직 (기존 유지)
     async function fetchUserKeywords() {
-        if (!currentUser) return;
-        const { data } = await supabaseClient
-            .from('user_settings')
-            .select('keywords')
-            .eq('id', currentUser.id)
-            .maybeSingle();
-
+        const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle();
         if (data) userKeywords = data.keywords || [];
         renderTags();
     }
 
     async function addKw() {
-        const newKw = document.getElementById('new-kw').value.trim();
-        if (!newKw || !currentUser) return;
-
-        if (userKeywords.length >= 5) {
-            alert("⚠️ 키워드는 최대 5개까지만 등록할 수 있습니다.");
-            return;
-        }
-
-        if (userKeywords.includes(newKw)) return;
-
-        const updatedKeywords = [...userKeywords, newKw];
-        const { error } = await supabaseClient
-            .from('user_settings')
-            .upsert({ id: currentUser.id, keywords: updatedKeywords, email: currentUser.email });
-
-        if (!error) {
-            userKeywords = updatedKeywords;
-            document.getElementById('new-kw').value = '';
-            renderTags();
-        }
+        const word = document.getElementById('new-kw').value.trim();
+        if (!word || userKeywords.length >= 5 || userKeywords.includes(word)) return;
+        userKeywords.push(word);
+        await supabaseClient.from('user_settings').upsert({ id: currentUser.id, keywords: userKeywords, email: currentUser.email });
+        document.getElementById('new-kw').value = '';
+        renderTags();
     }
 
-    async function removeKw(targetKw) {
-        if (!confirm(`'${targetKw}'를 삭제하시겠습니까?`)) return;
-        const updatedKeywords = userKeywords.filter(k => k !== targetKw);
-        const { error } = await supabaseClient
-            .from('user_settings')
-            .update({ keywords: updatedKeywords })
-            .eq('id', currentUser.id);
-
-        if (!error) {
-            userKeywords = updatedKeywords;
-            renderTags();
-        }
+    async function removeKw(word) {
+        userKeywords = userKeywords.filter(k => k !== word);
+        await supabaseClient.from('user_settings').update({ keywords: userKeywords }).eq('id', currentUser.id);
+        renderTags();
     }
 
-    // 5. UI 업데이트 및 렌더링
     function updateUI() {
         const display = document.getElementById('user-display');
-        const kwTitle = document.getElementById('kw-title');
         const kwControls = document.getElementById('kw-controls');
-        const kwNotice = document.getElementById('kw-notice');
-        const managerCard = document.getElementById('manager-card');
-
         if (currentUser) {
-            const userId = currentUser.email.split('@')[0];
-            display.innerHTML = `<span style="font-size:0.9em; margin-right:12px;">👤 <b>${userId}</b>님</span><button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
+            display.innerHTML = `<span>👤 <b>${currentUser.email.split('@')[0]}</b>님</span> <button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
             kwControls.style.display = "flex";
-            
-            if (currentUser.email === MASTER_EMAIL) {
-                kwTitle.innerHTML = "👑 마스터 키워드 관리";
-                managerCard.classList.add('master-mode');
-            } else {
-                kwTitle.innerText = "👤 나의 개인화 키워드";
-                managerCard.classList.add('user-mode');
-                kwNotice.innerText = "💡 설정하신 키워드로 분석된 리포트가 내일 오전 발송됩니다.";
-            }
+            document.getElementById('manager-card').classList.add(currentUser.email === MASTER_EMAIL ? 'master-mode' : 'user-mode');
         }
         renderTags();
     }
 
     function renderTags() {
-        // 로그인 안했을 때는 DB 리포트의 기본 키워드 사용
-        const displayKeywords = currentUser ? userKeywords : (currentReport?.tracked_keywords || []);
-        const isEditable = !!currentUser;
-        document.getElementById('tag-list').innerHTML = displayKeywords.map(k => `
-            <span class="tag">#${k} ${isEditable ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>
-        `).join('');
+        const tags = currentUser ? userKeywords : (currentReport?.tracked_keywords || []);
+        document.getElementById('tag-list').innerHTML = tags.map(k => `<span class="tag">#${k} ${currentUser ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>`).join('');
     }
 
     function setRole(role) {
         currentRole = role;
-        document.querySelectorAll('.role-switch .auth-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`btn-${role}`).classList.add('active');
+        document.querySelectorAll('.role-switch .auth-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${role}`));
         render();
     }
 
     function render() {
         if (!currentReport) return;
-        const date = document.getElementById('date-select').value;
         const brief = currentRole === 'PM' ? currentReport.pm_brief : currentReport.ba_brief;
-        
-        document.getElementById('briefing-box').innerHTML = `
-            <h4 style="margin:0 0 15px 0;"><span class="ai-badge">AI Analysis</span> ${date} 브리핑</h4>
-            <div style="font-size:1em; line-height:1.8; color:#eee;">${marked.parse(brief || '분석 중...')}</div>
-        `;
-
-        document.getElementById('news-list').innerHTML = (currentReport.articles || []).map(a => `
-            <div class="news-card ${currentRole === 'PM' ? 'active-pm' : 'active-ba'}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <span style="font-weight:bold; color:var(--primary); font-size:0.95em;">#${a.keyword}</span>
-                    <a href="${a.url}" target="_blank" style="font-size:0.85em; text-decoration:none; color:var(--primary); font-weight:bold;">원문보기 ↗</a>
-                </div>
-                <h3 style="margin:0 0 10px 0; font-size:1.1em;">${a.title}</h3>
-                <div style="background:#f9f9f9; padding:15px; border-radius:10px; font-size:0.95em;">
-                    ${marked.parse(currentRole === 'PM' ? a.pm_summary : a.ba_summary)}
-                </div>
-            </div>
-        `).join('');
+        document.getElementById('briefing-box').innerHTML = `<h4 style="margin:0 0 15px 0;"><span class="ai-badge">AI Analysis</span> 브리핑</h4><div style="font-size:1em; line-height:1.8; color:#eee;">${marked.parse(brief || '분석 중...')}</div>`;
+        document.getElementById('news-list').innerHTML = (currentReport.articles || []).map(a => `<div class="news-card ${currentRole === 'PM' ? 'active-pm' : 'active-ba'}"><div style="display:flex; justify-content:space-between;"><b>#${a.keyword}</b><a href="${a.url}" target="_blank" style="text-decoration:none; font-size:0.8em;">원문 ↗</a></div><h3>${a.title}</h3><div style="background:#f9f9f9; padding:15px; border-radius:10px;">${marked.parse(currentRole === 'PM' ? a.pm_summary : a.ba_summary)}</div></div>`).join('');
         renderTags();
     }
 
-    // Auth Helpers (기존 동일)
-    async function sendOtp() {
-        const email = document.getElementById('email-input').value;
-        const { error } = await supabaseClient.auth.signInWithOtp({ email });
-        if (error) alert(error.message);
-        else { alert("코드가 발송되었습니다."); document.getElementById('otp-request').style.display = 'none'; document.getElementById('otp-verify').style.display = 'block'; }
-    }
-    async function verifyOtp() {
-        const email = document.getElementById('email-input').value;
-        const token = document.getElementById('otp-token').value;
-        const { error } = await supabaseClient.auth.verifyOtp({ email, token, type: 'email' });
-        if (error) alert("인증 실패"); else location.reload();
-    }
+    async function sendOtp() { const email = document.getElementById('email-input').value; await supabaseClient.auth.signInWithOtp({ email }); alert("코드 발송!"); document.getElementById('otp-request').style.display = 'none'; document.getElementById('otp-verify').style.display = 'block'; }
+    async function verifyOtp() { const email = document.getElementById('email-input').value; const token = document.getElementById('otp-token').value; const { error } = await supabaseClient.auth.verifyOtp({ email, token, type: 'email' }); if (error) alert("실패"); else location.reload(); }
     function toggleAuth() { const s = document.getElementById('auth-section'); s.style.display = s.style.display === 'none' ? 'block' : 'none'; }
     async function handleLogout() { await supabaseClient.auth.signOut(); location.reload(); }
-
     init();
 </script>
 </body>
