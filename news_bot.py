@@ -5,7 +5,7 @@ from supabase import create_client, Client
 from datetime import datetime
 from difflib import SequenceMatcher
 
-# 초기화
+# 1. 초기화
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 SB_URL = os.environ.get("SUPABASE_URL")
 SB_KEY = os.environ.get("SUPABASE_KEY")
@@ -22,13 +22,13 @@ ROLES = {
 }
 
 def send_email_report(user_email, report_data):
-    """분석 완료 후 이메일 발송 로직"""
+    """분석 완료 후 이메일 자동 발송"""
     try:
         articles_html = "".join([f"<li><b>[{a['keyword']}] {a['title']}</b><br><a href='{a['url']}'>원문보기</a></li><br>" for a in report_data['articles']])
-        html_content = f"""<h2>🚀 {TODAY} Fitz Intelligence Report</h2><p>{user_email}님을 위한 오늘 아침의 분석 결과입니다.</p><hr><h3>📊 PM 브리핑</h3><div>{report_data['pm_brief']}</div><h3>📰 뉴스 리스트</h3><ul>{articles_html}</ul>"""
+        html_content = f"""<h2>🚀 {TODAY} Fitz Intelligence Report</h2><p>{user_email}님을 위한 리포트입니다.</p><hr><h3>📊 PM 브리핑</h3><div>{report_data['pm_brief']}</div><h3>📰 뉴스 리스트</h3><ul>{articles_html}</ul>"""
         resend.Emails.send({"from": "Fitz Intelligence <onboarding@resend.dev>", "to": user_email, "subject": f"[{TODAY}] 오늘의 뉴스 분석 리포트", "html": html_content})
         print(f"📧 {user_email}님 이메일 발송 성공.")
-    except: print("🚨 이메일 발송 중 오류 발생")
+    except: print("🚨 이메일 발송 오류")
 
 def call_agent(prompt, role_key, max_retries=3):
     persona = ROLES.get(role_key, "전문가")
@@ -67,7 +67,7 @@ def run_main_engine():
             is_cjk = any(ord(char) > 0x1100 for char in word)
             lang, country = ('ko', 'KR') if is_cjk else ('en', 'US')
             
-            # [v8.9] 1일 전 검색 우선, 없으면 3일 확장
+            # [v8.9] 데이터 신선도 1일(1d) 고정, 실패 시 3일 확장
             gn = GNews(language=lang, country=country, period='1d', max_results=10)
             items = gn.get_news(word)
             if not items:
