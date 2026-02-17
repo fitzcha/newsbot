@@ -82,6 +82,9 @@
     const SUPABASE_KEY = 'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G';
     const MASTER_EMAIL = 'positivecha@gmail.com';
 
+    // [수정] 디폴트 불변 키워드 정의
+    const DEFAULT_KEYWORDS = ['카카오모빌리티', '쏘카', '타운카', 'G카', '롯데렌터카'];
+
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
     let currentReport = null;
@@ -93,7 +96,6 @@
         const { data: { user } } = await supabaseClient.auth.getUser();
         currentUser = user;
         
-        // [격리 패치] 날짜 목록도 본인의 리포트가 있는 날짜만 필터링
         let dateQuery = supabaseClient.from('reports').select('report_date');
         if (currentUser) dateQuery = dateQuery.eq('user_id', currentUser.id);
 
@@ -115,8 +117,6 @@
         if (!selectedDate) return;
 
         let query = supabaseClient.from('reports').select('*').eq('report_date', selectedDate);
-        
-        // [격리 패치] 본인의 리포트만 정확히 타겟팅
         if (currentUser) query = query.eq('user_id', currentUser.id);
 
         const { data } = await query.order('created_at', { ascending: false }).limit(1);
@@ -177,9 +177,12 @@
         renderTags();
     }
 
+    // [수정 핵심] 디폴트 키워드 로직 고정
     function renderTags() {
-        const displayKeywords = currentUser ? userKeywords : (currentReport?.tracked_keywords || []);
+        // 로그인 중이고 본인 키워드가 있으면 그것을, 아니면 무조건 불변의 DEFAULT_KEYWORDS를 노출
+        const displayKeywords = (currentUser && userKeywords.length > 0) ? userKeywords : DEFAULT_KEYWORDS;
         const isEditable = !!currentUser;
+        
         document.getElementById('tag-list').innerHTML = displayKeywords.map(k => `
             <span class="tag">#${k} ${isEditable ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>
         `).join('');
@@ -195,8 +198,6 @@
     function render() {
         if (!currentReport) return;
         const date = document.getElementById('date-select').value;
-        
-        // [3인 체제 패치] PM/BA/Securities 데이터 매핑
         let brief = currentReport.pm_brief;
         if(currentRole === 'BA') brief = currentReport.ba_brief;
         if(currentRole === 'Sec') brief = currentReport.securities_brief;
