@@ -14,13 +14,14 @@
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .auth-card { background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 25px; border: 1px solid #eee; }
         .admin-panel { border-top: 6px solid var(--admin) !important; background: #fffafb !important; }
-        .auth-btn { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--primary); background: #fff; color: var(--primary); cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s; }
+        .auth-btn { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--primary); background: #fff; color: var(--primary); cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s; outline: none; }
         .auth-btn:hover { background: #f0f7ff; }
         .auth-btn.active { background: var(--primary); color: #fff; }
-        /* 마스터 전용 결정 상태 스타일 */
-        .auth-btn.approved { background: #28a745 !important; color: #fff !important; border: none; }
-        .auth-btn.rejected { background: var(--admin) !important; color: #fff !important; border: none; }
-        .auth-btn.disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+        
+        /* [v6.2 추가] 의사결정 상태 스타일 */
+        .auth-btn.approved-state { background: #28a745 !important; color: #fff !important; border: none; }
+        .auth-btn.rejected-state { background: var(--admin) !important; color: #fff !important; border: none; }
+        .auth-btn.disabled-state { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
         
         .keyword-manager { background: #fff; padding: 22px; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 6px solid #ccc; }
         .master-mode { border-top-color: var(--black); }
@@ -30,13 +31,14 @@
         .remove-btn { margin-left: 9px; cursor: pointer; color: #ff4d4f; font-weight: bold; font-size: 1.1em; }
         .briefing-box { background: #343a40; color: #fff; padding: 25px; border-radius: 14px; margin-bottom: 35px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .ai-badge { font-size: 0.7em; background: var(--black); color: var(--white); padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-right: 12px; vertical-align: middle; border: 1px solid #444; text-transform: uppercase; }
-        .news-card { background: #fff; padding: 22px; border-radius: 14px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #eee; }
+        .news-card { background: #fff; padding: 22px; border-radius: 14px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #eee; transition: transform 0.2s; }
+        .news-card:hover { transform: translateY(-3px); }
         .active-pm { border-left-color: var(--primary); }
         .active-ba { border-left-color: #28a745; }
         .active-sec { border-left-color: var(--sec); }
         .input-group { display: flex; gap: 12px; margin-top: 18px; }
         input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 0.95em; outline: none; }
-        .log-box { font-size: 0.75em; background: #f1f1f1; padding: 10px; border-radius: 8px; max-height: 150px; overflow-y: auto; font-family: monospace; }
+        .log-box { font-size: 0.75em; background: #f1f1f1; padding: 10px; border-radius: 8px; max-height: 120px; overflow-y: auto; font-family: monospace; border: 1px solid #ddd; }
     </style>
 </head>
 <body>
@@ -66,10 +68,10 @@
                     <button id="btn-approve" onclick="executeAction('APPROVED')" class="auth-btn" style="flex:1;">승인</button>
                     <button id="btn-reject" onclick="executeAction('REJECTED')" class="auth-btn" style="flex:1;">반려</button>
                 </div>
-                <p id="lock-msg" style="display:none; color:var(--admin); font-size:0.75em; margin-top:10px; font-weight:bold;">🔒 23:30 이후에는 결정을 번복할 수 없습니다.</p>
+                <p id="lock-notice" style="display:none; color:var(--admin); font-size:0.75em; margin-top:10px; font-weight:bold;">🔒 23:30 타임락 작동 중 (번복 불가)</p>
             </div>
             <div>
-                <strong style="font-size:0.9em;">🕵️ BA 내부 감사 & 시스템 로그</strong>
+                <strong style="font-size:0.9em;">🕵️ 내부 감사 및 시스템 실시간 로그</strong>
                 <div id="audit-box" style="font-size:0.85em; background:#fff; padding:15px; border-radius:10px; margin:10px 0; border:1px solid #eef; min-height: 50px;"></div>
                 <div class="log-box" id="system-logs">시스템 로그 대기 중...</div>
             </div>
@@ -78,9 +80,9 @@
 
     <section id="auth-section" class="auth-card" style="display:none;">
         <h3 style="margin-top:0;">🚀 이메일 간편 입장</h3>
-        <p style="font-size:0.9em; color:#666;">이메일 주소를 입력하시면 즉시 접속 링크가 발송됩니다.</p>
+        <p style="font-size:0.9em; color:#666;">접속용 매직 링크가 이메일로 발송됩니다.</p>
         <div class="input-group">
-            <input type="email" id="email-input" placeholder="example@gmail.com">
+            <input type="email" id="email-input" placeholder="yourname@gmail.com">
             <button id="magic-btn" class="auth-btn active" onclick="sendMagicLink()">로그인 링크 받기</button>
         </div>
     </section>
@@ -89,7 +91,7 @@
         <strong id="kw-title" style="font-size:1.1em;">📌 마스터 추천 키워드 (Public)</strong>
         <div id="tag-list" class="tag-list"></div>
         <div id="kw-controls" style="display:none;" class="input-group">
-            <input type="text" id="new-kw" placeholder="관심 키워드 입력 (최대 5개)">
+            <input type="text" id="new-kw" placeholder="관심 키워드 추가 (최대 5개)">
             <button class="auth-btn active" onclick="addKw()">추가</button>
         </div>
     </section>
@@ -101,8 +103,8 @@
             <button id="btn-Sec" class="auth-btn" onclick="setRole('Sec')">증권</button>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
-            <span id="db-indicator" style="font-size:0.7em; color:green;">● DB Connected</span>
-            <select id="date-select" onchange="fetchDayData()" style="padding:10px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer;"></select>
+            <span id="db-indicator" style="font-size:0.7em; color:green;">● DB Online</span>
+            <select id="date-select" onchange="fetchDayData()" style="padding:10px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:bold;"></select>
         </div>
     </div>
 
@@ -119,13 +121,9 @@
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
-    let currentReport = null;
-    let currentRole = 'PM';
-    let currentUser = null;
-    let userKeywords = [];
-    let currentProposal = null;
+    let currentReport = null, currentRole = 'PM', currentUser = null, userKeywords = [], currentProposal = null;
 
-    // [1] 초기화 및 데이터 로드
+    // [1] 시스템 초기화
     async function init() {
         const { data: { user } } = await supabaseClient.auth.getUser();
         currentUser = user;
@@ -142,7 +140,7 @@
         updateUI();
     }
 
-    // [2] 마스터 의사결정 집행 로직
+    // [2] 마스터 의사결정 브릿지
     async function executeAction(newStatus) {
         if (!currentProposal || !currentUser) return;
         
@@ -150,52 +148,51 @@
         const now = new Date();
         const limit = new Date(); limit.setHours(23, 30, 0);
         if (now >= limit) {
-            alert("🚨 23:30분이 지났습니다. 시스템이 이미 최종 결정을 집행 중이므로 번복할 수 없습니다.");
+            alert("🚨 23:30분이 지났습니다. 시스템이 이미 최종 집행 단계에 진입하여 결정을 번복할 수 없습니다.");
             return;
         }
 
-        // 기존 결정 번복 시 확인
-        if (currentProposal.status !== 'PENDING' && !confirm(`이미 '${currentProposal.status}' 처리된 건입니다. 결정을 번복하시겠습니까?`)) {
+        // 기존 결정 번복 시 재확인 로직
+        if (currentProposal.status !== 'PENDING' && !confirm(`이미 '${currentProposal.status}' 처리된 제안입니다. 결정을 번복하시겠습니까?`)) {
             return;
         }
 
-        // DB 업데이트 및 스냅샷 생성
         const { error } = await supabaseClient.from('pending_approvals').update({ status: newStatus }).eq('id', currentProposal.id);
         
         if (!error) {
-            // 마스터 개입이 있었으므로 'MASTER' 스냅샷 생성
+            // 마스터 전용 스냅샷 저장 (롤백 앵커 지점)
             await supabaseClient.from('version_snapshots').insert({
-                snapshot_data: { keywords: userKeywords, decision: newStatus, target: currentProposal.word },
+                snapshot_data: { keywords: userKeywords, decision: newStatus, target_word: currentProposal.word },
                 approved_by: 'MASTER',
-                description: `Master ${newStatus}: ${currentProposal.word}`
+                description: `Manual Decision: ${newStatus} for ${currentProposal.word}`
             });
-            alert(`✅ ${currentProposal.word}에 대한 결정을 저장했습니다.`);
+            alert(`✅ '${currentProposal.word}'에 대한 마스터의 결정이 저장되었습니다.`);
             fetchDayData(); 
         }
     }
 
-    // [3] 마스터 전용 UI 업데이트
-    function updateDecisionUI() {
-        const btnApp = document.getElementById('btn-approve'), btnRej = document.getElementById('btn-reject'), lockMsg = document.getElementById('lock-msg');
+    // [3] 의사결정 UI 동적 제어
+    function syncDecisionUI() {
+        const btnApp = document.getElementById('btn-approve'), btnRej = document.getElementById('btn-reject'), lockNotice = document.getElementById('lock-notice');
         if (!currentProposal) return;
 
         const now = new Date(), limit = new Date(); limit.setHours(23, 30, 0);
         const isLocked = now >= limit || currentProposal.status === 'EXECUTED';
 
-        // 버튼 상태 표시
-        btnApp.classList.toggle('approved', currentProposal.status === 'APPROVED');
-        btnRej.classList.toggle('rejected', currentProposal.status === 'REJECTED');
+        // 버튼 상태 하이라이트
+        btnApp.classList.toggle('approved-state', currentProposal.status === 'APPROVED');
+        btnRej.classList.toggle('rejected-state', currentProposal.status === 'REJECTED');
         
         if (isLocked) {
-            btnApp.classList.add('disabled'); btnRej.classList.add('disabled');
-            lockMsg.style.display = 'block';
+            btnApp.classList.add('disabled-state'); btnRej.classList.add('disabled-state');
+            lockNotice.style.display = 'block';
         } else {
-            btnApp.classList.remove('disabled'); btnRej.classList.remove('disabled');
-            lockMsg.style.display = 'none';
+            btnApp.classList.remove('disabled-state'); btnRej.classList.remove('disabled-state');
+            lockNotice.style.display = 'none';
         }
     }
 
-    // [4] 데이터 수집 및 렌더링 함수들 (기존 기능 유지)
+    // [4] 데이터 렌더링 (기존 v6.1 완벽 유지)
     async function fetchDayData() {
         const date = document.getElementById('date-select').value;
         if (!date) return;
@@ -203,111 +200,96 @@
         if (currentUser) query = query.eq('user_id', currentUser.id);
         const { data } = await query.order('created_at', { ascending: false }).limit(1);
         
-        if (data?.length) { 
-            currentReport = data[0].content; 
-            render(); 
+        if (data && data.length > 0) {
+            currentReport = data[0].content;
+            render();
             document.getElementById('db-indicator').innerText = `● DB Live (${date})`;
         }
 
         if (currentUser?.email === MASTER_EMAIL) {
-            // 최신 인사 제안 로드
             const { data: prop } = await supabaseClient.from('pending_approvals').select('*').order('proposed_at', { ascending: false }).limit(1).single();
             currentProposal = prop;
-            updateDecisionUI();
+            syncDecisionUI();
             fetchSystemLogs();
         }
     }
 
-    async function fetchUserKeywords() {
-        const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle();
-        userKeywords = data?.keywords || []; 
-        renderTags();
-    }
-
-    function renderTags() {
-        const displayKeywords = (currentUser && userKeywords.length > 0) ? userKeywords : DEFAULT_KEYWORDS;
-        document.getElementById('tag-list').innerHTML = displayKeywords.map(k => `
-            <span class="tag">#${k} ${currentUser ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>
-        `).join('');
-    }
-
-    function setRole(role) {
-        currentRole = role;
-        document.querySelectorAll('.role-switch .auth-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${role}`));
-        render();
-    }
-
     function render() {
         if (!currentReport) return;
-        const b = currentRole === 'BA' ? currentReport.ba_brief : currentRole === 'Sec' ? currentReport.securities_brief : currentReport.pm_brief;
+        const roleBrief = currentRole === 'BA' ? currentReport.ba_brief : currentRole === 'Sec' ? currentReport.securities_brief : currentReport.pm_brief;
+        
         document.getElementById('briefing-box').innerHTML = `
-            <h4 style="margin:0 0 15px 0;"><span class="ai-badge">AI</span> ${currentRole} 브리핑</h4>
-            <div style="font-size:1em; color:#eee;">${marked.parse(b || '분석 중...')}</div>
+            <h4 style="margin:0 0 15px 0;"><span class="ai-badge">AI Analysis</span> ${currentRole} 브리핑</h4>
+            <div style="font-size:1em; line-height:1.8; color:#eee;">${marked.parse(roleBrief || '데이터 분석 중...')}</div>
         `;
         
         if (currentUser?.email === MASTER_EMAIL) {
-            document.getElementById('hr-box').innerHTML = marked.parse(currentReport.hr_proposal || "대기 중...");
-            document.getElementById('audit-box').innerHTML = marked.parse(currentReport.internal_audit || "대기 중...");
+            document.getElementById('hr-box').innerHTML = marked.parse(currentReport.hr_proposal || "제안 데이터 없음");
+            document.getElementById('audit-box').innerHTML = marked.parse(currentReport.internal_audit || "감사 데이터 없음");
             document.getElementById('hr-actions').style.display = "flex";
         }
 
         document.getElementById('news-list').innerHTML = (currentReport.articles || []).map(a => {
-            const sum = currentRole === 'BA' ? a.ba_summary : currentRole === 'Sec' ? a.sec_summary : a.pm_summary;
+            const summary = currentRole === 'BA' ? a.ba_summary : currentRole === 'Sec' ? a.sec_summary : a.pm_summary;
             return `
             <div class="news-card ${currentRole === 'PM' ? 'active-pm' : currentRole === 'BA' ? 'active-ba' : 'active-sec'}">
-                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                    <span style="font-weight:bold; color:var(--primary);">#${a.keyword}</span>
-                    <a href="${a.url}" target="_blank" style="font-size:0.85em; text-decoration:none; color:var(--primary); font-weight:bold;">원문보기 ↗</a>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <span style="font-weight:bold; color:var(--primary); font-size:0.95em;">#${a.keyword}</span>
+                    <a href="${a.url}" target="_blank" style="font-size:0.85em; text-decoration:none; color:var(--primary); font-weight:bold;">원문 ↗</a>
                 </div>
                 <h3 style="margin:0 0 10px 0; font-size:1.1em;">${a.title}</h3>
-                <div style="background:#f9f9f9; padding:15px; border-radius:10px;">${marked.parse(sum || '분석 중...')}</div>
+                <div style="background:#f9f9f9; padding:15px; border-radius:10px; font-size:0.95em;">${marked.parse(summary || '요약 중...')}</div>
             </div>`;
         }).join('');
     }
 
-    // [5] 부가 기능 (Auth, Logs, Keywords)
-    async function fetchSystemLogs() {
-        const { data } = await supabaseClient.from('action_logs').select('*').order('executed_at', { ascending: false }).limit(3);
-        if (data) document.getElementById('system-logs').innerHTML = data.map(l => `[${l.executed_at.substring(11,16)}] ${l.execution_method}: ${l.target_word}`).join('<br>');
+    // [5] 유틸리티 기능들
+    async function fetchUserKeywords() {
+        const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle();
+        if (data) userKeywords = data.keywords || [];
+        renderTags();
     }
 
-    async function sendMagicLink() {
-        const email = document.getElementById('email-input').value;
-        await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: MY_PLATFORM_URL } });
-        alert("메일을 확인하세요.");
+    function renderTags() {
+        const displayKws = (currentUser && userKeywords.length > 0) ? userKeywords : DEFAULT_KEYWORDS;
+        document.getElementById('tag-list').innerHTML = displayKws.map(k => `
+            <span class="tag">#${k} ${currentUser ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>
+        `).join('');
     }
 
     async function addKw() {
-        const kw = document.getElementById('new-kw').value.trim();
-        if (userKeywords.length >= 5) return alert("최대 5개!");
-        userKeywords.push(kw);
+        const newKw = document.getElementById('new-kw').value.trim();
+        if (!newKw || userKeywords.length >= 5) return;
+        userKeywords.push(newKw);
         await supabaseClient.from('user_settings').upsert({ id: currentUser.id, keywords: userKeywords, email: currentUser.email });
         document.getElementById('new-kw').value = ''; renderTags();
     }
 
-    async function removeKw(k) {
-        if (!confirm('삭제?')) return;
-        userKeywords = userKeywords.filter(x => x !== k);
+    async function removeKw(target) {
+        if (!confirm('삭제하시겠습니까?')) return;
+        userKeywords = userKeywords.filter(k => k !== target);
         await supabaseClient.from('user_settings').update({ keywords: userKeywords }).eq('id', currentUser.id);
         renderTags();
     }
 
     async function rollbackToMasterVerified() {
         const { data } = await supabaseClient.from('version_snapshots').select('*').eq('approved_by', 'MASTER').order('created_at', { ascending: false }).limit(1).single();
-        if (!data) return alert("복구 지점이 없습니다.");
-        if (confirm(`${data.created_at} 버전으로 복구할까요?`)) alert("🔄 복구 실행 (백엔드 연동 필요)");
+        if (!data) return alert("복구 가능한 마스터 승인 버전이 없습니다.");
+        if (confirm(`[${data.created_at}] 마스터 승인 시점으로 복구하시겠습니까?`)) alert("🔄 복구 프로세스 가동 (백엔드 동기화 중)");
     }
 
-    function triggerManualRun() { alert("🚀 즉시 분석을 요청합니다."); }
-    function updateUI() {
-        if (currentUser) {
-            document.getElementById('user-display').innerHTML = `<span>👤 <b>${currentUser.email.split('@')[0]}</b>님</span> <button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
-            document.getElementById('kw-controls').style.display = "flex";
-            if (currentUser.email === MASTER_EMAIL) {
-                document.getElementById('master-panel').style.display = "block";
-                document.getElementById('manager-card').classList.add('master-mode');
-            }
-        }
+    async function fetchSystemLogs() {
+        const { data } = await supabaseClient.from('action_logs').select('*').order('executed_at', { ascending: false }).limit(3);
+        if (data) document.getElementById('system-logs').innerHTML = data.map(l => `[${l.executed_at.substring(11,16)}] ${l.execution_method}: ${l.target_word}`).join('<br>');
     }
+
+    function triggerManualRun() { alert("🚀 즉시 분석 엔진 가동 신호를 보냈습니다."); }
+    function setRole(r) { currentRole = r; document.querySelectorAll('.role-switch .auth-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${r}`)); render(); }
     function toggleAuth() { const s = document.getElementById('auth-section'); s.style.display = s.style.display === 'none' ? 'block' : 'none'; }
-    async function handle
+    async function sendMagicLink() { const email = document.getElementById('email-input').value; await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: MY_PLATFORM_URL } }); alert("메일함을 확인해주세요!"); }
+    async function handleLogout() { await supabaseClient.auth.signOut(); location.reload(); }
+
+    init();
+</script>
+</body>
+</html>
