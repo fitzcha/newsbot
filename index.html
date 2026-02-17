@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitz Intelligence v7.2 | Final Stable Edition</title>
+    <title>Fitz Intelligence v7.3 | Emergency Recovery</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
@@ -32,7 +32,7 @@
         .active-ba { border-left-color: #28a745; }
         .active-sec { border-left-color: var(--sec); }
         .input-group { display: flex; gap: 12px; margin-top: 18px; }
-        input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 0.95em; outline: none; transition: border 0.2s; }
+        input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 0.95em; outline: none; }
         .log-box { font-size: 0.75em; background: #f1f1f1; padding: 12px; border-radius: 8px; max-height: 120px; overflow-y: auto; font-family: monospace; border: 1px solid #ddd; }
     </style>
 </head>
@@ -40,7 +40,7 @@
 
 <div class="container">
     <div class="top-bar">
-        <h1>Fitz Intelligence <small id="v-tag" style="font-size:0.4em; color:var(--admin); letter-spacing: 1px;">v7.2 Final</small></h1>
+        <h1>Fitz Intelligence <small id="v-tag" style="font-size:0.4em; color:var(--admin); letter-spacing: 1px;">v7.3 Recovery</small></h1>
         <div id="user-display"><button class="auth-btn" onclick="toggleAuth()">로그인</button></div>
     </div>
 
@@ -54,12 +54,9 @@
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
             <div>
-                <strong>👨‍💼 HR 인사 제안</strong>
+                <strong>👨‍💼 HR 제안</strong>
                 <div id="hr-box" style="font-size:0.85em; background:#fff; padding:15px; border-radius:10px; margin-top:10px; border:1px solid #ffebeb; min-height: 100px;"></div>
-                <div id="hr-actions" style="margin-top:10px; display:none; gap:5px;">
-                    <button id="btn-approve" onclick="executeAction('APPROVED')" class="auth-btn" style="flex:1;">승인</button>
-                    <button id="btn-reject" onclick="executeAction('REJECTED')" class="auth-btn" style="flex:1;">반려</button>
-                </div>
+                <div id="hr-actions" style="margin-top:10px; display:none; gap:5px;"><button id="btn-approve" onclick="executeAction('APPROVED')" class="auth-btn" style="flex:1;">승인</button><button id="btn-reject" onclick="executeAction('REJECTED')" class="auth-btn" style="flex:1;">반려</button></div>
             </div>
             <div>
                 <strong>🕵️ 시스템 감사 로그</strong>
@@ -70,7 +67,7 @@
     </section>
 
     <section id="auth-section" class="auth-card" style="display:none;">
-        <h3 style="margin-top:0;">🚀 매직링크 입장</h3>
+        <h3 style="margin-top:0;">🚀 간편 입장</h3>
         <div class="input-group">
             <input type="email" id="email-input" placeholder="example@gmail.com">
             <button id="magic-btn" class="auth-btn active" onclick="sendMagicLink()">링크 전송</button>
@@ -93,8 +90,8 @@
             <button id="btn-Sec" class="auth-btn" onclick="setRole('Sec')">증권</button>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
-            <span id="db-indicator" style="font-size:0.7em; color:green;">● DB Connected</span>
-            <select id="date-select" onchange="fetchDayData()" style="padding:10px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:bold;"></select>
+            <span id="db-indicator" style="font-size:0.7em; color:green;">● DB connected</span>
+            <select id="date-select" onchange="fetchDayData()" style="padding:10px; border-radius:10px; border:1px solid #ddd; background:#fff; font-weight:bold;"></select>
         </div>
     </div>
 
@@ -112,7 +109,7 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentReport = null, currentRole = 'PM', currentUser = null, userKeywords = [], currentProposal = null;
 
-    // [v7.2 핵심] 로그인 세션 자동 감지 및 즉시 데이터 동기화
+    // [v7.3 핵심] 세션 감지 즉시 동기화
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
             currentUser = session?.user;
@@ -135,69 +132,53 @@
             currentUser = session.user;
             await refreshAll();
         } else {
-            await loadAvailableDates(); // 비로그인 시에도 공용 날짜 로드
+            await loadAvailableDates(); // 비로그인 시에도 마스터 데이터 강제 노출
         }
     }
 
-    // [v7.2 핵심] 2/17 노출 실패 및 데이터 누락 원천 해결 로직
+    // [v7.3 핵심] 날짜 로드 시 필터링 완전 해제 -> 데이터가 있으면 무조건 목록에 추가
     async function loadAvailableDates() {
-        let query = supabaseClient.from('reports').select('report_date');
-        
-        // 로그인이 되어 있다면 '내 리포트'만 필터링, 아니면 전체 로드
-        if (currentUser) { query = query.eq('user_id', currentUser.id); }
-        
-        const { data } = await query.order('report_date', { ascending: false });
+        console.log("📡 날짜 목록 전체 조회 시도...");
+        const { data, error } = await supabaseClient.from('reports').select('report_date').order('report_date', { ascending: false });
 
         const select = document.getElementById('date-select');
         if (data && data.length > 0) {
             const uniqueDates = [...new Set(data.map(d => d.report_date))];
             select.innerHTML = uniqueDates.map(d => `<option value="${d}">${d}</option>`).join('');
+            console.log("✅ 발견된 날짜:", uniqueDates);
             await fetchDayData(); 
         } else {
-            // [v7.2 Fallback] 만약 내 데이터가 없으면 마스터/공용 데이터 날짜라도 가져와서 보여줌
-            const publicRes = await supabaseClient.from('reports').select('report_date').order('report_date', { ascending: false }).limit(10);
-            if (publicRes.data?.length) {
-                const uniqueDates = [...new Set(publicRes.data.map(d => d.report_date))];
-                select.innerHTML = uniqueDates.map(d => `<option value="${d}">${d}</option>`).join('');
-                await fetchDayData();
-            } else {
-                select.innerHTML = '<option value="">데이터 없음</option>';
-                showEmptyMsg();
-            }
+            select.innerHTML = '<option value="">데이터 없음</option>';
+            showEmpty("DB에 저장된 리포트가 없습니다.");
         }
     }
 
+    // [v7.3 핵심] 리포트 로드 시 user_id 필터링 제거 (Recovery 모드)
     async function fetchDayData() {
         const selectedDate = document.getElementById('date-select').value;
-        if (!selectedDate) return showEmptyMsg();
+        if (!selectedDate) return;
         
-        let query = supabaseClient.from('reports').select('*').eq('report_date', selectedDate);
-        if (currentUser) { query = query.eq('user_id', currentUser.id); }
-        
-        const { data } = await query.order('created_at', { ascending: false }).limit(1);
+        console.log(`📡 ${selectedDate} 리포트 강제 로딩 중...`);
+        // 특정 유저 필터를 제거하여 무조건 최신 데이터를 가져옴
+        const { data, error } = await supabaseClient.from('reports').select('*').eq('report_date', selectedDate).order('created_at', { ascending: false }).limit(1);
         
         if (data && data.length > 0) {
             currentReport = data[0].content;
             renderDisplay();
             document.getElementById('db-indicator').innerText = `● DB Connected (${selectedDate})`;
         } else {
-            // [v7.2 Fallback] 특정 날짜에 내 데이터가 없으면 마스터 데이터 로드 시도
-            const pubData = await supabaseClient.from('reports').select('*').eq('report_date', selectedDate).limit(1);
-            if (pubData.data?.length) {
-                currentReport = pubData.data[0].content;
-                renderDisplay();
-            } else { showEmptyMsg(); }
+            showEmpty("해당 날짜의 리포트 데이터를 찾을 수 없습니다.");
         }
 
         if (currentUser?.email === MASTER_EMAIL) {
             const { data: prop } = await supabaseClient.from('pending_approvals').select('*').order('proposed_at', { ascending: false }).limit(1).single();
-            currentProposal = prop; syncDecisionUI(); fetchActionLogs();
+            currentProposal = prop; syncDecisionUI(); fetchHistoryLogs();
         }
     }
 
-    function showEmptyMsg() {
+    function showEmpty(msg) {
         currentReport = null;
-        document.getElementById('briefing-box').innerHTML = `<div style="text-align:center; padding:40px; color:#bbb;"><p style="font-weight:bold; color:var(--admin);">오늘 뉴스가 검색되지 않아 분석을 할 수 없었어요.</p><p>키워드는 최대 5개까지 입력 가능합니다.</p></div>`;
+        document.getElementById('briefing-box').innerHTML = `<div style="text-align:center; padding:40px; color:#bbb;"><p style="font-weight:bold; color:var(--admin);">${msg}</p></div>`;
         document.getElementById('news-list').innerHTML = "";
     }
 
@@ -211,6 +192,7 @@
             document.getElementById('audit-box').innerHTML = marked.parse(currentReport.internal_audit || "감사 없음");
             document.getElementById('hr-actions').style.display = "flex";
         }
+
         document.getElementById('news-list').innerHTML = (currentReport.articles || []).map(a => {
             const s = currentRole === 'BA' ? a.ba_summary : currentRole === 'Sec' ? a.sec_summary : a.pm_summary;
             return `<div class="news-card ${currentRole === 'PM' ? 'active-pm' : currentRole === 'BA' ? 'active-ba' : 'active-sec'}">
@@ -225,14 +207,12 @@
         const btn = document.getElementById('magic-btn');
         btn.innerText = "전송 중..."; btn.disabled = true;
         const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: MY_PLATFORM_URL } });
-        if (error) { alert(error.message); btn.innerText = "재시도"; btn.disabled = false; }
-        else { alert("메일함을 확인하세요!"); btn.innerText = "전송 완료"; }
+        if (error) { alert("오류: " + error.message); btn.innerText = "재시도"; btn.disabled = false; }
+        else { alert("메일함을 확인하세요!"); btn.innerText = "완료"; }
     }
 
     async function executeAction(newStatus) {
         if (!currentProposal) return;
-        const now = new Date(), limit = new Date(); limit.setHours(23, 30, 0);
-        if (now >= limit) return alert("23:30분이 지났습니다.");
         const { error } = await supabaseClient.from('pending_approvals').update({ status: newStatus }).eq('id', currentProposal.id);
         if (!error) { alert("저장되었습니다."); fetchDayData(); }
     }
@@ -244,11 +224,11 @@
         btnRej.classList.toggle('rejected-state', currentProposal.status === 'REJECTED');
     }
 
-    async function fetchUserKeywords() { const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle(); if (data) userKeywords = data.keywords || []; renderTags(); }
-    function renderTags() { const kws = (currentUser && userKeywords.length > 0) ? userKeywords : DEFAULT_KEYWORDS; document.getElementById('tag-list').innerHTML = kws.map(k => `<span class="tag">#${k} ${currentUser ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>`).join(''); }
+    async function fetchUserKeywords() { if (!currentUser) return; const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle(); if (data) userKeywords = data.keywords || []; renderTags(); }
+    function renderTags() { const list = (currentUser && userKeywords.length > 0) ? userKeywords : DEFAULT_KEYWORDS; document.getElementById('tag-list').innerHTML = list.map(k => `<span class="tag">#${k} ${currentUser ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>`).join(''); }
     async function addKw() { const kw = document.getElementById('new-kw').value.trim(); if (!kw || userKeywords.length >= 5) return; userKeywords.push(kw); await supabaseClient.from('user_settings').upsert({ id: currentUser.id, keywords: userKeywords, email: currentUser.email }); document.getElementById('new-kw').value = ''; renderTags(); }
     async function removeKw(t) { if (!confirm('삭제?')) return; userKeywords = userKeywords.filter(k => k !== t); await supabaseClient.from('user_settings').update({ keywords: userKeywords }).eq('id', currentUser.id); renderTags(); }
-    async function fetchActionLogs() { const { data } = await supabaseClient.from('action_logs').select('*').order('executed_at', { ascending: false }).limit(3); if (data) document.getElementById('system-logs').innerHTML = data.map(l => `[${l.executed_at.substring(11,16)}] ${l.execution_method}: ${l.target_word}`).join('<br>'); }
+    async function fetchHistoryLogs() { const { data } = await supabaseClient.from('action_logs').select('*').order('executed_at', { ascending: false }).limit(3); if (data) document.getElementById('system-logs').innerHTML = data.map(l => `[${l.executed_at.substring(11,16)}] ${l.execution_method}: ${l.target_word}`).join('<br>'); }
     function setRole(r) { currentRole = r; document.querySelectorAll('.role-switch .auth-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${r}`)); renderDisplay(); }
     function toggleAuth() { const s = document.getElementById('auth-section'); s.style.display = s.style.display === 'none' ? 'block' : 'none'; }
     async function handleLogout() { await supabaseClient.auth.signOut(); }
