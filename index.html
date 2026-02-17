@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitz Intelligence v5.1 | Platform Core</title>
+    <title>Fitz Intelligence v5.2 | Magic Link Platform</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
@@ -13,13 +13,13 @@
         .container { max-width: 850px; margin: 0 auto; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         
-        /* Auth UI */
+        /* Auth UI (v4.1 스타일 유지) */
         .auth-card { background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 25px; border: 1px solid #eee; }
         .auth-btn { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--primary); background: #fff; color: var(--primary); cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s; }
         .auth-btn:hover { background: #f0f7ff; }
         .auth-btn.active { background: var(--primary); color: #fff; }
         
-        /* Keyword UI */
+        /* Keyword UI (v4.1 스타일 유지) */
         .keyword-manager { background: #fff; padding: 22px; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 6px solid #ccc; }
         .master-mode { border-top-color: var(--black); }
         .user-mode { border-top-color: var(--primary); }
@@ -28,7 +28,7 @@
         .remove-btn { margin-left: 9px; cursor: pointer; color: #ff4d4f; font-weight: bold; font-size: 1.1em; }
         .notice { font-size: 0.8em; color: #777; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
         
-        /* Briefing & News */
+        /* Briefing & News (v4.1 스타일 유지) */
         .briefing-box { background: #343a40; color: #fff; padding: 25px; border-radius: 14px; margin-bottom: 35px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .ai-badge { font-size: 0.7em; background: var(--black); color: var(--white); padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-right: 12px; vertical-align: middle; border: 1px solid #444; text-transform: uppercase; }
         .news-card { background: #fff; padding: 22px; border-radius: 14px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #eee; }
@@ -42,25 +42,19 @@
 
 <div class="container">
     <div class="top-bar">
-        <h1>Fitz Intelligence <small style="font-size:0.4em; color:#999; letter-spacing: 1px;">v5.1</small></h1>
+        <h1>Fitz Intelligence <small style="font-size:0.4em; color:#999; letter-spacing: 1px;">v5.2</small></h1>
         <div id="user-display">
             <button class="auth-btn" onclick="toggleAuth()">베타 신청 / 로그인</button>
         </div>
     </div>
 
     <section id="auth-section" class="auth-card" style="display:none;">
-        <h3 style="margin-top:0;">🔑 VIP 초대 코드 인증</h3>
-        <p style="font-size:0.9em; color:#666;">이메일을 입력하시면 6자리 초대 코드가 발송됩니다.</p>
+        <h3 style="margin-top:0;">🚀 이메일 간편 입장</h3>
+        <p style="font-size:0.9em; color:#666;">이메일 주소를 입력하시면 접속 링크가 발송됩니다. 번호 입력이 필요 없습니다.</p>
         <div id="otp-request">
             <div class="input-group">
-                <input type="email" id="email-input" placeholder="이메일 주소">
-                <button class="auth-btn active" onclick="sendOtp()">코드 받기</button>
-            </div>
-        </div>
-        <div id="otp-verify" style="display:none; margin-top:15px;">
-            <div class="input-group">
-                <input type="text" id="otp-token" placeholder="6자리 숫자 입력">
-                <button class="auth-btn active" style="background:#28a745; border:none;" onclick="verifyOtp()">인증 및 입장</button>
+                <input type="email" id="email-input" placeholder="example@gmail.com">
+                <button class="auth-btn active" onclick="sendMagicLink()">로그인 링크 받기</button>
             </div>
         </div>
     </section>
@@ -101,7 +95,7 @@
     let currentUser = null;
     let userKeywords = [];
 
-    // 1. 초기화 (날짜 중복 제거 패치 적용)
+    // 1. 초기화 (기존 데이터 상속 보장)
     async function init() {
         const { data: { user } } = await supabaseClient.auth.getUser();
         currentUser = user;
@@ -112,7 +106,6 @@
             .order('report_date', { ascending: false });
 
         if (allDates && allDates.length > 0) {
-            // [Bug Fix] 날짜 선택 중복 제거
             const uniqueDates = [...new Set(allDates.map(d => d.report_date))];
             const select = document.getElementById('date-select');
             select.innerHTML = uniqueDates.map(d => `<option value="${d}">${d}</option>`).join('');
@@ -123,17 +116,16 @@
         updateUI();
     }
 
-    // 2. 데이터 페칭 (중복 중 최신 데이터 1건 패치 적용)
+    // 2. 데이터 페칭 (과거 브리핑 검색 기능 유지)
     async function fetchDayData() {
         const selectedDate = document.getElementById('date-select').value;
         if (!selectedDate) return;
 
-        // [Bug Fix] .single() 대신 .limit(1) 사용하여 다중 데이터 에러 방지
-        const { data, error } = await supabaseClient
+        const { data } = await supabaseClient
             .from('reports')
             .select('*')
             .eq('report_date', selectedDate)
-            .order('created_at', { ascending: false }) // 최신 배포분 우선
+            .order('created_at', { ascending: false })
             .limit(1);
 
         if (data && data.length > 0) {
@@ -143,7 +135,7 @@
         }
     }
 
-    // 3. 키워드 로직 (기존 v4.1 유지)
+    // 3. 키워드 로직 (기기 변경 시에도 유지)
     async function fetchUserKeywords() {
         if (!currentUser) return;
         const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle();
@@ -168,12 +160,11 @@
         if (!error) { userKeywords = updatedKeywords; renderTags(); }
     }
 
-    // 4. UI 및 렌더링
+    // 4. UI 렌더링
     function updateUI() {
         const display = document.getElementById('user-display');
         const kwTitle = document.getElementById('kw-title');
         const kwControls = document.getElementById('kw-controls');
-        const kwNotice = document.getElementById('kw-notice');
         const managerCard = document.getElementById('manager-card');
 
         if (currentUser) {
@@ -186,7 +177,6 @@
             } else {
                 kwTitle.innerText = "👤 나의 개인화 키워드";
                 managerCard.classList.add('user-mode');
-                kwNotice.innerText = "💡 설정하신 키워드로 분석된 리포트가 내일 오전 발송됩니다.";
             }
         }
         renderTags();
@@ -230,19 +220,23 @@
         renderTags();
     }
 
-    // Auth Helpers
-    async function sendOtp() {
+    // 5. 매직링크 인증 헬퍼
+    async function sendMagicLink() {
         const email = document.getElementById('email-input').value;
-        const { error } = await supabaseClient.auth.signInWithOtp({ email });
+        if (!email) { alert("이메일을 입력해주세요."); return; }
+
+        const { error } = await supabaseClient.auth.signInWithOtp({
+            email: email,
+            options: {
+                // 로그인 후 돌아올 주소 (Vercel 주소와 일치해야 함)
+                emailRedirectTo: window.location.origin 
+            }
+        });
+
         if (error) alert(error.message);
-        else { alert("코드가 발송되었습니다."); document.getElementById('otp-request').style.display = 'none'; document.getElementById('otp-verify').style.display = 'block'; }
+        else alert("이메일로 로그인 링크가 발송되었습니다!\n수신함에서 버튼을 눌러주세요.");
     }
-    async function verifyOtp() {
-        const email = document.getElementById('email-input').value;
-        const token = document.getElementById('otp-token').value;
-        const { error } = await supabaseClient.auth.verifyOtp({ email, token, type: 'email' });
-        if (error) alert("인증 실패"); else location.reload();
-    }
+
     function toggleAuth() { const s = document.getElementById('auth-section'); s.style.display = s.style.display === 'none' ? 'block' : 'none'; }
     async function handleLogout() { await supabaseClient.auth.signOut(); location.reload(); }
 
