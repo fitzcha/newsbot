@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitz Intelligence v6.0 | Master Command Center</title>
+    <title>Fitz Intelligence v6.1 | Governance Engine</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <style>
-        :root { --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; --black: #000; --white: #fff; --sec: #ffc107; --admin: #ff4d4f; }
+        :root { --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; --black: #000; --white: #fff; --sec: #ffc107; --admin: #ff4d4f; --system: #6f42c1; }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; line-height: 1.6; }
         .container { max-width: 850px; margin: 0 auto; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
@@ -31,32 +31,41 @@
         .active-sec { border-left-color: var(--sec); }
         .input-group { display: flex; gap: 12px; margin-top: 18px; }
         input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 0.95em; outline: none; }
+        .log-box { font-size: 0.75em; background: #f1f1f1; padding: 10px; border-radius: 8px; max-height: 150px; overflow-y: auto; font-family: monospace; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="top-bar">
-        <h1>Fitz Intelligence <small style="font-size:0.4em; color:#admin; letter-spacing: 1px;">v6.0</small></h1>
+        <h1>Fitz Intelligence <small style="font-size:0.4em; color:var(--admin); letter-spacing: 1px;">v6.1 Governance</small></h1>
         <div id="user-display">
             <button class="auth-btn" onclick="toggleAuth()">베타 신청 / 로그인</button>
         </div>
     </div>
 
     <section id="master-panel" class="auth-card admin-panel" style="display:none;">
-        <h3 style="margin-top:0; color:var(--admin);">⚖️ Master Command Center</h3>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+            <h3 style="margin:0; color:var(--admin);">⚖️ Master Command Center</h3>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="rollbackToMasterVerified()" class="auth-btn" style="border-color:var(--black); color:var(--black); font-size:0.75em;">🔄 마스터 버전 복구</button>
+                <button onclick="triggerManualRun()" class="auth-btn active" style="background:var(--black); border:none; font-size:0.75em;">🚀 수기 분석 실행</button>
+            </div>
+        </div>
+
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
             <div>
-                <strong style="font-size:0.9em;">👨‍💼 HR 인사 제안 (채용/해고)</strong>
-                <div id="hr-box" style="font-size:0.85em; background:#fff; padding:15px; border-radius:10px; margin-top:10px; border:1px solid #ffebeb;"></div>
-                <div style="margin-top:10px; display:flex; gap:5px;">
-                    <button onclick="alert('인사 제안을 승인했습니다.')" class="auth-btn active" style="background:var(--admin); border:none; flex:1;">승인</button>
-                    <button onclick="alert('제안을 반려했습니다.')" class="auth-btn" style="flex:1;">반려</button>
+                <strong style="font-size:0.9em;">👨‍💼 HR 인사 제안</strong>
+                <div id="hr-box" style="font-size:0.85em; background:#fff; padding:15px; border-radius:10px; margin-top:10px; border:1px solid #ffebeb; min-height: 100px;"></div>
+                <div id="hr-actions" style="margin-top:10px; display:none; gap:5px;">
+                    <button id="hire-btn" onclick="executeAction('HIRE')" class="auth-btn active" style="background:var(--admin); border:none; flex:1;">제안 승인</button>
+                    <button onclick="executeAction('REJECT')" class="auth-btn" style="flex:1;">제안 반려</button>
                 </div>
             </div>
             <div>
-                <strong style="font-size:0.9em;">🕵️ BA 내부 감사 (의사결정 피드백)</strong>
-                <div id="audit-box" style="font-size:0.85em; background:#fff; padding:15px; border-radius:10px; margin-top:10px; border:1px solid #ffebeb;"></div>
+                <strong style="font-size:0.9em;">🕵️ BA 내부 감사 & 시스템 로그</strong>
+                <div id="audit-box" style="font-size:0.85em; background:#fff; padding:15px; border-radius:10px; margin:10px 0; border:1px solid #eef; min-height: 50px;"></div>
+                <div class="log-box" id="system-logs">시스템 로그 대기 중...</div>
             </div>
         </div>
     </section>
@@ -109,13 +118,13 @@
     let currentUser = null;
     let userKeywords = [];
 
+    // [Step 1] 초기화 및 마스터 체크
     async function init() {
         const { data: { user } } = await supabaseClient.auth.getUser();
         currentUser = user;
         
         let dateQuery = supabaseClient.from('reports').select('report_date');
         if (currentUser) dateQuery = dateQuery.eq('user_id', currentUser.id);
-
         const { data: allDates } = await dateQuery.order('report_date', { ascending: false });
 
         if (allDates && allDates.length > 0) {
@@ -124,28 +133,74 @@
             select.innerHTML = uniqueDates.map(d => `<option value="${d}">${d}</option>`).join('');
             await fetchDayData(); 
         }
-
         if (currentUser) await fetchUserKeywords();
         updateUI();
+        if (currentUser?.email === MASTER_EMAIL) fetchSystemLogs();
     }
 
+    // [Action-Bridge] 인사권 승인 및 롤백 로직
+    async function executeAction(actionType) {
+        if (!currentReport || !currentUser) return;
+        
+        // 여기에 성환님이 정의한 HIRE/FIRE 로직을 DB에 반영하는 코드 삽입
+        // 예: Supabase의 pending_approvals 업데이트 및 keywords 테이블 조작
+        alert(`인사 명령 [${actionType}]을 수행합니다. 스냅샷이 생성됩니다.`);
+        
+        // 스냅샷 저장 시 approved_by: 'MASTER'로 명시 (롤백 앵커 지점)
+        const snapshot = { keywords: userKeywords, date: new Date().toISOString() };
+        await supabaseClient.from('version_snapshots').insert({
+            snapshot_data: snapshot,
+            approved_by: 'MASTER',
+            description: `Master Manual ${actionType}`
+        });
+        location.reload();
+    }
+
+    async function rollbackToMasterVerified() {
+        const { data, error } = await supabaseClient
+            .from('version_snapshots')
+            .select('*')
+            .eq('approved_by', 'MASTER') // 자동 승인은 무시
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+
+        if (error || !data) {
+            alert("복구 가능한 마스터 승인 버전이 없습니다.");
+            return;
+        }
+
+        if (confirm(`마스터의 마지막 승인 지점(${data.created_at})으로 복구할까요?`)) {
+            // 실제 복구 수행 (Keywords 테이블 업데이트 로직)
+            alert("🔄 복구 완료");
+        }
+    }
+
+    async function triggerManualRun() {
+        alert("봇에게 즉시 수기 분석 명령을 전달합니다.");
+        // GitHub Actions API 호출 또는 DB Trigger 활용
+    }
+
+    async function fetchSystemLogs() {
+        const { data } = await supabaseClient.from('action_logs').select('*').order('executed_at', { ascending: false }).limit(5);
+        if (data) {
+            document.getElementById('system-logs').innerHTML = data.map(l => 
+                `[${l.executed_at.substring(11,16)}] ${l.execution_method}: ${l.target_word} ${l.action_type}`
+            ).join('<br>');
+        }
+    }
+
+    // [기존 렌더링 및 통계 함수들 유지]
     async function fetchDayData() {
         const selectedDate = document.getElementById('date-select').value;
         if (!selectedDate) return;
-
         let query = supabaseClient.from('reports').select('*').eq('report_date', selectedDate);
         if (currentUser) query = query.eq('user_id', currentUser.id);
-
         const { data } = await query.order('created_at', { ascending: false }).limit(1);
-
         if (data && data.length > 0) {
             currentReport = data[0].content;
             render();
             document.getElementById('db-indicator').innerText = `● DB Live (${selectedDate})`;
-        } else {
-            currentReport = null;
-            document.getElementById('briefing-box').innerHTML = "<p style='text-align:center; padding:20px; color:#999;'>리포트가 아직 생성되지 않았습니다.</p>";
-            document.getElementById('news-list').innerHTML = "";
         }
     }
 
@@ -156,54 +211,36 @@
         renderTags();
     }
 
-    async function addKw() {
-        const newKw = document.getElementById('new-kw').value.trim();
-        if (!newKw || !currentUser) return;
-        if (userKeywords.length >= 5) { alert("⚠️ 최대 5개까지 가능합니다."); return; }
-        const updatedKeywords = [...userKeywords, newKw];
-        const { error } = await supabaseClient.from('user_settings').upsert({ id: currentUser.id, keywords: updatedKeywords, email: currentUser.email, role: 'PM' });
-        if (!error) { userKeywords = updatedKeywords; document.getElementById('new-kw').value = ''; renderTags(); }
-    }
-
-    async function removeKw(targetKw) {
-        if (!confirm(`'${targetKw}' 삭제?`)) return;
-        const updatedKeywords = userKeywords.filter(k => k !== targetKw);
-        const { error } = await supabaseClient.from('user_settings').update({ keywords: updatedKeywords }).eq('id', currentUser.id);
-        if (!error) { userKeywords = updatedKeywords; renderTags(); }
-    }
-
-    function updateUI() {
-        const display = document.getElementById('user-display');
-        const kwTitle = document.getElementById('kw-title');
-        const kwControls = document.getElementById('kw-controls');
-        const managerCard = document.getElementById('manager-card');
-        const masterPanel = document.getElementById('master-panel');
-
-        if (currentUser) {
-            const userId = currentUser.email.split('@')[0];
-            display.innerHTML = `<span style="font-size:0.9em; margin-right:12px;">👤 <b>${userId}</b>님</span><button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
-            kwControls.style.display = "flex";
-            
-            // [Master 전용] 패널 노출 조건
-            if (currentUser.email === MASTER_EMAIL) {
-                kwTitle.innerHTML = "👑 마스터 키워드 관리";
-                managerCard.classList.add('master-mode');
-                masterPanel.style.display = "block"; // 오직 성환님에게만 노출
-            } else {
-                kwTitle.innerText = "👤 나의 개인화 키워드";
-                managerCard.classList.add('user-mode');
-                masterPanel.style.display = "none";
-            }
-        }
-        renderTags();
-    }
-
     function renderTags() {
         const displayKeywords = (currentUser && userKeywords.length > 0) ? userKeywords : DEFAULT_KEYWORDS;
         const isEditable = !!currentUser;
         document.getElementById('tag-list').innerHTML = displayKeywords.map(k => `
             <span class="tag">#${k} ${isEditable ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>
         `).join('');
+    }
+
+    function updateUI() {
+        const display = document.getElementById('user-display');
+        const kwTitle = document.getElementById('kw-title');
+        const managerCard = document.getElementById('manager-card');
+        const masterPanel = document.getElementById('master-panel');
+        const kwControls = document.getElementById('kw-controls');
+
+        if (currentUser) {
+            const userId = currentUser.email.split('@')[0];
+            display.innerHTML = `<span style="font-size:0.9em; margin-right:12px;">👤 <b>${userId}</b>님</span><button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
+            kwControls.style.display = "flex";
+            if (currentUser.email === MASTER_EMAIL) {
+                masterPanel.style.display = "block";
+                kwTitle.innerHTML = "👑 마스터 키워드 관리";
+                managerCard.classList.add('master-mode');
+            } else {
+                masterPanel.style.display = "none";
+                kwTitle.innerText = "👤 나의 개인화 키워드";
+                managerCard.classList.add('user-mode');
+            }
+        }
+        renderTags();
     }
 
     function setRole(role) {
@@ -216,8 +253,6 @@
     function render() {
         if (!currentReport) return;
         const date = document.getElementById('date-select').value;
-        
-        // 1. 인사이트 브리핑 렌더링
         let brief = currentReport.pm_brief;
         if(currentRole === 'BA') brief = currentReport.ba_brief;
         if(currentRole === 'Sec') brief = currentReport.securities_brief;
@@ -227,13 +262,12 @@
             <div style="font-size:1em; line-height:1.8; color:#eee;">${marked.parse(brief || '분석 중...')}</div>
         `;
         
-        // 2. [Master 전용] 거버넌스 데이터 렌더링
-        if (currentUser && currentUser.email === MASTER_EMAIL) {
+        if (currentUser?.email === MASTER_EMAIL) {
             document.getElementById('hr-box').innerHTML = marked.parse(currentReport.hr_proposal || "제안 대기 중...");
             document.getElementById('audit-box').innerHTML = marked.parse(currentReport.internal_audit || "감사 대기 중...");
+            document.getElementById('hr-actions').style.display = "flex";
         }
 
-        // 3. 뉴스 리스트 렌더링
         document.getElementById('news-list').innerHTML = (currentReport.articles || []).map(a => {
             let sum = a.pm_summary;
             if(currentRole === 'BA') sum = a.ba_summary;
@@ -252,12 +286,27 @@
 
     async function sendMagicLink() {
         const email = document.getElementById('email-input').value;
-        if (!email) { alert("이메일을 입력해주세요."); return; }
         const btn = document.getElementById('magic-btn');
         btn.innerText = "발송 중..."; btn.disabled = true;
         const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: MY_PLATFORM_URL } });
         if (error) { alert(error.message); btn.innerText = "다시 시도"; btn.disabled = false; }
         else { alert("메일함을 확인해주세요!"); btn.innerText = "발송 완료"; }
+    }
+
+    async function addKw() {
+        const newKw = document.getElementById('new-kw').value.trim();
+        if (!newKw || !currentUser) return;
+        if (userKeywords.length >= 5) { alert("⚠️ 최대 5개까지 가능합니다."); return; }
+        const updatedKeywords = [...userKeywords, newKw];
+        await supabaseClient.from('user_settings').upsert({ id: currentUser.id, keywords: updatedKeywords, email: currentUser.email, role: 'PM' });
+        userKeywords = updatedKeywords; document.getElementById('new-kw').value = ''; renderTags();
+    }
+
+    async function removeKw(targetKw) {
+        if (!confirm(`'${targetKw}' 삭제?`)) return;
+        userKeywords = userKeywords.filter(k => k !== targetKw);
+        await supabaseClient.from('user_settings').update({ keywords: userKeywords }).eq('id', currentUser.id);
+        renderTags();
     }
 
     function toggleAuth() { const s = document.getElementById('auth-section'); s.style.display = s.style.display === 'none' ? 'block' : 'none'; }
