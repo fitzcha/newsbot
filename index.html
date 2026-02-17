@@ -75,7 +75,6 @@
 </div>
 
 <script>
-    // [중요] 절대 주소로 고정하여 IP 리다이렉트 방지
     const MY_PLATFORM_URL = 'https://newsbot-smoky.vercel.app'; 
     const SUPABASE_URL = 'https://zrlpwmpbrvohautldcon.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G';
@@ -108,14 +107,20 @@
         updateUI();
     }
 
+    // [수정 포인트] 로그인한 유저의 ID와 일치하는 데이터만 가져오도록 쿼리 수정
     async function fetchDayData() {
         const selectedDate = document.getElementById('date-select').value;
         if (!selectedDate) return;
 
-        const { data } = await supabaseClient
-            .from('reports')
-            .select('*')
-            .eq('report_date', selectedDate)
+        // 쿼리 시작
+        let query = supabaseClient.from('reports').select('*').eq('report_date', selectedDate);
+
+        // [핵심] 로그인 상태라면 본인의 user_id 필터를 추가하여 남의 기사 노출 방지
+        if (currentUser) {
+            query = query.eq('user_id', currentUser.id);
+        }
+
+        const { data } = await query
             .order('created_at', { ascending: false })
             .limit(1);
 
@@ -123,10 +128,14 @@
             currentReport = data[0].content;
             render();
             document.getElementById('db-indicator').innerText = `● DB Live (${selectedDate})`;
+        } else {
+            // 데이터가 없을 경우 이전 데이터가 남지 않도록 초기화
+            currentReport = null;
+            document.getElementById('briefing-box').innerHTML = "<p style='text-align:center; padding:20px; color:#999;'>해당 날짜에 본인 전용 리포트가 아직 생성되지 않았습니다.</p>";
+            document.getElementById('news-list').innerHTML = "";
         }
     }
 
-    // 키워드 로직 (기존 v4.1 UI 유지)
     async function fetchUserKeywords() {
         if (!currentUser) return;
         const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle();
@@ -210,7 +219,6 @@
         renderTags();
     }
 
-    // [최종 패치] 매직링크 발송 로직
     async function sendMagicLink() {
         const email = document.getElementById('email-input').value;
         if (!email) { alert("이메일을 입력해주세요."); return; }
@@ -222,7 +230,6 @@
         const { error } = await supabaseClient.auth.signInWithOtp({
             email: email,
             options: {
-                // 이 주소가 Supabase 설정의 Site URL과 토씨 하나 안 틀리고 똑같아야 합니다.
                 emailRedirectTo: MY_PLATFORM_URL 
             }
         });
