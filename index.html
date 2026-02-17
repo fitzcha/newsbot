@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitz Intelligence v7.4 | Ultimate Force-Load</title>
+    <title>Fitz Intelligence v7.5 | Master Key Final</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <style>
-        /* [Root Design System - 100% 유지] */
-        :root { --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; --black: #000; --white: #fff; --sec: #ffc107; --admin: #ff4d4f; --system: #6f42c1; }
+        /* [Root Design System - 366줄 원본 스타일 100% 복원] */
+        :root { 
+            --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; 
+            --black: #000; --white: #fff; --sec: #ffc107; 
+            --admin: #ff4d4f; --system: #6f42c1; 
+        }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; line-height: 1.6; }
         .container { max-width: 850px; margin: 0 auto; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
@@ -23,7 +27,6 @@
         .auth-btn.disabled-state { opacity: 0.4; cursor: not-allowed; pointer-events: none; filter: grayscale(0.8); }
         .keyword-manager { background: #fff; padding: 22px; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 6px solid #ccc; }
         .master-mode { border-top-color: var(--black); }
-        .user-mode { border-top-color: var(--primary); }
         .tag-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
         .tag { background: #eef2f7; padding: 8px 16px; border-radius: 25px; font-size: 0.85em; color: var(--primary); font-weight: 600; display: flex; align-items: center; border: 1px solid #d1d9e6; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .remove-btn { margin-left: 9px; cursor: pointer; color: #ff4d4f; font-weight: bold; font-size: 1.1em; }
@@ -36,15 +39,15 @@
         .active-sec { border-left-color: var(--sec); }
         .input-group { display: flex; gap: 12px; margin-top: 18px; }
         input { flex: 1; padding: 12px 15px; border: 1px solid #ddd; border-radius: 10px; font-size: 0.95em; outline: none; }
-        .log-box { font-size: 0.75em; background: #f1f1f1; padding: 10px; border-radius: 8px; max-height: 120px; overflow-y: auto; font-family: monospace; border: 1px solid #ddd; color: #555; }
+        .log-box { font-size: 0.75em; background: #f1f1f1; padding: 12px; border-radius: 8px; max-height: 120px; overflow-y: auto; font-family: monospace; border: 1px solid #ddd; color: #555; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="top-bar">
-        <h1>Fitz Intelligence <small id="v-tag" style="font-size:0.4em; color:var(--admin); letter-spacing: 1px;">v7.4 Ultimate Fix</small></h1>
-        <div id="user-display"><button class="auth-btn" onclick="toggleAuth()">로그인</button></div>
+        <h1>Fitz Intelligence <small id="v-tag" style="font-size:0.4em; color:var(--admin); letter-spacing: 1px;">v7.5 Ultimate</small></h1>
+        <div id="user-display"><button class="auth-btn" onclick="toggleAuth()">베타 신청 / 로그인</button></div>
     </div>
 
     <section id="master-panel" class="auth-card admin-panel" style="display:none;">
@@ -57,12 +60,13 @@
         </div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
             <div>
-                <strong>👨‍💼 HR 제안</strong>
+                <strong>👨‍💼 HR 인사 제안</strong>
                 <div id="hr-box" style="font-size:0.85em; background:#fff; padding:15px; border-radius:10px; margin-top:10px; border:1px solid #ffebeb; min-height: 100px;"></div>
                 <div id="hr-actions" style="margin-top:10px; display:none; gap:5px;"><button id="btn-approve" onclick="executeAction('APPROVED')" class="auth-btn" style="flex:1;">승인</button><button id="btn-reject" onclick="executeAction('REJECTED')" class="auth-btn" style="flex:1;">반려</button></div>
+                <p id="lock-notice" style="display:none; color:var(--admin); font-size:0.75em; margin-top:10px; font-weight:bold;">🔒 23:30 타임락 (번복 불가)</p>
             </div>
             <div>
-                <strong>🕵️ 시스템 로그</strong>
+                <strong>🕵️ 내부 감사 로그</strong>
                 <div id="audit-box" style="font-size:0.85em; background:#fff; padding:15px; border-radius:10px; margin:10px 0; border:1px solid #eef; min-height: 50px;"></div>
                 <div class="log-box" id="system-logs">로그 대기 중...</div>
             </div>
@@ -70,10 +74,11 @@
     </section>
 
     <section id="auth-section" class="auth-card" style="display:none;">
-        <h3 style="margin-top:0;">🚀 매직링크 입장</h3>
+        <h3 style="margin-top:0;">🚀 이메일 간편 입장</h3>
+        <p style="font-size:0.9em; color:#666;">로그인 링크가 입력하신 메일로 즉시 발송됩니다.</p>
         <div class="input-group">
             <input type="email" id="email-input" placeholder="example@gmail.com">
-            <button id="magic-btn" class="auth-btn active" onclick="sendMagicLink()">링크 받기</button>
+            <button id="magic-btn" class="auth-btn active" onclick="sendMagicLink()">로그인 링크 받기</button>
         </div>
     </section>
 
@@ -93,8 +98,8 @@
             <button id="btn-Sec" class="auth-btn" onclick="setRole('Sec')">증권</button>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
-            <span id="db-indicator" style="font-size:0.7em; color:green;">● DB Connected</span>
-            <select id="date-select" onchange="fetchDayData()" style="padding:10px; border-radius:10px; border:1px solid #ddd; background:#fff; font-weight:bold;"></select>
+            <span id="db-indicator" style="font-size:0.7em; color:green;">● DB connected</span>
+            <select id="date-select" onchange="fetchDayData()" style="padding:10px; border-radius:10px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:bold;"></select>
         </div>
     </div>
 
@@ -112,77 +117,89 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentReport = null, currentRole = 'PM', currentUser = null, userKeywords = [], currentProposal = null;
 
-    // [v7.4 핵심] 로그인 세션 자동 복구 및 즉시 로드 리스너
+    // [v7.5 핵심] 로그인 세션 자동 감지 및 즉시 데이터 동기화
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
-        if (session) {
-            currentUser = session.user;
-            await refreshAll();
+        if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+            currentUser = session?.user;
+            await syncAll();
         }
-        if (event === 'SIGNED_OUT') { location.reload(); }
+        if (event === 'SIGNED_OUT') { currentUser = null; location.reload(); }
     });
 
-    async function refreshAll() {
+    async function syncAll() {
         updateUI();
         await fetchUserKeywords();
         await loadDates();
     }
 
     async function init() {
-        renderTags(); // 무조건 먼저 실행
+        renderTags();
+        updateUI();
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) {
             currentUser = session.user;
-            await refreshAll();
+            await syncAll();
         } else {
-            await loadDates(); // 비로그인 시에도 강제 로드
-            updateUI();
+            await loadDates(); // 비로그인 시에도 공용 데이터 노출
         }
     }
 
-    // [v7.4 핵심] 날짜 로드 시 권한 필터 완전 해제
+    // [v7.5 핵심] 마스터 계정일 경우 모든 필터를 제거하고 날짜 로드
     async function loadDates() {
-        console.log("📡 DB에서 날짜 목록 긁어오는 중...");
-        // user_id 필터를 제거하여 DB에 있는 모든 리포트 날짜를 확보함
-        const { data, error } = await supabaseClient.from('reports').select('report_date').order('report_date', { ascending: false });
+        let query = supabaseClient.from('reports').select('report_date, user_id');
+        
+        // 마스터(positivecha)가 아니거나 로그인 전인 경우에만 사용자 필터 적용 시도
+        // 성환님 계정은 모든 데이터를 볼 수 있도록 필터를 우회함
+        if (currentUser && currentUser.email !== MASTER_EMAIL) {
+            query = query.eq('user_id', currentUser.id);
+        }
+        
+        const { data } = await query.order('report_date', { ascending: false });
 
         const select = document.getElementById('date-select');
         if (data && data.length > 0) {
             const uniqueDates = [...new Set(data.map(d => d.report_date))];
             select.innerHTML = uniqueDates.map(d => `<option value="${d}">${d}</option>`).join('');
-            console.log("✅ 발견된 날짜:", uniqueDates);
             await fetchDayData(); 
         } else {
-            select.innerHTML = '<option value="">데이터 없음</option>';
-            showEmpty("리포트 데이터가 아직 생성되지 않았습니다.");
+            // 데이터가 아예 없는 경우 최신 리포트 10개 강제 조회
+            const publicRes = await supabaseClient.from('reports').select('report_date').order('report_date', { ascending: false }).limit(10);
+            if (publicRes.data?.length) {
+                const uniqueDates = [...new Set(publicRes.data.map(d => d.report_date))];
+                select.innerHTML = uniqueDates.map(d => `<option value="${d}">${d}</option>`).join('');
+                await fetchDayData();
+            } else {
+                select.innerHTML = '<option value="">데이터 없음</option>';
+                showNoData();
+            }
         }
     }
 
-    // [v7.4 핵심] 리포트 데이터 조회 시 'Force Load' 로직 적용
+    // [v7.5 핵심] 특정 날짜 데이터 로드 시 마스터 바이패스 로직 적용
     async function fetchDayData() {
         const selectedDate = document.getElementById('date-select').value;
-        if (!selectedDate) return;
+        if (!selectedDate) return showNoData();
         
-        console.log(`📡 ${selectedDate} 리포트 강제 로드 시도...`);
-        
-        // 1. 먼저 내 ID로 조회 시도
         let query = supabaseClient.from('reports').select('*').eq('report_date', selectedDate);
-        if (currentUser) { query = query.eq('user_id', currentUser.id); }
         
-        let { data, error } = await query.order('created_at', { ascending: false }).limit(1);
-        
-        // 2. 내 데이터가 없으면, 마스터(positivecha)의 데이터를 Public하게 가져옴
-        if (!data || data.length === 0) {
-            console.log("💡 내 리포트 없음. 공용 리포트 탐색 중...");
-            const { data: fallbackData } = await supabaseClient.from('reports').select('*').eq('report_date', selectedDate).order('created_at', { ascending: false }).limit(1);
-            data = fallbackData;
+        // 성환님 계정(MASTER_EMAIL)이면 user_id 필터를 제거하여 봇이 생성한 모든 데이터를 긁어옴
+        if (currentUser && currentUser.email !== MASTER_EMAIL) {
+            query = query.eq('user_id', currentUser.id);
         }
+        
+        const { data } = await query.order('created_at', { ascending: false }).limit(1);
         
         if (data && data.length > 0) {
             currentReport = data[0].content;
             renderDisplay();
             document.getElementById('db-indicator').innerText = `● DB Connected (${selectedDate})`;
         } else {
-            showEmpty("해당 날짜의 분석 결과를 찾을 수 없습니다.");
+            // Fallback: 필터링 없이 해당 날짜의 리포트가 있는지 다시 확인
+            const { data: fallback } = await supabaseClient.from('reports').select('*').eq('report_date', selectedDate).limit(1);
+            if (fallback?.length) {
+                currentReport = fallback[0].content;
+                renderDisplay();
+            } else { showNoData(); }
         }
 
         if (currentUser?.email === MASTER_EMAIL) {
@@ -191,16 +208,16 @@
         }
     }
 
-    function showEmpty(msg) {
+    function showNoData() {
         currentReport = null;
-        document.getElementById('briefing-box').innerHTML = `<div style="text-align:center; padding:40px; color:#bbb;"><p style="font-weight:bold; color:var(--admin);">${msg}</p></div>`;
+        document.getElementById('briefing-box').innerHTML = `<div style="text-align:center; padding:40px; color:#bbb;"><p style="font-weight:bold; color:var(--admin); font-size:1.1em;">오늘 뉴스가 검색되지 않아 분석을 할 수 없었어요.</p><p>키워드는 최대 5개까지 입력 가능합니다.</p></div>`;
         document.getElementById('news-list').innerHTML = "";
     }
 
     function renderDisplay() {
         if (!currentReport) return;
         const b = currentRole === 'BA' ? currentReport.ba_brief : currentRole === 'Sec' ? currentReport.securities_brief : currentReport.pm_brief;
-        document.getElementById('briefing-box').innerHTML = `<h4 style="margin:0 0 15px 0;"><span class="ai-badge">AI</span> ${currentRole} 브리핑</h4><div style="font-size:1.05em; color:#eee;">${marked.parse(b || '분석 중...')}</div>`;
+        document.getElementById('briefing-box').innerHTML = `<h4 style="margin:0 0 15px 0;"><span class="ai-badge">AI</span> ${currentRole} 브리핑</h4><div style="font-size:1.1em; line-height:1.9; color:#eee;">${marked.parse(b || '분석 중...')}</div>`;
         
         if (currentUser?.email === MASTER_EMAIL) {
             document.getElementById('hr-box').innerHTML = marked.parse(currentReport.hr_proposal || "제안 없음");
@@ -210,44 +227,58 @@
         document.getElementById('news-list').innerHTML = (currentReport.articles || []).map(a => {
             const s = currentRole === 'BA' ? a.ba_summary : currentRole === 'Sec' ? a.sec_summary : a.pm_summary;
             return `<div class="news-card ${currentRole === 'PM' ? 'active-pm' : currentRole === 'BA' ? 'active-ba' : 'active-sec'}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><span style="font-weight:bold; color:var(--primary);">#${a.keyword}</span><a href="${a.url}" target="_blank" style="font-size:0.85em; text-decoration:none; color:var(--primary); font-weight:bold;">원문보기 ↗</a></div>
-                <h3 style="margin:0 0 10px 0; font-size:1.15em;">${a.title}</h3><div style="background:#f9f9f9; padding:15px; border-radius:10px; font-size:0.95em;">${marked.parse(s || '요약 중...')}</div></div>`;
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><span style="font-weight:bold; color:var(--primary);">#${a.keyword}</span><a href="${a.url}" target="_blank" style="font-size:0.9em; text-decoration:none; color:var(--primary); font-weight:bold;">원문보기 ↗</a></div>
+                <h3 style="margin:0 0 12px 0; font-size:1.2em; line-height:1.4;">${a.title}</h3><div style="background:#f9f9f9; padding:18px; border-radius:12px; font-size:1em; color:#444;">${marked.parse(s || '요약 중...')}</div></div>`;
         }).join('');
     }
 
     async function sendMagicLink() {
         const email = document.getElementById('email-input').value.trim();
-        if (!email) return alert("이메일을 입력하세요.");
+        if (!email) return alert("이메일을 입력해 주세요.");
         const btn = document.getElementById('magic-btn');
         btn.innerText = "전송 중..."; btn.disabled = true;
         const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: MY_PLATFORM_URL } });
-        if (error) { alert(error.message); btn.innerText = "재시도"; btn.disabled = false; }
-        else { alert("메일함을 확인하세요!"); btn.innerText = "전송 완료"; }
+        if (error) { alert("발송 실패: " + error.message); btn.innerText = "재시도"; btn.disabled = false; }
+        else { alert("메일함을 확인해 주세요!"); btn.innerText = "발송 성공"; }
     }
 
     async function executeAction(newStatus) {
         if (!currentProposal) return;
+        const now = new Date(), limit = new Date(); limit.setHours(23, 30, 0);
+        if (now >= limit) return alert("🚨 23:30분이 지났습니다.");
         const { error } = await supabaseClient.from('pending_approvals').update({ status: newStatus }).eq('id', currentProposal.id);
-        if (!error) { alert("저장되었습니다."); fetchDayData(); }
+        if (!error) { 
+            await supabaseClient.from('version_snapshots').insert({ snapshot_data: { keywords: userKeywords, decision: newStatus }, approved_by: 'MASTER' });
+            alert("성공적으로 저장되었습니다."); fetchDayData(); 
+        }
     }
 
     function syncDecisionUI() {
-        const btnApp = document.getElementById('btn-approve'), btnRej = document.getElementById('btn-reject');
+        const btnApp = document.getElementById('btn-approve'), btnRej = document.getElementById('btn-reject'), lockNotice = document.getElementById('lock-notice');
         if (!currentProposal) return;
+        const now = new Date(), limit = new Date(); limit.setHours(23, 30, 0);
+        const isLocked = now >= limit || currentProposal.status === 'EXECUTED';
         btnApp.classList.toggle('approved-state', currentProposal.status === 'APPROVED');
         btnRej.classList.toggle('rejected-state', currentProposal.status === 'REJECTED');
+        if (isLocked) { btnApp.classList.add('disabled-state'); btnRej.classList.add('disabled-state'); lockNotice.style.display = 'block'; }
     }
 
     async function fetchUserKeywords() { if (!currentUser) return; const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle(); if (data) userKeywords = data.keywords || []; renderTags(); }
     function renderTags() { const list = (currentUser && userKeywords.length > 0) ? userKeywords : DEFAULT_KEYWORDS; document.getElementById('tag-list').innerHTML = list.map(k => `<span class="tag">#${k} ${currentUser ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>`).join(''); }
     async function addKw() { const kw = document.getElementById('new-kw').value.trim(); if (!kw || userKeywords.length >= 5) return; userKeywords.push(kw); await supabaseClient.from('user_settings').upsert({ id: currentUser.id, keywords: userKeywords, email: currentUser.email }); document.getElementById('new-kw').value = ''; renderTags(); }
-    async function removeKw(t) { if (!confirm('삭제?')) return; userKeywords = userKeywords.filter(k => k !== t); await supabaseClient.from('user_settings').update({ keywords: userKeywords }).eq('id', currentUser.id); renderTags(); }
+    async function removeKw(t) { if (!confirm('삭제하시겠습니까?')) return; userKeywords = userKeywords.filter(k => k !== t); await supabaseClient.from('user_settings').update({ keywords: userKeywords }).eq('id', currentUser.id); renderTags(); }
     async function fetchHistory() { const { data } = await supabaseClient.from('action_logs').select('*').order('executed_at', { ascending: false }).limit(3); if (data) document.getElementById('system-logs').innerHTML = data.map(l => `[${l.executed_at.substring(11,16)}] ${l.execution_method}: ${l.target_word}`).join('<br>'); }
     function setRole(r) { currentRole = r; document.querySelectorAll('.role-switch .auth-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${r}`)); renderDisplay(); }
     function toggleAuth() { const s = document.getElementById('auth-section'); s.style.display = s.style.display === 'none' ? 'block' : 'none'; }
     async function handleLogout() { await supabaseClient.auth.signOut(); }
-    function updateUI() { if (currentUser) { document.getElementById('user-display').innerHTML = `<span>👤 <b>${currentUser.email.split('@')[0]}</b>님</span> <button class="auth-btn" onclick="handleLogout()">로그아웃</button>`; document.getElementById('kw-controls').style.display = "flex"; if (currentUser.email === MASTER_EMAIL) document.getElementById('master-panel').style.display = "block"; } }
-
+    
+    function updateUI() {
+        if (currentUser) {
+            document.getElementById('user-display').innerHTML = `<span>👤 <b>${currentUser.email.split('@')[0]}</b>님</span> <button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
+            document.getElementById('kw-controls').style.display = "flex";
+            if (currentUser.email === MASTER_EMAIL) { document.getElementById('master-panel').style.display = "block"; document.getElementById('manager-card').classList.add('master-mode'); }
+        }
+    }
     init();
 </script>
 </body>
