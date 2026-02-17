@@ -14,22 +14,18 @@ TODAY = datetime.now().strftime("%Y-%m-%d")
 supabase: Client = create_client(SB_URL, SB_KEY)
 google_genai = genai.Client(api_key=GEMINI_KEY)
 
-# [V8.5] 전 세계 뉴스 풀 가동을 위해 언어 및 국가 제한 완전 해제
-google_news = GNews(period='2d', max_results=10) 
-
 ROLES = {
-    "HR": "인사 결정권자. 키워드 성과 평가 및 채용/해고 제안.",
-    "BA_INTERNAL": "플랫폼 내부 감사관. 전략적 결함 비판.",
-    "DEBUGGER": "시스템 엔지니어. 코드 오류 분석 및 패치 제안.",
+    "HR": "인사 결정권자. 성과 평가 기반 채용/해고 제안.",
+    "BA_INTERNAL": "플랫폼 감사관. 의사결정 품질 비판.",
     "PM": "IT 서비스 기획자", "BA": "전략 분석가", "SEC": "증권 분석가"
 }
 
 def call_agent(prompt, role_key, max_retries=3):
-    """지수 백오프 및 강제 휴식으로 429 에러(Rate Limit) 완벽 회피"""
+    """429 에러 방지를 위한 적응형 호출 로직"""
     persona = ROLES.get(role_key, "전문가")
     for attempt in range(max_retries):
         try:
-            # API 호출 전 RPM 안정을 위한 선제적 휴식
+            # API 가이드를 준수하는 선제적 휴식
             time.sleep(5 + random.uniform(0, 2)) 
             res = google_genai.models.generate_content(
                 model="gemini-2.0-flash", 
@@ -37,48 +33,28 @@ def call_agent(prompt, role_key, max_retries=3):
             )
             return res.text
         except Exception as e:
-            if "429" in str(e) or "Quota" in str(e):
-                # 에러 발생 시 대기 시간을 늘려가며 재시도
-                wait_time = (2 ** attempt) * 20 + random.uniform(0, 5)
-                print(f"⚠️ {role_key} 지연 발생. {wait_time:.1f}초 후 재시도...")
-                time.sleep(wait_time)
+            if "429" in str(e):
+                time.sleep((2 ** attempt) * 20)
             else: raise e
-    return f"• 분석 지연 (과부하로 인한 스킵)"
-
-# --- [거버넌스 및 스냅샷 로직] ---
-
-def create_snapshot(approved_by, details):
-    """마스터 복구용 스냅샷 (user_settings 테이블 기준)"""
-    current_settings = supabase.table("user_settings").select("*").execute().data
-    supabase.table("version_snapshots").insert({
-        "snapshot_data": {"settings": current_settings},
-        "approved_by": approved_by,
-        "description": details
-    }).execute()
+    return "• 분석 지연"
 
 def execute_governance():
     """23:30 의사결정 확정 및 타임락 집행"""
     now = datetime.now()
     deadline = now.replace(hour=23, minute=30, second=0, microsecond=0)
     
-    # 23:30 전이라도 마스터가 승인(APPROVED)하거나 반려(REJECTED)한 건은 확정 처리
-    active_decisions = supabase.table("pending_approvals").select("*").neq("status", "EXECUTED").execute().data
+    # 미확정된 모든 결정(APPROVED, REJECTED, PENDING) 조회
+    decisions = supabase.table("pending_approvals").select("*").neq("status", "EXECUTED").execute().data
     
-    for p in active_decisions:
-        # 데드라인 도래 혹은 마스터의 수기 결정이 완료된 경우
+    for p in decisions:
+        # 타임아웃이 되었거나 마스터가 이미 결정을 내린 경우 확정 처리
         if now >= deadline or p['status'] in ['APPROVED', 'REJECTED']:
-            print(f"🔒 결정 확정 및 잠금: {p['word']} ({p['status']})")
-            
-            # 상태를 EXECUTED로 변경하여 UI 상에서 번복을 방지함
+            print(f"🔒 결정 확정: {p['word']} ({p['status']})")
             supabase.table("pending_approvals").update({"status": "EXECUTED"}).eq("id", p['id']).execute()
-            
-            # 감사 로그 기록
             supabase.table("action_logs").insert({
                 "user_id": p['user_id'], "action_type": p['type'], "target_word": p['word'],
-                "execution_method": "AUTO_FINALIZER", "details": "23:30 데드라인 확정 및 잠금"
+                "execution_method": "AUTO_FINALIZER", "details": "23:30 타임락 집행 및 확정"
             }).execute()
-
-# --- [메인 엔진: 글로벌 뉴스 수집 및 분석] ---
 
 def run_main_engine():
     # user_settings 테이블에서 유저별 키워드 배열 로드
@@ -87,27 +63,32 @@ def run_main_engine():
     for user_set in settings:
         user_id = user_set['id']
         user_email = user_set.get('email', 'Unknown')
-        user_keywords = user_set.get('keywords', [])[:5] 
+        user_keywords = user_set.get('keywords', [])[:5]
         
-        if not user_keywords:
-            print(f"⏩ {user_email}님 설정 키워드 없음. 스킵.")
-            continue
-
-        print(f"🔍 {user_email}님 글로벌 분석 시작 (키워드: {user_keywords})")
+        if not user_keywords: continue
+        print(f"🔍 {user_email}님 분석 시작: {user_keywords}")
         report = {"date": TODAY, "articles": [], "tracked_keywords": user_keywords}
         all_titles = []
 
         for word in user_keywords:
-            # [유지] 전 세계 뉴스 검색 (중문/영어 대응)
-            items = google_news.get_news(word)
-            unique_news = []
+            # [V8.6 핵심] CJK(한중일) 키워드 판별 검색 전략
+            is_cjk = any(ord(char) > 0x1100 for char in word)
             
+            # 1차 시도: 해당 언어권 정밀 검색
+            lang, country = ('ko', 'KR') if is_cjk else ('en', 'US')
+            gn = GNews(language=lang, country=country, period='2d', max_results=10)
+            items = gn.get_news(word)
+
+            # 2차 시도: 결과 없으면 글로벌 확장 검색
+            if not items:
+                items = GNews(period='2d', max_results=10).get_news(word)
+
+            unique_news = []
             for n in items:
-                # [유지] 원문 유사도 필터링 규칙 (0.6 기준 유사 기사 제거)
+                # [유지] 성환님의 0.6 유사도 필터링 원칙
                 if any(SequenceMatcher(None, n['title'], u['title']).ratio() > 0.6 for u in unique_news):
                     continue
                 unique_news.append(n)
-                # 키워드당 정예 기사 3개로 압축하여 품질 향상
                 if len(unique_news) >= 3: break
 
             for n in unique_news:
@@ -121,23 +102,19 @@ def run_main_engine():
                 all_titles.append(f"[{word}] {n['title']}")
 
         if report["articles"]:
-            # 종합 인사이트 생성
             context = "\n".join(all_titles)
             report["pm_brief"] = call_agent(context, "PM")
             report["ba_brief"] = call_agent(context, "BA")
             report["securities_brief"] = call_agent(context, "SEC")
-            report["internal_audit"] = call_agent("플랫폼 의사결정 품질 비판", "BA_INTERNAL")
-            report["hr_proposal"] = call_agent(f"키워드 {user_keywords} 성과 기반 해고/채용 제안", "HR")
+            report["internal_audit"] = call_agent("품질 감사", "BA_INTERNAL")
+            report["hr_proposal"] = call_agent(f"키워드 {user_keywords} 성과 기반 제안", "HR")
             
-            # 최종 리포트 DB 저장
             supabase.table("reports").insert({"user_id": user_id, "report_date": TODAY, "content": report}).execute()
-            print(f"✅ {user_email}님 글로벌 리포트 저장 완료.")
+            print(f"✅ {user_email}님 리포트 저장 성공.")
 
 if __name__ == "__main__":
     try:
-        # 1. 의사결정 데드라인 체크 및 잠금 수행
         execute_governance()
-        # 2. 메인 분석 엔진 가동
         run_main_engine()
     except Exception as e:
-        print(f"🚨 시스템 오류: {traceback.format_exc()}")
+        print(f"🚨 치명적 에러: {traceback.format_exc()}")
