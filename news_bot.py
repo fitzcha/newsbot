@@ -28,15 +28,15 @@ def analyze_news(title, role="PM"):
 def send_newsletter(user_email, user_articles):
     if not user_articles: return
     user_id = user_email.split('@')[0]
-    email_body = f"<h2>🚀 {user_id}님, 오늘 설정하신 키워드 분석 리포트입니다.</h2>"
+    email_body = f"<h2>🚀 {user_id}님, 분석 리포트입니다.</h2>"
     for a in user_articles:
-        email_body += f"<div style='margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;'><p><span style='background:#eef2f7; padding:4px 8px; border-radius:4px;'>#{a['keyword']}</span></p><h3 style='color:#007bff; margin-top:5px;'>{a['title']}</h3><div style='background:#f9f9f9; padding:15px; border-radius:8px;'>{a['pm_summary'].replace('•', '<br>•')}</div><a href='{a['url']}' style='font-size:0.8em; color:#007bff;'>원문 보기 ↗</a></div>"
+        email_body += f"<div style='margin-bottom:20px;'><h3 style='color:#007bff;'>{a['title']}</h3><div>{a['pm_summary'].replace('•', '<br>•')}</div><a href='{a['url']}'>원문 보기</a></div>"
     try:
-        resend.Emails.send({"from": "Fitz Intelligence <onboarding@resend.dev>", "to": user_email, "subject": f"[{TODAY}] {user_id}님을 위한 인사이트", "html": email_body})
+        resend.Emails.send({"from": "Fitz Intelligence <onboarding@resend.dev>", "to": user_email, "subject": f"[{TODAY}] 인사이트", "html": email_body})
         print(f"📧 {user_email}님 이메일 발송 성공")
-    except Exception as e: print(f"❌ 이메일 발송 실패: {e}")
+    except Exception as e: print(f"❌ 이메일 실패: {e}")
 
-# 3. 메인 실행 로직
+# 3. 메인 실행 및 데이터 수집
 response = supabase.table("user_settings").select("*").execute()
 users = response.data
 master_report = {"date": TODAY, "articles": [], "pm_brief": "", "ba_brief": "", "tracked_keywords": []}
@@ -53,7 +53,7 @@ for user in users:
         news_items = google_news.get_news(word)
         for news in news_items:
             pm_sum = analyze_news(news['title'], "PM")
-            ba_sum = analyze_news(news['title'], "BA") # BA 요약 추가
+            ba_sum = analyze_news(news['title'], "BA")
             article_data = {"keyword": word, "title": news['title'], "url": news['url'], "pm_summary": pm_sum, "ba_summary": ba_sum}
             user_articles.append(article_data)
             
@@ -64,17 +64,18 @@ for user in users:
 
     send_newsletter(user_email, user_articles)
 
-# [V5.0 핵심] DB 저장 로직 추가
+# [V5.0 핵심] ★ 실종되었던 DB 저장 로직 가동 ★
 if master_report["articles"]:
     titles = [a['title'] for a in master_report["articles"]]
-    master_report["pm_brief"] = analyze_news(f"전체 요약:\n{chr(10).join(titles)}", "PM")
-    master_report["ba_brief"] = analyze_news(f"비즈니스 분석:\n{chr(10).join(titles)}", "BA")
+    master_report["pm_brief"] = analyze_news(f"종합 요약:\n{chr(10).join(titles)}", "PM")
+    master_report["ba_brief"] = analyze_news(f"수익성 분석:\n{chr(10).join(titles)}", "BA")
     
-    master_user = next((u for u in users if u['email'] == MASTER_EMAIL), None)
-    if master_user:
+    # 마스터 유저의 ID를 찾아서 reports 테이블에 꽂아 넣습니다.
+    target_user = next((u for u in users if u['email'] == MASTER_EMAIL), None)
+    if target_user:
         supabase.table("reports").insert({
-            "user_id": master_user['id'],
+            "user_id": target_user['id'],
             "report_date": TODAY,
             "content": master_report
         }).execute()
-        print(f"🚀 {TODAY} 리포트 DB 저장 완료!")
+        print(f"✅ [성공] {TODAY} 리포트가 Supabase 서랍에 안전하게 입고되었습니다!")
