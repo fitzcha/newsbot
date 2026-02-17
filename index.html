@@ -13,13 +13,13 @@
         .container { max-width: 850px; margin: 0 auto; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         
-        /* Auth UI (v4.1 스타일 유지) */
+        /* Auth UI */
         .auth-card { background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 25px; border: 1px solid #eee; }
         .auth-btn { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--primary); background: #fff; color: var(--primary); cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s; }
         .auth-btn:hover { background: #f0f7ff; }
         .auth-btn.active { background: var(--primary); color: #fff; }
         
-        /* Keyword UI (v4.1 스타일 유지) */
+        /* Keyword UI */
         .keyword-manager { background: #fff; padding: 22px; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 6px solid #ccc; }
         .master-mode { border-top-color: var(--black); }
         .user-mode { border-top-color: var(--primary); }
@@ -28,7 +28,7 @@
         .remove-btn { margin-left: 9px; cursor: pointer; color: #ff4d4f; font-weight: bold; font-size: 1.1em; }
         .notice { font-size: 0.8em; color: #777; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
         
-        /* Briefing & News (v4.1 스타일 유지) */
+        /* Briefing & News */
         .briefing-box { background: #343a40; color: #fff; padding: 25px; border-radius: 14px; margin-bottom: 35px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .ai-badge { font-size: 0.7em; background: var(--black); color: var(--white); padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-right: 12px; vertical-align: middle; border: 1px solid #444; text-transform: uppercase; }
         .news-card { background: #fff; padding: 22px; border-radius: 14px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #eee; }
@@ -95,7 +95,6 @@
     let currentUser = null;
     let userKeywords = [];
 
-    // 1. 초기화 (기존 데이터 상속 보장)
     async function init() {
         const { data: { user } } = await supabaseClient.auth.getUser();
         currentUser = user;
@@ -116,7 +115,6 @@
         updateUI();
     }
 
-    // 2. 데이터 페칭 (과거 브리핑 검색 기능 유지)
     async function fetchDayData() {
         const selectedDate = document.getElementById('date-select').value;
         if (!selectedDate) return;
@@ -135,7 +133,6 @@
         }
     }
 
-    // 3. 키워드 로직 (기기 변경 시에도 유지)
     async function fetchUserKeywords() {
         if (!currentUser) return;
         const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle();
@@ -160,7 +157,6 @@
         if (!error) { userKeywords = updatedKeywords; renderTags(); }
     }
 
-    // 4. UI 렌더링
     function updateUI() {
         const display = document.getElementById('user-display');
         const kwTitle = document.getElementById('kw-title');
@@ -220,7 +216,7 @@
         renderTags();
     }
 
-    // 5. 매직링크 인증 헬퍼
+    // [핵심 수정] 매직링크 리다이렉트 주소를 명확하게 고정
     async function sendMagicLink() {
         const email = document.getElementById('email-input').value;
         if (!email) { alert("이메일을 입력해주세요."); return; }
@@ -228,8 +224,8 @@
         const { error } = await supabaseClient.auth.signInWithOtp({
             email: email,
             options: {
-                // 로그인 후 돌아올 주소 (Vercel 주소와 일치해야 함)
-                emailRedirectTo: window.location.origin 
+                // window.location.origin 대신 성환님의 Vercel 주소를 직접 명시하여 경로 이탈을 방지합니다.
+                emailRedirectTo: 'https://newsbot-smoky.vercel.app' 
             }
         });
 
