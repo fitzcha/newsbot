@@ -22,14 +22,23 @@ ROLES = {
 }
 
 def send_email_report(user_email, report_data):
-    """분석 성공 시에만 이메일 발송"""
+    """분석 완료 후 사용자 이메일 발송"""
     try:
         articles_html = "".join([f"<li><b>[{a['keyword']}] {a['title']}</b><br><a href='{a['url']}'>원문보기</a></li><br>" for a in report_data['articles']])
-        html_content = f"<h2>🚀 {TODAY} Fitz Intelligence</h2><p>{user_email}님, 분석 결과입니다.</p><hr><h3>📊 브리핑</h3><div>{report_data['pm_brief']}</div><h3>📰 뉴스</h3><ul>{articles_html}</ul>"
-        resend.Emails.send({"from": "Fitz Intelligence <onboarding@resend.dev>", "to": user_email, "subject": f"[{TODAY}] 데일리 뉴스 리포트", "html": html_content})
-    except: print("🚨 메일 발송 오류")
+        html_content = f"""
+        <div style="font-family:sans-serif; line-height:1.6; color:#333;">
+            <h2>🚀 {TODAY} Fitz Intelligence Report</h2>
+            <p>{user_email}님을 위한 오늘 아침의 분석 결과입니다.</p><hr>
+            <h3>📊 PM 종합 브리핑</h3>
+            <div style="background:#f4f4f4; padding:15px; border-radius:8px;">{report_data['pm_brief']}</div>
+            <h3>📰 주요 뉴스 요약</h3><ul>{articles_html}</ul>
+        </div>"""
+        resend.Emails.send({"from": "Fitz Intelligence <onboarding@resend.dev>", "to": user_email, "subject": f"[{TODAY}] 오늘의 뉴스 분석 리포트", "html": html_content})
+        print(f"📧 {user_email}님 이메일 발송 완료.")
+    except: print("🚨 이메일 발송 중 오류")
 
 def call_agent(prompt, role_key, max_retries=3):
+    """429 방지 적응형 호출"""
     persona = ROLES.get(role_key, "전문가")
     for attempt in range(max_retries):
         try:
@@ -49,6 +58,7 @@ def execute_governance():
     for p in (res.data if res.data else []):
         if now >= deadline or p['status'] in ['APPROVED', 'REJECTED']:
             supabase.table("pending_approvals").update({"status": "EXECUTED"}).eq("id", p['id']).execute()
+            supabase.table("action_logs").insert({"user_id": p['user_id'], "action_type": p['type'], "target_word": p['word'], "execution_method": "AUTO_FINALIZER"}).execute()
 
 def run_main_engine():
     settings = supabase.table("user_settings").select("*").execute().data
@@ -57,7 +67,7 @@ def run_main_engine():
         user_keywords = user_set.get('keywords', [])[:5]
         if not user_keywords: continue
 
-        print(f"🔍 {user_email}님 분석 중...")
+        print(f"🔍 {user_email}님 분석 시작: {user_keywords}")
         report = {"date": TODAY, "articles": [], "tracked_keywords": user_keywords}
         all_titles = []
 
@@ -90,7 +100,7 @@ def run_main_engine():
             supabase.table("reports").insert({"user_id": user_id, "report_date": TODAY, "content": report}).execute()
             send_email_report(user_email, report)
         else:
-            print(f"⚠️ {user_email}님 검색 결과 없음.")
+            print(f"⚠️ {user_email}님 리포트 생성 스킵 (뉴스 없음)")
 
 if __name__ == "__main__":
     try:
