@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitz Intelligence v5.3 | Final Platform</title>
+    <title>Fitz Intelligence v5.3 | Stable Core</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
@@ -22,7 +22,6 @@
         .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
         .tag { background: #eef2f7; padding: 7px 15px; border-radius: 25px; font-size: 0.85em; color: var(--primary); font-weight: 600; display: flex; align-items: center; border: 1px solid #d1d9e6; }
         .remove-btn { margin-left: 9px; cursor: pointer; color: #ff4d4f; font-weight: bold; font-size: 1.1em; }
-        .notice { font-size: 0.8em; color: #777; margin-top: 15px; border-top: 1px dashed #eee; padding-top: 10px; }
         .briefing-box { background: #343a40; color: #fff; padding: 25px; border-radius: 14px; margin-bottom: 35px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .ai-badge { font-size: 0.7em; background: var(--black); color: var(--white); padding: 4px 10px; border-radius: 4px; font-weight: bold; margin-right: 12px; vertical-align: middle; border: 1px solid #444; text-transform: uppercase; }
         .news-card { background: #fff; padding: 22px; border-radius: 14px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #eee; }
@@ -44,10 +43,10 @@
 
     <section id="auth-section" class="auth-card" style="display:none;">
         <h3 style="margin-top:0;">🚀 이메일 간편 입장</h3>
-        <p style="font-size:0.9em; color:#666;">이메일을 입력하시면 전용 접속 링크가 발송됩니다.</p>
+        <p style="font-size:0.9em; color:#666;">이메일 주소를 입력하시면 즉시 접속 링크가 발송됩니다.</p>
         <div class="input-group">
             <input type="email" id="email-input" placeholder="example@gmail.com">
-            <button id="send-btn" class="auth-btn active" onclick="sendMagicLink()">로그인 링크 받기</button>
+            <button id="magic-btn" class="auth-btn active" onclick="sendMagicLink()">로그인 링크 받기</button>
         </div>
     </section>
 
@@ -58,7 +57,6 @@
             <input type="text" id="new-kw" placeholder="관심 키워드 입력 (최대 5개)">
             <button class="auth-btn active" onclick="addKw()">추가</button>
         </div>
-        <p id="kw-notice" class="notice">💡 로그인 시 본인만의 개인화 키워드 설정이 가능합니다.</p>
     </section>
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
@@ -77,10 +75,11 @@
 </div>
 
 <script>
+    // [중요] 절대 주소로 고정하여 IP 리다이렉트 방지
+    const MY_PLATFORM_URL = 'https://newsbot-smoky.vercel.app'; 
     const SUPABASE_URL = 'https://zrlpwmpbrvohautldcon.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G';
     const MASTER_EMAIL = 'positivecha@gmail.com';
-    const REDIRECT_URL = 'https://newsbot-smoky.vercel.app'; // 성환님의 Vercel 주소
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     
@@ -89,12 +88,10 @@
     let currentUser = null;
     let userKeywords = [];
 
-    // 1. 초기화 및 세션 감지
     async function init() {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        currentUser = session?.user || null;
-
-        // 리포트 날짜 목록 가져오기
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        currentUser = user;
+        
         const { data: allDates } = await supabaseClient
             .from('reports')
             .select('report_date')
@@ -111,7 +108,6 @@
         updateUI();
     }
 
-    // 2. 리포트 데이터 가져오기
     async function fetchDayData() {
         const selectedDate = document.getElementById('date-select').value;
         if (!selectedDate) return;
@@ -130,7 +126,7 @@
         }
     }
 
-    // 3. 키워드 관리
+    // 키워드 로직 (기존 v4.1 UI 유지)
     async function fetchUserKeywords() {
         if (!currentUser) return;
         const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle();
@@ -155,7 +151,6 @@
         if (!error) { userKeywords = updatedKeywords; renderTags(); }
     }
 
-    // 4. UI 및 렌더링
     function updateUI() {
         const display = document.getElementById('user-display');
         const kwTitle = document.getElementById('kw-title');
@@ -215,29 +210,29 @@
         renderTags();
     }
 
-    // 5. 매직링크 발송 (강력한 경로 고정 버전)
+    // [최종 패치] 매직링크 발송 로직
     async function sendMagicLink() {
         const email = document.getElementById('email-input').value;
-        if (!email) { alert("이메일을 입력하세요."); return; }
+        if (!email) { alert("이메일을 입력해주세요."); return; }
         
-        const btn = document.getElementById('send-btn');
+        const btn = document.getElementById('magic-btn');
         btn.innerText = "발송 중...";
         btn.disabled = true;
 
         const { error } = await supabaseClient.auth.signInWithOtp({
             email: email,
             options: {
-                // 이 주소를 Supabase 대시보드의 Site URL과 100% 일치시켜야 합니다.
-                emailRedirectTo: REDIRECT_URL 
+                // 이 주소가 Supabase 설정의 Site URL과 토씨 하나 안 틀리고 똑같아야 합니다.
+                emailRedirectTo: MY_PLATFORM_URL 
             }
         });
 
         if (error) {
-            alert("발송 실패: " + error.message);
+            alert(error.message);
             btn.innerText = "다시 시도";
             btn.disabled = false;
         } else {
-            alert("✅ 메일함으로 로그인 링크를 보냈습니다!\n링크를 누르면 바로 입장됩니다.");
+            alert("메일함을 확인해주세요! 로그인 링크가 전송되었습니다.");
             btn.innerText = "발송 완료";
         }
     }
