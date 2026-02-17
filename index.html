@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitz Intelligence v5.4 | Multi-Agent Core</title>
+    <title>Fitz Intelligence v6.0 | Master Command Center</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <style>
-        :root { --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; --black: #000; --white: #fff; --sec: #ffc107; }
+        :root { --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; --black: #000; --white: #fff; --sec: #ffc107; --admin: #ff4d4f; }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; line-height: 1.6; }
         .container { max-width: 850px; margin: 0 auto; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .auth-card { background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 25px; border: 1px solid #eee; }
+        .admin-panel { border-top: 6px solid var(--admin) !important; background: #fffafb !important; }
         .auth-btn { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--primary); background: #fff; color: var(--primary); cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s; }
         .auth-btn:hover { background: #f0f7ff; }
         .auth-btn.active { background: var(--primary); color: #fff; }
@@ -36,11 +37,29 @@
 
 <div class="container">
     <div class="top-bar">
-        <h1>Fitz Intelligence <small style="font-size:0.4em; color:#999; letter-spacing: 1px;">v5.4</small></h1>
+        <h1>Fitz Intelligence <small style="font-size:0.4em; color:#admin; letter-spacing: 1px;">v6.0</small></h1>
         <div id="user-display">
             <button class="auth-btn" onclick="toggleAuth()">베타 신청 / 로그인</button>
         </div>
     </div>
+
+    <section id="master-panel" class="auth-card admin-panel" style="display:none;">
+        <h3 style="margin-top:0; color:var(--admin);">⚖️ Master Command Center</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+            <div>
+                <strong style="font-size:0.9em;">👨‍💼 HR 인사 제안 (채용/해고)</strong>
+                <div id="hr-box" style="font-size:0.85em; background:#fff; padding:15px; border-radius:10px; margin-top:10px; border:1px solid #ffebeb;"></div>
+                <div style="margin-top:10px; display:flex; gap:5px;">
+                    <button onclick="alert('인사 제안을 승인했습니다.')" class="auth-btn active" style="background:var(--admin); border:none; flex:1;">승인</button>
+                    <button onclick="alert('제안을 반려했습니다.')" class="auth-btn" style="flex:1;">반려</button>
+                </div>
+            </div>
+            <div>
+                <strong style="font-size:0.9em;">🕵️ BA 내부 감사 (의사결정 피드백)</strong>
+                <div id="audit-box" style="font-size:0.85em; background:#fff; padding:15px; border-radius:10px; margin-top:10px; border:1px solid #ffebeb;"></div>
+            </div>
+        </div>
+    </section>
 
     <section id="auth-section" class="auth-card" style="display:none;">
         <h3 style="margin-top:0;">🚀 이메일 간편 입장</h3>
@@ -81,8 +100,6 @@
     const SUPABASE_URL = 'https://zrlpwmpbrvohautldcon.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G';
     const MASTER_EMAIL = 'positivecha@gmail.com';
-
-    // [수정] 디폴트 불변 키워드 정의
     const DEFAULT_KEYWORDS = ['카카오모빌리티', '쏘카', '타운카', 'G카', '롯데렌터카'];
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -127,7 +144,7 @@
             document.getElementById('db-indicator').innerText = `● DB Live (${selectedDate})`;
         } else {
             currentReport = null;
-            document.getElementById('briefing-box').innerHTML = "<p style='text-align:center; padding:20px; color:#999;'>본인 전용 리포트가 아직 생성되지 않았습니다.</p>";
+            document.getElementById('briefing-box').innerHTML = "<p style='text-align:center; padding:20px; color:#999;'>리포트가 아직 생성되지 않았습니다.</p>";
             document.getElementById('news-list').innerHTML = "";
         }
     }
@@ -143,7 +160,6 @@
         const newKw = document.getElementById('new-kw').value.trim();
         if (!newKw || !currentUser) return;
         if (userKeywords.length >= 5) { alert("⚠️ 최대 5개까지 가능합니다."); return; }
-        if (userKeywords.includes(newKw)) return;
         const updatedKeywords = [...userKeywords, newKw];
         const { error } = await supabaseClient.from('user_settings').upsert({ id: currentUser.id, keywords: updatedKeywords, email: currentUser.email, role: 'PM' });
         if (!error) { userKeywords = updatedKeywords; document.getElementById('new-kw').value = ''; renderTags(); }
@@ -161,28 +177,30 @@
         const kwTitle = document.getElementById('kw-title');
         const kwControls = document.getElementById('kw-controls');
         const managerCard = document.getElementById('manager-card');
+        const masterPanel = document.getElementById('master-panel');
 
         if (currentUser) {
             const userId = currentUser.email.split('@')[0];
             display.innerHTML = `<span style="font-size:0.9em; margin-right:12px;">👤 <b>${userId}</b>님</span><button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
             kwControls.style.display = "flex";
+            
+            // [Master 전용] 패널 노출 조건
             if (currentUser.email === MASTER_EMAIL) {
                 kwTitle.innerHTML = "👑 마스터 키워드 관리";
                 managerCard.classList.add('master-mode');
+                masterPanel.style.display = "block"; // 오직 성환님에게만 노출
             } else {
                 kwTitle.innerText = "👤 나의 개인화 키워드";
                 managerCard.classList.add('user-mode');
+                masterPanel.style.display = "none";
             }
         }
         renderTags();
     }
 
-    // [수정 핵심] 디폴트 키워드 로직 고정
     function renderTags() {
-        // 로그인 중이고 본인 키워드가 있으면 그것을, 아니면 무조건 불변의 DEFAULT_KEYWORDS를 노출
         const displayKeywords = (currentUser && userKeywords.length > 0) ? userKeywords : DEFAULT_KEYWORDS;
         const isEditable = !!currentUser;
-        
         document.getElementById('tag-list').innerHTML = displayKeywords.map(k => `
             <span class="tag">#${k} ${isEditable ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>
         `).join('');
@@ -198,6 +216,8 @@
     function render() {
         if (!currentReport) return;
         const date = document.getElementById('date-select').value;
+        
+        // 1. 인사이트 브리핑 렌더링
         let brief = currentReport.pm_brief;
         if(currentRole === 'BA') brief = currentReport.ba_brief;
         if(currentRole === 'Sec') brief = currentReport.securities_brief;
@@ -207,11 +227,17 @@
             <div style="font-size:1em; line-height:1.8; color:#eee;">${marked.parse(brief || '분석 중...')}</div>
         `;
         
+        // 2. [Master 전용] 거버넌스 데이터 렌더링
+        if (currentUser && currentUser.email === MASTER_EMAIL) {
+            document.getElementById('hr-box').innerHTML = marked.parse(currentReport.hr_proposal || "제안 대기 중...");
+            document.getElementById('audit-box').innerHTML = marked.parse(currentReport.internal_audit || "감사 대기 중...");
+        }
+
+        // 3. 뉴스 리스트 렌더링
         document.getElementById('news-list').innerHTML = (currentReport.articles || []).map(a => {
             let sum = a.pm_summary;
             if(currentRole === 'BA') sum = a.ba_summary;
             if(currentRole === 'Sec') sum = a.sec_summary;
-            
             return `
             <div class="news-card ${currentRole === 'PM' ? 'active-pm' : currentRole === 'BA' ? 'active-ba' : 'active-sec'}">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
@@ -219,34 +245,19 @@
                     <a href="${a.url}" target="_blank" style="font-size:0.85em; text-decoration:none; color:var(--primary); font-weight:bold;">원문보기 ↗</a>
                 </div>
                 <h3 style="margin:0 0 10px 0; font-size:1.1em;">${a.title}</h3>
-                <div style="background:#f9f9f9; padding:15px; border-radius:10px; font-size:0.95em;">
-                    ${marked.parse(sum || '분석 중...')}
-                </div>
+                <div style="background:#f9f9f9; padding:15px; border-radius:10px; font-size:0.95em;">${marked.parse(sum || '분석 중...')}</div>
             </div>`;
         }).join('');
-        renderTags();
     }
 
     async function sendMagicLink() {
         const email = document.getElementById('email-input').value;
         if (!email) { alert("이메일을 입력해주세요."); return; }
         const btn = document.getElementById('magic-btn');
-        btn.innerText = "발송 중...";
-        btn.disabled = true;
-
-        const { error } = await supabaseClient.auth.signInWithOtp({
-            email: email,
-            options: { emailRedirectTo: MY_PLATFORM_URL }
-        });
-
-        if (error) {
-            alert(error.message);
-            btn.innerText = "다시 시도";
-            btn.disabled = false;
-        } else {
-            alert("메일함을 확인해주세요!");
-            btn.innerText = "발송 완료";
-        }
+        btn.innerText = "발송 중..."; btn.disabled = true;
+        const { error } = await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: MY_PLATFORM_URL } });
+        if (error) { alert(error.message); btn.innerText = "다시 시도"; btn.disabled = false; }
+        else { alert("메일함을 확인해주세요!"); btn.innerText = "발송 완료"; }
     }
 
     function toggleAuth() { const s = document.getElementById('auth-section'); s.style.display = s.style.display === 'none' ? 'block' : 'none'; }
