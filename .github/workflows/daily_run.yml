@@ -1,9 +1,11 @@
-name: Daily News Analysis Bot
+name: Daily News Analysis & Governance Bot
 
 on:
   schedule:
-    # 매일 아침 9시(KST) 실행 (UTC 00:00)
+    # 1. 매일 아침 09:00 (KST) - 뉴스 분석 및 리포트 생성 (UTC 00:00)
     - cron: '0 0 * * *'
+    # 2. 매일 밤 23:30 (KST) - 인사권 자동 승인 및 집행 (UTC 14:30)
+    - cron: '30 14 * * *'
   workflow_dispatch: # 수동 실행 버튼 활성화
 
 jobs:
@@ -17,26 +19,29 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11' # 👈 3.9의 경고를 없애고 성능을 높인 최신 버전
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt # 👈 resend 등 필요한 패키지 일괄 설치
+          pip install -r requirements.txt
 
       - name: Run news_bot.py
         env:
-          # GitHub Secrets에서 가져와 봇에게 전달하는 구간
+          # 기존 환경 변수 유지
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          # [Step 3 핵심] 에이전트가 코드를 수정하고 Push할 수 있는 권한 부여
+          GH_TOKEN: ${{ secrets.GH_TOKEN }} 
         run: python news_bot.py
 
       - name: Commit and Push changes
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          git add data.json
-          git commit -m "Update master report: $(date +'%Y-%m-%d')" || echo "No changes to commit"
+          # 기존 data.json 관리 유지 (DB 사용 시에도 백업용으로 작동 가능)
+          git add data.json || echo "No data.json to add"
+          git commit -m "System Sync: $(date +'%Y-%m-%d %H:%M')" || echo "No changes to commit"
           git push
