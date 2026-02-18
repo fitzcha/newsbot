@@ -5,12 +5,10 @@ from supabase import create_client, Client
 from datetime import datetime, timedelta, timezone
 from difflib import SequenceMatcher
 
-# [v9.3] 타임존 설정: 한국(KST) 시간 강제 적용
-# 서버가 UTC여도 무조건 한국 날짜 기준으로 DB에 저장합니다.
+# [v10.0] 타임존 및 환경 변수 설정
 KST = timezone(timedelta(hours=9))
 TODAY = datetime.now(KST).strftime("%Y-%m-%d")
 
-# 환경 설정
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 SB_URL = os.environ.get("SUPABASE_URL")
 SB_KEY = os.environ.get("SUPABASE_KEY")
@@ -19,142 +17,148 @@ resend.api_key = os.environ.get("RESEND_API_KEY")
 supabase: Client = create_client(SB_URL, SB_KEY)
 google_genai = genai.Client(api_key=GEMINI_KEY)
 
-ROLES = {
-    "HR": "인사 결정권자. 키워드 성과 평가 및 채용/해고 제안.",
-    "BA_INTERNAL": "플랫폼 내부 감사관. 전략적 결함 및 품질 비판.",
-    "DEBUGGER": "시스템 엔지니어. 코드 안정성 분석.",
-    "PM": "IT 서비스 기획자", 
-    "BA": "전략 분석가", 
-    "SEC": "증권 분석가"
-}
-
-# [v9.3] 이메일 발송 최적화 (Resend SDK 규격 준수)
-def send_email_report(user_email, report_data):
+# ---------------------------------------------------------
+# [에이전트 제어부] DB에서 8대 에이전트 지침 및 설정 로드
+# ---------------------------------------------------------
+def get_agents():
+    """agent_config 테이블에서 8대 에이전트의 뇌(Prompt/Params)를 로드합니다."""
     try:
-        articles_html = "".join([
-            f"<li style='margin-bottom:15px;'><b>[{a['keyword']}] {a['title']}</b><br>"
-            f"<span style='color:#666; font-size:0.9em;'>{a['pm_summary'][:150]}...</span> "
-            f"<a href='{a['url']}' style='color:#007bff; text-decoration:none;'>원문보기</a></li>"
-            for a in report_data['articles']
-        ])
-        
-        # [주의] Resend 무료 티어는 승인된 도메인이 없을 경우 본인 이메일로만 발송 가능할 수 있음
-        params = {
-            "from": "Fitz Intelligence <onboarding@resend.dev>",
-            "to": [user_email], # 리스트 형태로 전달
-            "subject": f"[{TODAY}] Fitz Intelligence 분석 리포트",
-            "html": f"""
-            <div style="font-family:sans-serif; max-width:600px; margin:auto; border:1px solid #eee; padding:20px;">
-                <h2 style="color:#007bff;">🚀 {TODAY} 인사이트 리포트</h2>
-                <p>{user_email}님, 오늘의 뉴스 분석 결과입니다.</p>
-                <div style="background:#f8f9fa; padding:15px; border-radius:10px;">{report_data['pm_brief']}</div>
-                <h3 style="margin-top:20px;">📰 주요 뉴스</h3>
-                <ul>{articles_html}</ul>
-            </div>
-            """
-        }
-        
-        resend.Emails.send(params)
-        print(f"📧 {user_email}님 이메일 발송 명령 완료 (KST {TODAY})")
+        res = supabase.table("agent_config").select("*").execute()
+        return {a['agent_role']: a for a in (res.data or [])}
     except Exception as e:
-        print(f"🚨 이메일 발송 실패: {str(e)}")
+        print(f"🚨 에이전트 로드 실패: {str(e)}")
+        return {}
 
-# AI 에이전트 호출 (백오프 로직 유지)
-def call_agent(prompt, role_key, max_retries=3):
-    persona = ROLES.get(role_key, "전문가")
+def call_agent(prompt, agent_info, persona_override=None, max_retries=3):
+    """DB 설정값(Temperature, Model)을 기반으로 개별 에이전트를 가동합니다."""
+    role = persona_override if persona_override else agent_info['agent_role']
+    instruction = agent_info['instruction']
+    
     for attempt in range(max_retries):
         try:
-            time.sleep(5 + random.uniform(0, 2)) 
+            time.sleep(2 + random.uniform(0, 1)) # RPM 조절
             res = google_genai.models.generate_content(
-                model="gemini-2.0-flash", 
-                contents=f"당신은 {persona}입니다.\n{prompt}"
+                model=agent_info.get('model_name', 'gemini-2.0-flash'),
+                contents=f"당신은 {role}입니다.\n지침: {instruction}\n\n입력 데이터: {prompt}",
+                config={'temperature': agent_info.get('temperature', 0.7)}
             )
             return res.text
         except Exception as e:
             if "429" in str(e):
-                wait = (2 ** attempt) * 30
-                print(f"⚠️ 과부하 대기: {wait}초 ({role_key})")
+                wait = (2 ** attempt) * 20
+                print(f"⚠️ {role} 과부하 대기: {wait}초")
                 time.sleep(wait)
             else: raise e
-    return "• 분석 지연"
+    return f"• {role} 분석 지연"
 
-# 거버넌스 집행 (23:30)
-def execute_governance():
-    now_kst = datetime.now(KST)
-    # KST 기준 밤 11:30분 확인
-    deadline = now_kst.replace(hour=23, minute=30, second=0, microsecond=0)
-    
-    res = supabase.table("pending_approvals").select("*").neq("status", "EXECUTED").execute()
-    for p in (res.data or []):
-        if now_kst >= deadline or p['status'] in ['APPROVED', 'REJECTED']:
-            supabase.table("pending_approvals").update({"status": "EXECUTED"}).eq("id", p['id']).execute()
-            supabase.table("action_logs").insert({
-                "user_id": p['user_id'], "action_type": p['type'], 
-                "target_word": p['word'], "execution_method": "AUTO_SYSTEM",
-                "details": f"KST {deadline} 기준 자동 확정"
-            }).execute()
+# ---------------------------------------------------------
+# [핵심 로직] 8대 에이전트 연쇄 호출 파이프라인
+# ---------------------------------------------------------
+def run_autonomous_engine():
+    # 1. 에이전트 세팅 로드
+    agents = get_agents()
+    if not agents: return
+    print(f"🚀 {TODAY} 8대 에이전트 연쇄 가동 시작")
 
-# 메인 엔진
-def run_main_engine():
-    settings = supabase.table("user_settings").select("*").execute().data or []
+    # 2. [INFO] 정보수집 정책 결정 및 키워드(직원) 리스트 확보
+    info_policy = agents['INFO'].get('metadata', {})
+    period = info_policy.get('period', '1d')
     
-    for user_set in settings:
-        user_id, user_email = user_set['id'], user_set.get('email', 'Unknown')
-        user_keywords = user_set.get('keywords', [])[:5]
+    # [KW] 키워드 에이전트 관점의 직원 리스트 로드
+    kw_res = supabase.table("user_settings").select("id, email, keywords").execute()
+    
+    for user in (kw_res.data or []):
+        user_id, user_email = user['id'], user.get('email', 'Unknown')
+        keywords = user.get('keywords', [])[:5]
         
-        if not user_keywords: continue
-
-        print(f"🔍 {user_email} 분석 시작 (기준일: {TODAY})")
-        report = {"date": TODAY, "articles": [], "tracked_keywords": user_keywords}
+        print(f"🔍 {user_email} (직원수: {len(keywords)}) 분석 중...")
+        raw_collection = []
         all_titles = []
 
-        for word in user_keywords:
+        # 3. [INFO] 실제 뉴스 수집 실행
+        for word in keywords:
             is_cjk = any(ord(char) > 0x1100 for char in word)
             lang, country = ('ko', 'KR') if is_cjk else ('en', 'US')
-            
-            # GNews 인스턴스
-            gn = GNews(language=lang, country=country, period='1d', max_results=5)
+            gn = GNews(language=lang, country=country, period=period, max_results=5)
             items = gn.get_news(word)
-
-            if not items:
-                gn = GNews(language=lang, country=country, period='3d', max_results=5)
-                items = gn.get_news(word)
-
-            unique_news = []
+            
+            # 중복 제거 (v8.8 로직 유지)
+            unique_items = []
             for n in items:
-                if any(SequenceMatcher(None, n['title'], u['title']).ratio() > 0.6 for u in unique_news):
-                    continue
-                unique_news.append(n)
-                if len(unique_news) >= 3: break
-
-            for n in unique_news:
-                article = {
-                    "keyword": word, "title": n['title'], "url": n['url'],
-                    "pm_summary": call_agent(n['title'], "PM"),
-                    "ba_summary": call_agent(n['title'], "BA"),
-                    "sec_summary": call_agent(n['title'], "SEC")
-                }
-                report["articles"].append(article)
+                if not any(SequenceMatcher(None, n['title'], u['title']).ratio() > 0.6 for u in unique_items):
+                    unique_items.append(n)
+                if len(unique_items) >= 2: break
+            
+            for n in unique_items:
+                raw_collection.append({"keyword": word, "title": n['title'], "url": n['url']})
                 all_titles.append(f"[{word}] {n['title']}")
 
-        if report["articles"]:
-            ctx = "\n".join(all_titles)
-            report["pm_brief"] = call_agent(ctx, "PM")
-            report["ba_brief"] = call_agent(ctx, "BA")
-            report["securities_brief"] = call_agent(ctx, "SEC")
-            report["internal_audit"] = call_agent("플랫폼 분석 품질 비판", "BA_INTERNAL")
-            report["hr_proposal"] = call_agent(f"키워드 {user_keywords} 기반 제안", "HR")
-            
-            # [v9.3 핵심] 한국 날짜(KST)로 DB 저장
-            supabase.table("reports").upsert({
-                "user_id": user_id, 
-                "report_date": TODAY, 
-                "content": report
-            }).execute()
-            
-            send_email_report(user_email, report)
-            print(f"✅ {user_email} 완료.")
+        if not raw_collection: continue
+
+        # 4. [DATA] 데이터 엔지니어링: 뉴스 정제 및 분석용 컨텍스트 생성
+        context_data = "\n".join(all_titles)
+        refined_context = call_agent(context_data, agents['DATA'])
+
+        # 5. [BRIEF] 전문가 그룹(PM/BA/SEC) 브리핑 작성
+        articles_with_summary = []
+        for news in raw_collection:
+            articles_with_summary.append({
+                **news,
+                "pm_summary": call_agent(news['title'], agents['BRIEF'], "PM"),
+                "ba_summary": call_agent(news['title'], agents['BRIEF'], "BA"),
+                "sec_summary": call_agent(news['title'], agents['BRIEF'], "SEC")
+            })
+
+        pm_brief = call_agent(refined_context, agents['BRIEF'], "PM")
+        ba_brief = call_agent(refined_context, agents['BRIEF'], "BA")
+        sec_brief = call_agent(refined_context, agents['BRIEF'], "SEC")
+
+        # 6. [QA] 품질 보증: 리포트 검수 및 점수 부여
+        qa_input = f"Briefing: {pm_brief}\nArticles: {str(all_titles)}"
+        qa_feedback = call_agent(qa_input, agents['QA'])
+        # 간단한 점수 추출 로직 (지침에 'Score: 00' 포함 권장)
+        qa_score = 80 if "통과" in qa_feedback or "Good" in qa_feedback else 50
+
+        # 7. [HR] 인사 평가: 키워드(직원) 성과 기반 해고/채용 제안
+        hr_input = f"Keywords: {keywords}\nPerformance Data: {refined_context}"
+        hr_proposal = call_agent(hr_input, agents['HR'])
+
+        # 8. 최종 리포트 패키징 (v8.8 FE 호환 구조 유지)
+        final_report = {
+            "date": TODAY,
+            "pm_brief": pm_brief,
+            "ba_brief": ba_brief,
+            "securities_brief": sec_brief,
+            "hr_proposal": hr_proposal,
+            "articles": articles_with_summary,
+            "qa_feedback": qa_feedback
+        }
+
+        # 9. [DB 저장] QA 점수 포함
+        supabase.table("reports").insert({
+            "user_id": user_id,
+            "report_date": TODAY,
+            "content": final_report,
+            "qa_score": qa_score,
+            "qa_feedback": qa_feedback
+        }).execute()
+
+        # 10. 이메일 발송
+        send_email_report(user_email, final_report)
+
+def send_email_report(user_email, report):
+    try:
+        articles_html = "".join([
+            f"<li><b>[{a['keyword']}]</b> {a['title']} <a href='{a['url']}'>[원문]</a></li>"
+            for a in report['articles']
+        ])
+        resend.Emails.send({
+            "from": "Fitz Intelligence <onboarding@resend.dev>",
+            "to": [user_email],
+            "subject": f"[{TODAY}] AI 기업 자율 분석 리포트",
+            "html": f"<h2>🚀 {TODAY} 리포트</h2>{report['pm_brief']}<h3>📰 수집 뉴스</h3><ul>{articles_html}</ul>"
+        })
+    except Exception as e: print(f"📧 메일 실패: {str(e)}")
 
 if __name__ == "__main__":
-    execute_governance()
-    run_main_engine()
+    run_autonomous_engine()
