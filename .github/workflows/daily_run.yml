@@ -2,11 +2,11 @@ name: Daily News Analysis & Governance Bot
 
 on:
   schedule:
-    # 1. 매일 아침 09:00 (KST) - 뉴스 분석 및 리포트 생성 (UTC 00:00)
-    - cron: '0 0 * * *'
-    # 2. 매일 밤 23:30 (KST) - 인사권 자동 승인 및 집행 (UTC 14:30)
+    # [Fix 1] 한국 시간 오전 09:30 (KST) - 정각 부하를 피하기 위해 UTC 00:30 설정
+    - cron: '30 0 * * *'
+    # [Fix 2] 한국 시간 밤 23:30 (KST) - 인사권 자동 확정 (UTC 14:30)
     - cron: '30 14 * * *'
-  workflow_dispatch: # 수동 실행 버튼 활성화
+  workflow_dispatch: # 마스터의 수동 실행 버튼 유지
 
 jobs:
   build:
@@ -15,6 +15,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          # 에이전트가 코드를 수정하고 Push하기 위해 필요한 전체 히스토리 로드
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -28,20 +31,27 @@ jobs:
 
       - name: Run news_bot.py
         env:
-          # 기존 환경 변수 유지
+          # 시스템 가동을 위한 핵심 환경 변수
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          # [Step 3 핵심] 에이전트가 코드를 수정하고 Push할 수 있는 권한 부여
-          GH_TOKEN: ${{ secrets.GH_TOKEN }} 
+          # 에이전트 자율 진화를 위한 토큰 (Push 권한)
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }} 
         run: python news_bot.py
 
       - name: Commit and Push changes
         run: |
-          git config --global user.name "GitHub Action"
-          git config --global user.email "action@github.com"
-          # 기존 data.json 관리 유지 (DB 사용 시에도 백업용으로 작동 가능)
-          git add data.json || echo "No data.json to add"
-          git commit -m "System Sync: $(date +'%Y-%m-%d %H:%M')" || echo "No changes to commit"
-          git push
+          git config --global user.name "Fitz Intelligence Bot"
+          git config --global user.email "bot@fitzintelligence.ai"
+          
+          # 에이전트가 수정한 코드 및 data.json 전체 스테이징
+          git add .
+          
+          # 변경사항이 있을 때만 커밋 수행 (에러 방지)
+          if ! git diff --cached --quiet; then
+            git commit -m "🤖 [System Evolution] $(date +'%Y-%m-%d %H:%M') KST Update"
+            git push origin main
+          else
+            echo "No evolutionary changes detected. Skipping push."
+          fi
