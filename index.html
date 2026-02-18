@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitz Intelligence v8.5 | Loop Breaker</title>
+    <title>Fitz Intelligence v8.6 | Bridge of Trust</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <style>
-        /* [Design - 성환님 v7.9 규격 100% 보존] */
+        /* [성환님 v7.9 디자인 및 ID 완벽 복구] */
         :root { --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; --black: #000; --white: #fff; --sec: #ffc107; --admin: #ff4d4f; --system: #6f42c1; }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; line-height: 1.6; }
         .container { max-width: 850px; margin: 0 auto; }
@@ -36,8 +36,8 @@
 
 <div class="container">
     <div class="top-bar">
-        <h1>Fitz Intelligence <small id="v-tag" style="font-size:0.4em; color:var(--admin); letter-spacing: 1px;">v8.5 Stable</small></h1>
-        <div id="user-display"><button class="auth-btn" onclick="toggleAuth()">베타 신청 / 로그인</button></div>
+        <h1>Fitz Intelligence <small id="v-tag" style="font-size:0.4em; color:var(--admin); letter-spacing: 1px;">v8.6 Trust</small></h1>
+        <div id="user-display"></div>
     </div>
 
     <section id="auth-section" class="auth-card" style="display:none;">
@@ -52,7 +52,7 @@
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
             <h3 style="margin:0; color:var(--admin);">⚖️ Master Command</h3>
             <div style="display:flex; gap:10px;">
-                <button onclick="localStorage.clear(); sessionStorage.clear(); location.reload();" class="auth-btn" style="font-size:0.75em; border-color:#666; color:#666;">🔄 완전 초기화</button>
+                <button onclick="forceClean()" class="auth-btn" style="font-size:0.75em;">🔄 세션 초기화</button>
                 <button onclick="triggerManualRun()" class="auth-btn active" style="font-size:0.75em;">🚀 분석 실행</button>
             </div>
         </div>
@@ -86,7 +86,6 @@
         <div id="loading-spinner" class="loading-overlay">
             <div style="font-size:2em; margin-bottom:10px;">⌛</div>
             <div style="font-weight:bold; color:white;">데이터 동기화 중...</div>
-            <div style="font-size:0.7em; margin-top:15px; opacity:0.7; color:white; cursor:pointer;" onclick="showLoading(false)">[강제 닫기]</div>
         </div>
         <div id="briefing-content"></div>
     </div>
@@ -102,34 +101,36 @@
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let currentReport = null, currentRole = 'PM', currentUser = null, userKeywords = [];
-    let isInitialLoad = true;
 
-    // [v8.5 핵심] 무한 리로드 원인인 location.reload() 제거
+    // [v8.6] 무한 리로드 주범인 reload() 삭제 및 세션 관리 정교화
     supabaseClient.auth.onAuthStateChange(async (event, session) => {
-        console.log("🔔 Auth Event:", event);
+        console.log("🔔 세션 변경:", event);
         currentUser = session?.user || null;
         updateUI();
-        if (event !== 'INITIAL_SESSION' || isInitialLoad) {
-            isInitialLoad = false;
-            await syncAll();
+        if (event === 'SIGNED_IN') { // 로그인 성공 시에만 키워드 다시 불러오기
+            await fetchUserKeywords();
         }
     });
 
-    async function syncAll() {
-        showLoading(true);
-        try {
+    async function init() {
+        console.log("🚀 시스템 초기화 시작");
+        updateUI();
+        // 날짜 리스트는 로그인 여부와 관계없이 무조건 최초 1회 로드
+        await loadDates();
+        
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            currentUser = session.user;
+            updateUI();
             await fetchUserKeywords();
-            await loadDates();
-        } catch (e) {
-            console.error("동기화 실패:", e);
-        } finally {
-            showLoading(false);
         }
     }
 
     async function loadDates() {
+        showLoading(true);
         try {
             const { data, error } = await supabaseClient.from('reports').select('report_date').order('report_date', { ascending: false });
+            if (error) throw error;
             const select = document.getElementById('date-select');
             if (data && data.length > 0) {
                 const uniqueDates = [...new Set(data.map(d => d.report_date))];
@@ -139,14 +140,15 @@
             } else {
                 select.innerHTML = '<option value="">데이터 없음</option>';
             }
-        } catch (e) { console.error(e); }
+        } catch (e) { console.error("날짜 로드 실패:", e); }
+        finally { showLoading(false); }
     }
 
     async function fetchDayData() {
         const selectedDate = document.getElementById('date-select').value;
         if (!selectedDate) return;
+        showLoading(true);
         try {
-            showLoading(true);
             const { data } = await supabaseClient.from('reports').select('*').eq('report_date', selectedDate).order('created_at', { ascending: false }).limit(1);
             if (data && data.length > 0) {
                 currentReport = data[0].content;
@@ -157,24 +159,39 @@
         if (currentUser?.email === MASTER_EMAIL) fetchHistory();
     }
 
-    function showLoading(show) { 
-        const spinner = document.getElementById('loading-spinner');
-        if (spinner) spinner.style.display = show ? 'flex' : 'none'; 
-        if (show) setTimeout(() => { if(spinner) spinner.style.display = 'none'; }, 3500);
-    }
-
     function renderDisplay() {
         if (!currentReport) return;
         const b = currentRole === 'BA' ? currentReport.ba_brief : currentRole === 'Sec' ? currentReport.securities_brief : currentReport.pm_brief;
         document.getElementById('briefing-content').innerHTML = `
             <h4 style="margin:0 0 15px 0;"><span class="ai-badge">AI Analysis</span> ${currentRole} 브리핑</h4>
-            <div style="font-size:1.05em; color:#eee; line-height:1.8;">${marked.parse(b || '분석 중...')}</div>`;
+            <div style="font-size:1.05em; color:#eee; line-height:1.8;">${marked.parse(b || '분석 데이터를 읽어오는 중...')}</div>`;
         document.getElementById('news-list').innerHTML = (currentReport.articles || []).map(a => {
             const s = currentRole === 'BA' ? a.ba_summary : currentRole === 'Sec' ? a.sec_summary : a.pm_summary;
             return `<div class="news-card ${currentRole === 'PM' ? 'active-pm' : currentRole === 'BA' ? 'active-ba' : 'active-sec'}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><span style="font-weight:bold; color:var(--primary);">#${a.keyword}</span><a href="${a.url}" target="_blank" style="font-size:0.85em; text-decoration:none; color:var(--primary); font-weight:bold;">원문 ↗</a></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><span style="font-weight:bold; color:var(--primary);">#${a.keyword}</span><a href="${a.url}" target="_blank" style="font-size:0.85em; text-decoration:none; color:var(--primary); font-weight:bold;">원문보기 ↗</a></div>
                 <h3 style="margin:0 0 10px 0; font-size:1.15em;">${a.title}</h3><div style="background:#f9f9f9; padding:15px; border-radius:10px; font-size:0.95em;">${marked.parse(s || '요약 중...')}</div></div>`;
         }).join('');
+    }
+
+    function showLoading(show) { 
+        const spinner = document.getElementById('loading-spinner');
+        if (spinner) spinner.style.display = show ? 'flex' : 'none'; 
+        if (show) setTimeout(() => { if(spinner) spinner.style.display = 'none'; }, 4000); // 4초 후 강제 해제
+    }
+
+    function updateUI() { 
+        const userDisp = document.getElementById('user-display');
+        if (currentUser) {
+            userDisp.innerHTML = `<span>👤 <b>${currentUser.email.split('@')[0]}</b>님</span> <button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
+            document.getElementById('auth-section').style.display = "none";
+            document.getElementById('kw-controls').style.display = "flex";
+            if (currentUser.email === MASTER_EMAIL) document.getElementById('master-panel').style.display = "block";
+        } else {
+            userDisp.innerHTML = `<button class="auth-btn" onclick="toggleAuth()">베타 신청 / 로그인</button>`;
+            document.getElementById('master-panel').style.display = "none";
+            document.getElementById('kw-controls').style.display = "none";
+        }
+        renderTags();
     }
 
     function renderTags() { 
@@ -182,29 +199,15 @@
         document.getElementById('tag-list').innerHTML = list.map(k => `<span class="tag">#${k} ${currentUser ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>`).join(''); 
     }
 
+    function forceClean() { localStorage.clear(); sessionStorage.clear(); location.reload(); }
     function toggleAuth() { const s = document.getElementById('auth-section'); s.style.display = s.style.display === 'none' ? 'block' : 'none'; }
     async function sendMagicLink() { const email = document.getElementById('email-input').value.trim(); await supabaseClient.auth.signInWithOtp({ email, options: { emailRedirectTo: MY_PLATFORM_URL } }); alert("링크 발송 완료!"); }
     async function fetchUserKeywords() { if (!currentUser) return; const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle(); if (data) userKeywords = data.keywords || []; renderTags(); }
     async function fetchHistory() { const { data } = await supabaseClient.from('action_logs').select('*').order('executed_at', { ascending: false }).limit(3); if (data) document.getElementById('system-logs').innerHTML = data.map(l => `[${l.executed_at.substring(11,16)}] ${l.execution_method}: ${l.target_word}`).join('<br>'); }
     function setRole(r) { currentRole = r; document.querySelectorAll('.role-switch .auth-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${r}`)); renderDisplay(); }
-    async function handleLogout() { await supabaseClient.auth.signOut(); }
+    async function handleLogout() { await supabaseClient.auth.signOut(); location.reload(); }
     
-    function updateUI() { 
-        if (currentUser) {
-            document.getElementById('user-display').innerHTML = `<span>👤 <b>${currentUser.email.split('@')[0]}</b>님</span> <button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
-            document.getElementById('auth-section').style.display = "none";
-            document.getElementById('kw-controls').style.display = "flex";
-            if (currentUser.email === MASTER_EMAIL) document.getElementById('master-panel').style.display = "block";
-        } else {
-            document.getElementById('user-display').innerHTML = `<button class="auth-btn" onclick="toggleAuth()">베타 신청 / 로그인</button>`;
-            document.getElementById('master-panel').style.display = "none";
-            document.getElementById('kw-controls').style.display = "none";
-        }
-        renderTags(); // 키워드 표시 보장
-    }
-    
-    renderTags(); // 초기 키워드 표시
-    updateUI();
+    init();
 </script>
 </body>
 </html>
