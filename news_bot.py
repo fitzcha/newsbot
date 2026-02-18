@@ -1,11 +1,11 @@
-import os, json, time, traceback, random, resend
+import os, json, time, traceback, random, resend, re
 from google import genai
 from gnews import GNews
 from supabase import create_client, Client
 from datetime import datetime, timedelta, timezone
 from difflib import SequenceMatcher
 
-# [v10.0] 타임존 및 환경 변수 설정
+# [v10.1] 타임존 및 환경 변수 설정
 KST = timezone(timedelta(hours=9))
 TODAY = datetime.now(KST).strftime("%Y-%m-%d")
 
@@ -18,10 +18,9 @@ supabase: Client = create_client(SB_URL, SB_KEY)
 google_genai = genai.Client(api_key=GEMINI_KEY)
 
 # ---------------------------------------------------------
-# [에이전트 제어부] DB에서 8대 에이전트 지침 및 설정 로드
+# [에이전트 제어부] DB에서 8대 에이전트 지침 로드
 # ---------------------------------------------------------
 def get_agents():
-    """agent_config 테이블에서 8대 에이전트의 뇌(Prompt/Params)를 로드합니다."""
     try:
         res = supabase.table("agent_config").select("*").execute()
         return {a['agent_role']: a for a in (res.data or [])}
@@ -30,13 +29,12 @@ def get_agents():
         return {}
 
 def call_agent(prompt, agent_info, persona_override=None, max_retries=3):
-    """DB 설정값(Temperature, Model)을 기반으로 개별 에이전트를 가동합니다."""
     role = persona_override if persona_override else agent_info['agent_role']
     instruction = agent_info['instruction']
     
     for attempt in range(max_retries):
         try:
-            time.sleep(2 + random.uniform(0, 1)) # RPM 조절
+            time.sleep(2 + random.uniform(0, 1))
             res = google_genai.models.generate_content(
                 model=agent_info.get('model_name', 'gemini-2.0-flash'),
                 contents=f"당신은 {role}입니다.\n지침: {instruction}\n\n입력 데이터: {prompt}",
@@ -52,37 +50,39 @@ def call_agent(prompt, agent_info, persona_override=None, max_retries=3):
     return f"• {role} 분석 지연"
 
 # ---------------------------------------------------------
+# [v10.1 보조 함수] 마크다운의 HTML 변환 (이메일용)
+# ---------------------------------------------------------
+def marked_parse_pseudo(text):
+    if not text: return ""
+    return text.replace("\n", "<br>").replace("**", "<b>").replace("* ", "• ")
+
+# ---------------------------------------------------------
 # [핵심 로직] 8대 에이전트 연쇄 호출 파이프라인
 # ---------------------------------------------------------
 def run_autonomous_engine():
-    # 1. 에이전트 세팅 로드
     agents = get_agents()
     if not agents: return
-    print(f"🚀 {TODAY} 8대 에이전트 연쇄 가동 시작")
+    print(f"🚀 {TODAY} 8대 에이전트 연쇄 가동 시작 (v10.1)")
 
-    # 2. [INFO] 정보수집 정책 결정 및 키워드(직원) 리스트 확보
+    # [INFO] 정책 로드
     info_policy = agents['INFO'].get('metadata', {})
     period = info_policy.get('period', '1d')
     
-    # [KW] 키워드 에이전트 관점의 직원 리스트 로드
+    # 유저 키워드 로드
     kw_res = supabase.table("user_settings").select("id, email, keywords").execute()
     
     for user in (kw_res.data or []):
         user_id, user_email = user['id'], user.get('email', 'Unknown')
         keywords = user.get('keywords', [])[:5]
+        print(f"🔍 {user_email} (키워드: {keywords}) 분석 중...")
         
-        print(f"🔍 {user_email} (직원수: {len(keywords)}) 분석 중...")
-        raw_collection = []
-        all_titles = []
-
-        # 3. [INFO] 실제 뉴스 수집 실행
+        raw_collection, all_titles = [], []
         for word in keywords:
             is_cjk = any(ord(char) > 0x1100 for char in word)
             lang, country = ('ko', 'KR') if is_cjk else ('en', 'US')
             gn = GNews(language=lang, country=country, period=period, max_results=5)
             items = gn.get_news(word)
             
-            # 중복 제거 (v8.8 로직 유지)
             unique_items = []
             for n in items:
                 if not any(SequenceMatcher(None, n['title'], u['title']).ratio() > 0.6 for u in unique_items):
@@ -95,11 +95,10 @@ def run_autonomous_engine():
 
         if not raw_collection: continue
 
-        # 4. [DATA] 데이터 엔지니어링: 뉴스 정제 및 분석용 컨텍스트 생성
-        context_data = "\n".join(all_titles)
-        refined_context = call_agent(context_data, agents['DATA'])
+        # [DATA] 데이터 엔지니어링
+        refined_context = call_agent("\n".join(all_titles), agents['DATA'])
 
-        # 5. [BRIEF] 전문가 그룹(PM/BA/SEC) 브리핑 작성
+        # [BRIEF] 전문가 그룹 브리핑
         articles_with_summary = []
         for news in raw_collection:
             articles_with_summary.append({
@@ -113,17 +112,20 @@ def run_autonomous_engine():
         ba_brief = call_agent(refined_context, agents['BRIEF'], "BA")
         sec_brief = call_agent(refined_context, agents['BRIEF'], "SEC")
 
-        # 6. [QA] 품질 보증: 리포트 검수 및 점수 부여
-        qa_input = f"Briefing: {pm_brief}\nArticles: {str(all_titles)}"
+        # [QA] 품질 보증 및 점수 추출 (v10.1 보강)
+        qa_input = f"PM_Brief: {pm_brief}\nArticles: {str(all_titles)}"
         qa_feedback = call_agent(qa_input, agents['QA'])
-        # 간단한 점수 추출 로직 (지침에 'Score: 00' 포함 권장)
-        qa_score = 80 if "통과" in qa_feedback or "Good" in qa_feedback else 50
+        
+        # QA 피드백 텍스트에서 '75/100' 또는 '75점' 형태의 점수 추출
+        score_match = re.search(r"(\d+)(?=/100|점)", qa_feedback)
+        qa_score = int(score_match.group(1)) if score_match else 50
+        print(f"🛡️ QA Score: {qa_score}")
 
-        # 7. [HR] 인사 평가: 키워드(직원) 성과 기반 해고/채용 제안
-        hr_input = f"Keywords: {keywords}\nPerformance Data: {refined_context}"
+        # [HR] 인사 평가 (채용/해고 제안)
+        hr_input = f"Current Keywords: {keywords}\nContext: {refined_context}"
         hr_proposal = call_agent(hr_input, agents['HR'])
 
-        # 8. 최종 리포트 패키징 (v8.8 FE 호환 구조 유지)
+        # 최종 패키지
         final_report = {
             "date": TODAY,
             "pm_brief": pm_brief,
@@ -134,7 +136,7 @@ def run_autonomous_engine():
             "qa_feedback": qa_feedback
         }
 
-        # 9. [DB 저장] QA 점수 포함
+        # [DB 저장]
         supabase.table("reports").insert({
             "user_id": user_id,
             "report_date": TODAY,
@@ -143,22 +145,49 @@ def run_autonomous_engine():
             "qa_feedback": qa_feedback
         }).execute()
 
-        # 10. 이메일 발송
+        # [메일 발송]
         send_email_report(user_email, final_report)
 
 def send_email_report(user_email, report):
     try:
         articles_html = "".join([
-            f"<li><b>[{a['keyword']}]</b> {a['title']} <a href='{a['url']}'>[원문]</a></li>"
+            f"<li style='margin-bottom:8px;'><b>[{a['keyword']}]</b> {a['title']} "
+            f"<a href='{a['url']}' style='color:#007bff; text-decoration:none;'>[원문]</a></li>"
             for a in report['articles']
         ])
+        
+        # [v10.1] HR 섹션 디자인 보강
+        hr_section = f"""
+        <div style="background:#fff2f2; padding:20px; border-radius:12px; border-left:6px solid #ff4d4f; margin-top:25px;">
+            <h3 style="color:#ff4d4f; margin-top:0; font-size:18px;">👨‍💼 HR 에이전트 인사이트 (채용/해고)</h3>
+            <div style="color:#444; font-size:15px;">{marked_parse_pseudo(report['hr_proposal'])}</div>
+        </div>
+        """ if report.get('hr_proposal') else ""
+
+        html_body = f"""
+        <div style="font-family:'Pretendard', sans-serif; max-width:650px; margin:auto; line-height:1.7; color:#333;">
+            <h2 style="color:#007bff; border-bottom:3px solid #007bff; padding-bottom:12px; margin-bottom:25px;">Fitz Intelligence 리포트 ({TODAY})</h2>
+            <div style="background:#f8f9fa; padding:20px; border-radius:12px; border-left:6px solid #007bff; margin-bottom:25px;">
+                <h3 style="margin-top:0; color:#0056b3;">📊 PM 종합 브리핑</h3>
+                <div style="font-size:15px;">{marked_parse_pseudo(report['pm_brief'])}</div>
+            </div>
+            {hr_section}
+            <h3 style="margin-top:30px; border-bottom:1px solid #eee; padding-bottom:10px;">📰 수집된 지능 원문 리스트</h3>
+            <ul style="padding-left:20px; font-size:14px;">{articles_html}</ul>
+            <hr style="border:0; border-top:1px solid #eee; margin-top:40px;">
+            <p style="font-size:12px; color:#999; text-align:center;">본 분석은 QA 에이전트의 검증을 통과한 무결성 인사이트입니다.</p>
+        </div>
+        """
+
         resend.Emails.send({
             "from": "Fitz Intelligence <onboarding@resend.dev>",
             "to": [user_email],
-            "subject": f"[{TODAY}] AI 기업 자율 분석 리포트",
-            "html": f"<h2>🚀 {TODAY} 리포트</h2>{report['pm_brief']}<h3>📰 수집 뉴스</h3><ul>{articles_html}</ul>"
+            "subject": f"[{TODAY}] AI 기업 자율 분석 리포트 & HR 제안",
+            "html": html_body
         })
-    except Exception as e: print(f"📧 메일 실패: {str(e)}")
+        print(f"📧 {user_email}님 메일 발송 완료")
+    except Exception as e:
+        print(f"📧 이메일 발송 에러: {str(e)}")
 
 if __name__ == "__main__":
     run_autonomous_engine()
