@@ -3,37 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitz Intelligence v8.9 | Strategic Command</title>
+    <title>Fitz Intelligence v9.0 | Master & Client</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
     <style>
-        /* v8.8 디자인 유지 및 마스터 전용 UI 추가 */
-        :root { --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; --black: #000; --white: #fff; --sec: #ffc107; --admin: #ff4d4f; --system: #6f42c1; }
+        /* v8.8~8.9 통합 디자인 가이드 */
+        :root { --primary: #007bff; --bg: #f8f9fa; --card: #ffffff; --black: #000; --white: #fff; --sec: #ffc107; --admin: #ff4d4f; }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: #333; line-height: 1.6; }
         .container { max-width: 850px; margin: 0 auto; }
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        .auth-card { background: #fff; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 25px; border: 1px solid #eee; }
-        .admin-panel { border-top: 6px solid var(--admin) !important; background: #fffafb !important; }
-        .auth-btn { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--primary); background: #fff; color: var(--primary); cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s; outline: none; border: 1px solid var(--primary); }
-        .auth-btn:hover { background: #f0f7ff; }
+        
+        /* 마스터 콘솔 레이아웃 */
+        .admin-panel { border-top: 6px solid var(--admin) !important; background: #fffafb !important; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .tab-menu { display: flex; gap: 15px; border-bottom: 1px solid #eee; margin-bottom: 20px; }
+        .tab-item { padding: 10px 5px; cursor: pointer; font-size: 0.9em; color: #999; border-bottom: 2px solid transparent; }
+        .tab-item.active { color: var(--admin); border-bottom-color: var(--admin); font-weight: bold; }
+        
+        /* 공통 컴포넌트 */
+        .auth-btn { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--primary); background: #fff; color: var(--primary); cursor: pointer; font-weight: bold; font-size: 0.9em; transition: all 0.2s; }
         .auth-btn.active { background: var(--primary); color: #fff; }
         .keyword-manager { background: #fff; padding: 22px; border-radius: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 6px solid #ccc; }
         .tag-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
         .tag { background: #eef2f7; padding: 8px 16px; border-radius: 25px; font-size: 0.85em; color: var(--primary); font-weight: 600; display: flex; align-items: center; border: 1px solid #d1d9e6; }
-        .briefing-box { background: #343a40; color: #fff; padding: 25px; border-radius: 14px; margin-bottom: 35px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); min-height: 120px; position: relative; }
+        .remove-btn { margin-left: 9px; cursor: pointer; color: #ff4d4f; }
         
-        /* [v8.9 추가] QA 뱃지 디자인 */
-        .qa-badge { position: absolute; top: 15px; right: 15px; background: rgba(255, 77, 79, 0.2); border: 1px solid var(--admin); color: var(--admin); padding: 4px 12px; border-radius: 20px; font-size: 0.75em; font-weight: bold; }
-        .qa-pass { background: rgba(40, 167, 69, 0.2); border-color: #28a745; color: #28a745; }
-
-        /* [v8.9 추가] 에이전트 설정 탭 디자인 */
-        .tab-menu { display: flex; gap: 15px; border-bottom: 1px solid #eee; margin-bottom: 20px; }
-        .tab-item { padding: 10px 5px; cursor: pointer; font-size: 0.9em; color: #999; border-bottom: 2px solid transparent; }
-        .tab-item.active { color: var(--admin); border-bottom-color: var(--admin); font-weight: bold; }
-        .agent-editor { background: #f9f9f9; padding: 15px; border-radius: 10px; border: 1px solid #eee; margin-bottom: 15px; }
-        textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 0.9em; resize: vertical; margin-top: 10px; box-sizing: border-box; }
-        
+        .briefing-box { background: #343a40; color: #fff; padding: 25px; border-radius: 14px; margin-bottom: 35px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); position: relative; }
+        .qa-badge { position: absolute; top: 15px; right: 15px; padding: 4px 12px; border-radius: 20px; font-size: 0.75em; font-weight: bold; }
         .news-card { background: #fff; padding: 22px; border-radius: 14px; margin-bottom: 18px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); border-left: 5px solid #eee; }
         .active-pm { border-left-color: var(--primary); }
         .active-ba { border-left-color: #28a745; }
@@ -44,34 +40,26 @@
 
 <div class="container">
     <div class="top-bar">
-        <h1>Fitz Intelligence <small style="font-size:0.4em; color:var(--admin);">v8.9 Strategic</small></h1>
+        <h1>Fitz Intelligence <small style="font-size:0.4em; color:var(--admin);">v9.0 Integrated</small></h1>
         <div id="user-display"></div>
     </div>
 
-    <section id="auth-section" class="auth-card" style="display:none;">
-        <h3 style="margin-top:0;">🚀 매직링크 입장</h3>
-        <div style="display:flex; gap:10px;">
-            <input type="email" id="email-input" placeholder="example@gmail.com" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;">
-            <button class="auth-btn active" onclick="sendMagicLink()">링크 받기</button>
-        </div>
-    </section>
-
-    <section id="master-panel" class="auth-card admin-panel" style="display:none;">
+    <section id="master-console" style="display:none;" class="admin-panel">
         <div class="tab-menu">
-            <div id="tab-log" class="tab-item active" onclick="switchTab('log')">📋 시스템 운영</div>
-            <div id="tab-agent" class="tab-item" onclick="switchTab('agent')">🧠 에이전트 설정</div>
+            <div id="tab-log" class="tab-item active" onclick="switchTab('log')">📋 기업 운영 (HR/Log)</div>
+            <div id="tab-agent" class="tab-item" onclick="switchTab('agent')">🧠 에이전트 지휘</div>
         </div>
         
         <div id="view-log">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-                <div><strong>👨‍💼 HR 제안</strong><div id="hr-box" style="font-size:0.85em; background:#fff; padding:15px; border-radius:10px; margin-top:10px; border:1px solid #ffebeb; min-height: 50px;"></div></div>
-                <div><strong>🕵️ 로그</strong><div class="log-box" id="system-logs">로그 대기 중...</div></div>
+                <div><strong>👨‍💼 HR 채용/해고 제안</strong><div id="hr-box" style="font-size:0.85em; background:#fff; padding:15px; border-radius:10px; border:1px solid #ffebeb; margin-top:10px; min-height: 80px;"></div></div>
+                <div><strong>🕵️ 시스템 로그</strong><div id="system-logs" style="font-size:0.75em; background:#f1f1f1; padding:10px; border-radius:8px; height:80px; overflow-y:auto; font-family:monospace;"></div></div>
             </div>
-            <button onclick="triggerManualRun()" class="auth-btn active" style="width:100%; margin-top:20px;">🚀 분석 즉시 실행</button>
+            <button onclick="triggerManualRun()" class="auth-btn active" style="width:100%; margin-top:20px; background:var(--admin); border:none;">🚀 분석 즉시 가동 (Manual Run)</button>
         </div>
 
         <div id="view-agent" style="display:none;">
-            <div id="agent-list-container">에이전트 정보를 불러오는 중...</div>
+            <div id="agent-list-container" style="max-height: 300px; overflow-y: auto;"></div>
         </div>
     </section>
 
@@ -79,7 +67,7 @@
         <strong id="kw-title">📌 마스터 추천 키워드 (Public)</strong>
         <div id="tag-list" class="tag-list"></div>
         <div id="kw-controls" style="display:none; margin-top:15px; gap:10px;">
-            <input type="text" id="new-kw" placeholder="키워드 추가" style="flex:1; padding:10px; border-radius:8px; border:1px solid #ddd;">
+            <input type="text" id="new-kw" placeholder="키워드 추가" style="flex:1; padding:12px; border-radius:10px; border:1px solid #ddd;">
             <button class="auth-btn active" onclick="addKw()">추가</button>
         </div>
     </section>
@@ -94,8 +82,7 @@
     </div>
 
     <div id="briefing-box" class="briefing-box">
-        <div id="qa-indicator" class="qa-badge" style="display:none;">🛡️ QA 분석 대기</div>
-        <div id="loading-spinner" style="display:none; text-align:center; padding:20px;">⌛ 분석 중...</div>
+        <div id="qa-indicator" class="qa-badge" style="display:none;">🛡️ QA Score</div>
         <div id="briefing-content"></div>
     </div>
     <div id="news-list"></div>
@@ -109,7 +96,7 @@
     const DEFAULT_KEYWORDS = ['카카오모빌리티', '쏘카', '타운카', 'G카', '롯데렌터카'];
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    let currentReport = null, currentRole = 'PM', currentUser = null, userKeywords = [], agentsData = [];
+    let currentReport = null, currentRole = 'PM', currentUser = null, userKeywords = [];
 
     async function init() {
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -117,40 +104,35 @@
         updateUI();
         await fetchUserKeywords();
         await loadDates();
-        if (currentUser?.email === MASTER_EMAIL) fetchAgents();
-    }
-
-    // [v8.9] 에이전트 지침 정보 로드
-    async function fetchAgents() {
-        const { data } = await supabaseClient.from('agent_config').select('*').order('agent_role');
-        if (data) {
-            agentsData = data;
-            renderAgentSettings();
+        if (currentUser?.email === MASTER_EMAIL) {
+            fetchAgents();
+            fetchHistory();
         }
     }
 
-    function renderAgentSettings() {
-        const container = document.getElementById('agent-list-container');
-        container.innerHTML = agentsData.map(a => `
-            <div class="agent-editor">
-                <div style="display:flex; justify-content:space-between;">
-                    <strong>🤖 ${a.agent_role}</strong>
-                    <span style="font-size:0.7em; color:#666;">Model: ${a.model_name} / Temp: ${a.temperature}</span>
+    // [기능: 에이전트 지휘]
+    async function fetchAgents() {
+        const { data } = await supabaseClient.from('agent_config').select('*').order('agent_role');
+        if (data) {
+            document.getElementById('agent-list-container').innerHTML = data.map(a => `
+                <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #eee; margin-bottom:10px;">
+                    <div style="font-weight:bold; font-size:0.8em; display:flex; justify-content:space-between;">🤖 ${a.agent_role} <span style="font-weight:normal;">Temp: ${a.temperature}</span></div>
+                    <textarea id="instr-${a.id}" style="width:100%; height:60px; margin-top:5px; border-radius:5px; border:1px solid #ddd; font-size:0.85em;">${a.instruction}</textarea>
+                    <button class="auth-btn" style="width:100%; margin-top:5px; font-size:0.7em;" onclick="updateAgent('${a.id}')">지침 업데이트</button>
                 </div>
-                <textarea id="instr-${a.id}">${a.instruction}</textarea>
-                <button class="auth-btn" style="width:100%; margin-top:8px; font-size:0.8em;" onclick="updateAgent('${a.id}')">지침 업데이트</button>
-            </div>
-        `).join('');
+            `).join('');
+        }
     }
 
     async function updateAgent(id) {
-        const newInstr = document.getElementById(`instr-${id}`).value;
-        const { error } = await supabaseClient.from('agent_config').update({ instruction: newInstr }).eq('id', id);
-        if (!error) alert("에이전트 지침이 즉시 반영되었습니다.");
+        const val = document.getElementById(`instr-${id}`).value;
+        await supabaseClient.from('agent_config').update({ instruction: val }).eq('id', id);
+        alert("지침이 반영되었습니다.");
     }
 
+    // [기능: 데이터 로드]
     async function loadDates() {
-        const { data } = await supabaseClient.from('reports').select('report_date, qa_score, qa_feedback').order('report_date', { ascending: false });
+        const { data } = await supabaseClient.from('reports').select('report_date').order('report_date', { ascending: false });
         if (data && data.length > 0) {
             const select = document.getElementById('date-select');
             const uniqueDates = [...new Set(data.map(d => d.report_date))];
@@ -160,42 +142,59 @@
     }
 
     async function fetchDayData() {
-        const selectedDate = document.getElementById('date-select').value;
-        const { data } = await supabaseClient.from('reports').select('*').eq('report_date', selectedDate).order('created_at', { ascending: false }).limit(1);
+        const date = document.getElementById('date-select').value;
+        const { data } = await supabaseClient.from('reports').select('*').eq('report_date', date).order('created_at', { ascending: false }).limit(1);
         if (data && data.length > 0) {
             currentReport = data[0].content;
             const qaScore = data[0].qa_score || 0;
-            updateQAIndicator(qaScore);
+            if (currentUser?.email === MASTER_EMAIL) {
+                const badge = document.getElementById('qa-indicator');
+                badge.style.display = 'block';
+                badge.innerText = `🛡️ QA: ${qaScore}/100`;
+                badge.style.background = qaScore >= 70 ? 'rgba(40,167,69,0.2)' : 'rgba(255,77,79,0.2)';
+                badge.style.color = qaScore >= 70 ? '#28a745' : '#ff4d4f';
+                document.getElementById('hr-box').innerHTML = marked.parse(currentReport.hr_proposal || "제안 없음");
+            }
             renderDisplay();
-        }
-    }
-
-    function updateQAIndicator(score) {
-        const badge = document.getElementById('qa-indicator');
-        if (currentUser?.email === MASTER_EMAIL) {
-            badge.style.display = 'block';
-            badge.innerText = `🛡️ QA Score: ${score}/100`;
-            badge.className = `qa-badge ${score >= 70 ? 'qa-pass' : ''}`;
-        } else {
-            badge.style.display = 'none';
         }
     }
 
     function renderDisplay() {
         if (!currentReport) return;
         const b = currentRole === 'BA' ? currentReport.ba_brief : currentRole === 'Sec' ? currentReport.securities_brief : currentReport.pm_brief;
+        // BA 렌더링 최적화: 과도한 ---- 제거
+        const cleanContent = b.replace(/----/g, '<hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:15px 0;">');
         document.getElementById('briefing-content').innerHTML = `
-            <h4 style="margin:0 0 15px 0;"><span class="ai-badge">AI Analysis</span> ${currentRole} 브리핑</h4>
-            <div style="font-size:1.05em; color:#eee;">${marked.parse(b || '분석 중...')}</div>`;
+            <h4 style="margin:0 0 15px 0;"><span style="font-size:0.7em; background:#000; padding:4px 8px; border-radius:4px;">AI Analysis</span> ${currentRole} 브리핑</h4>
+            <div style="font-size:1.05em; color:#eee;">${marked.parse(cleanContent || '')}</div>`;
         
-        if (currentUser?.email === MASTER_EMAIL) document.getElementById('hr-box').innerHTML = marked.parse(currentReport.hr_proposal || "제안 없음");
-
         document.getElementById('news-list').innerHTML = (currentReport.articles || []).map(a => {
             const s = currentRole === 'BA' ? a.ba_summary : currentRole === 'Sec' ? a.sec_summary : a.pm_summary;
             return `<div class="news-card ${currentRole === 'PM' ? 'active-pm' : currentRole === 'BA' ? 'active-ba' : 'active-sec'}">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;"><span style="font-weight:bold; color:var(--primary);">#${a.keyword}</span><a href="${a.url}" target="_blank" style="font-size:0.85em; text-decoration:none; color:var(--primary); font-weight:bold;">원문 ↗</a></div>
-                <h3 style="margin:0 0 10px 0;">${a.title}</h3><div style="background:#f9f9f9; padding:15px; border-radius:10px; font-size:0.95em;">${marked.parse(s || '요약 중...')}</div></div>`;
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;"><span style="font-weight:bold; color:var(--primary);">#${a.keyword}</span><a href="${a.url}" target="_blank" style="font-size:0.8em; font-weight:bold; color:var(--primary); text-decoration:none;">원문보기 ↗</a></div>
+                <h3 style="margin:0 0 10px 0; font-size:1.15em;">${a.title}</h3><div style="background:#f9f9f9; padding:15px; border-radius:10px; font-size:0.95em;">${marked.parse(s || '')}</div></div>`;
         }).join('');
+    }
+
+    // [기능: 키워드 관리]
+    async function fetchUserKeywords() { if (!currentUser) return; const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle(); if (data) userKeywords = data.keywords || []; renderTags(); }
+    function renderTags() { const list = (currentUser && userKeywords.length > 0) ? userKeywords : DEFAULT_KEYWORDS; document.getElementById('tag-list').innerHTML = list.map(k => `<span class="tag">#${k} ${currentUser ? `<span class="remove-btn" onclick="removeKw('${k}')">×</span>` : ''}</span>`).join(''); }
+    async function addKw() { const val = document.getElementById('new-kw').value.trim(); if (val && !userKeywords.includes(val)) { userKeywords.push(val); await supabaseClient.from('user_settings').upsert({ id: currentUser.id, keywords: userKeywords, email: currentUser.email }); document.getElementById('new-kw').value = ''; renderTags(); } }
+    async function removeKw(k) { userKeywords = userKeywords.filter(x => x !== k); await supabaseClient.from('user_settings').upsert({ id: currentUser.id, keywords: userKeywords }); renderTags(); }
+
+    // [기능: UI 제어]
+    function updateUI() {
+        const ud = document.getElementById('user-display');
+        const mc = document.getElementById('master-console');
+        if (currentUser) {
+            ud.innerHTML = `<span>👤 <b>${currentUser.email.split('@')[0]}</b>님</span> <button class="auth-btn" style="margin-left:10px;" onclick="supabaseClient.auth.signOut(); location.reload();">로그아웃</button>`;
+            document.getElementById('kw-controls').style.display = "flex";
+            if (currentUser.email === MASTER_EMAIL) mc.style.display = "block";
+        } else {
+            ud.innerHTML = `<button class="auth-btn" onclick="location.reload();">로그인</button>`;
+            mc.style.display = "none";
+            document.getElementById('kw-controls').style.display = "none";
+        }
     }
 
     function switchTab(type) {
@@ -205,26 +204,8 @@
         document.getElementById('tab-agent').classList.toggle('active', type === 'agent');
     }
 
-    function updateUI() {
-        const ud = document.getElementById('user-display');
-        if (currentUser) {
-            ud.innerHTML = `<span>👤 <b>${currentUser.email.split('@')[0]}</b>님</span> <button class="auth-btn" onclick="handleLogout()">로그아웃</button>`;
-            if (currentUser.email === MASTER_EMAIL) document.getElementById('master-panel').style.display = "block";
-            document.getElementById('kw-controls').style.display = "flex";
-        } else {
-            ud.innerHTML = `<button class="auth-btn" onclick="toggleAuth()">로그인</button>`;
-            document.getElementById('master-panel').style.display = "none";
-        }
-    }
-
-    // [v8.8 기초 함수들 유지]
-    async function fetchUserKeywords() { if (!currentUser) return; const { data } = await supabaseClient.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle(); if (data) userKeywords = data.keywords || []; renderTags(); }
-    function renderTags() { const list = (currentUser && userKeywords.length > 0) ? userKeywords : DEFAULT_KEYWORDS; document.getElementById('tag-list').innerHTML = list.map(k => `<span class="tag">#${k}</span>`).join(''); }
-    async function handleLogout() { await supabaseClient.auth.signOut(); location.reload(); }
-    function toggleAuth() { const s = document.getElementById('auth-section'); s.style.display = s.style.display === 'none' ? 'block' : 'none'; }
-    async function sendMagicLink() { const e = document.getElementById('email-input').value.trim(); await supabaseClient.auth.signInWithOtp({ email:e, options:{emailRedirectTo:MY_PLATFORM_URL}}); alert("링크 발송!"); }
+    async function fetchHistory() { const { data } = await supabaseClient.from('action_logs').select('*').order('executed_at', { ascending: false }).limit(5); if (data) document.getElementById('system-logs').innerHTML = data.map(l => `[${l.executed_at.substring(11,16)}] ${l.execution_method}: ${l.target_word}`).join('<br>'); }
     function setRole(r) { currentRole = r; document.querySelectorAll('.role-switch .auth-btn').forEach(b => b.classList.toggle('active', b.id === `btn-${r}`)); renderDisplay(); }
-
     init();
 </script>
 </body>
