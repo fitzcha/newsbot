@@ -1,82 +1,405 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitz Intelligence | 웹 콘텐츠 AI 분석 플랫폼</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-    <style>
-        :root { --primary: #007bff; --bg: #f8f9fa; }
-        body { font-family: 'Pretendard', sans-serif; margin: 0; background: #fff; color: #333; text-align: center; }
-        .hero { padding: 100px 20px; background: linear-gradient(180deg, #fff 0%, #f8f9fa 100%); border-radius: 0 0 50px 50px; }
-        .flow-container { display: flex; justify-content: center; gap: 25px; margin: 60px 0; flex-wrap: wrap; }
-        .flow-card { background: #fff; padding: 30px; border-radius: 24px; box-shadow: 0 15px 40px rgba(0,0,0,0.06); width: 230px; border-top: 5px solid var(--primary); text-align: left; transition: 0.3s; }
-        .flow-card h4 { margin: 0 0 12px 0; color: var(--primary); font-size: 0.8em; letter-spacing: 1px; }
-        .example-tag { background: #eef2f7; padding: 4px 10px; border-radius: 12px; font-size: 0.75em; display: inline-block; margin-top: 15px; color: var(--primary); font-weight: 800; }
-        .auth-btn { padding: 22px 65px; border-radius: 50px; background: var(--primary); color: #fff; border: none; font-weight: bold; cursor: pointer; font-size: 1.2rem; box-shadow: 0 10px 25px rgba(0,123,255,0.25); }
-        #auth-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index: 9999; backdrop-filter: blur(8px); }
-        .auth-modal { position: absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:40px; border-radius:30px; width:90%; max-width:400px; }
-        input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 15px; box-sizing: border-box; }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fitz Intelligence | Agentic AI Platform</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0a;--card:#1a1a1a;--card2:#151515;--border:#2a2a2a;--text:#fff;--muted:#888;--cyan:#00d4ff;--pink:#ff3eb5;--purple:#8b5cf6;--blue:#3b82f6;--green:#22c55e}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:20px 60px;background:rgba(10,10,10,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.nav-logo{font-weight:700;font-size:1rem;letter-spacing:-.5px}
+.nav-links{display:flex;gap:32px;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.9rem;transition:.2s}
+.nav-links a:hover{color:#fff}
+.nav-cta{background:#fff;color:#000!important;padding:10px 22px;border-radius:8px;font-weight:700;font-size:.88rem!important}
+.nav-cta:hover{background:#e5e5e5!important}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:120px 20px 80px}
+.hero-label{font-size:.78rem;letter-spacing:3px;color:var(--muted);margin-bottom:28px;text-transform:uppercase}
+.hero-title{font-size:clamp(3rem,8vw,7rem);font-weight:300;letter-spacing:-3px;line-height:1.05;margin-bottom:32px}
+.hero-subs{display:flex;flex-direction:column;gap:10px;margin-bottom:48px}
+.hero-subs p{font-size:1.05rem;color:var(--muted)}
+.hero-btn{display:inline-flex;align-items:center;gap:10px;background:#fff;color:#000;padding:16px 36px;border-radius:10px;font-weight:700;font-size:1rem;cursor:pointer;border:none;transition:.2s}
+.hero-btn:hover{background:#e5e5e5;transform:translateY(-2px)}
+
+/* PRODUCT PREVIEW */
+#preview{padding:80px 40px;max-width:1300px;margin:0 auto}
+.preview-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.preview-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px}
+.preview-card-header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.icon-box{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.icon-pink{background:linear-gradient(135deg,#ff3eb5,#ff6b3b)}
+.icon-blue{background:linear-gradient(135deg,#3b82f6,#06b6d4)}
+.icon-purple{background:linear-gradient(135deg,#8b5cf6,#ec4899)}
+.preview-card h3{font-size:1rem;font-weight:700}
+.kw-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#111;border-radius:8px;margin-bottom:8px;font-size:.88rem;color:var(--muted)}
+.kw-item::before{content:'🔍';font-size:.75rem}
+.kw-add{border:1.5px dashed var(--border);border-radius:8px;padding:10px;text-align:center;color:var(--muted);font-size:.85rem;margin-top:4px;cursor:pointer}
+.insight-item{padding:14px 16px;border-radius:10px;margin-bottom:10px;font-size:.88rem;line-height:1.5}
+.insight-1{background:linear-gradient(135deg,rgba(0,180,200,.15),rgba(0,100,180,.15));border:1px solid rgba(0,180,200,.2)}
+.insight-2{background:linear-gradient(135deg,rgba(100,50,200,.15),rgba(50,100,220,.15));border:1px solid rgba(100,80,200,.2)}
+.insight-3{background:linear-gradient(135deg,rgba(150,30,200,.15),rgba(100,20,180,.15));border:1px solid rgba(130,50,200,.2)}
+.insight-num{color:var(--cyan);font-weight:700}
+.insight-num2{color:var(--purple);font-weight:700}
+.insight-num3{color:var(--pink);font-weight:700}
+.article-item{margin-bottom:16px}
+.article-item h4{font-size:.9rem;font-weight:700;margin-bottom:4px}
+.article-item p{font-size:.8rem;color:var(--muted)}
+.article-link{color:var(--purple);font-size:.8rem;text-decoration:none;display:flex;align-items:center;gap:4px;margin-top:4px}
+.more-link{display:flex;align-items:center;justify-content:flex-end;gap:6px;color:var(--muted);font-size:.85rem;margin-top:12px;cursor:pointer}
+.divider{border:none;border-top:1px solid var(--border);margin:10px 0}
+
+/* HOW TO */
+#how{padding:100px 40px;text-align:center;background:#0d0d0d}
+.section-title{font-size:clamp(2rem,5vw,3.5rem);font-weight:300;letter-spacing:-2px;margin-bottom:60px}
+.how-grid{display:flex;justify-content:center;gap:0;max-width:900px;margin:0 auto;position:relative}
+.how-grid::before{content:'';position:absolute;top:36px;left:15%;right:15%;height:1px;background:var(--border)}
+.how-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:16px;padding:0 20px}
+.how-circle{width:72px;height:72px;border-radius:50%;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.3rem;position:relative;z-index:1}
+.how-item h4{font-size:.95rem;font-weight:700}
+.how-item p{font-size:.82rem;color:var(--muted);text-align:center}
+
+/* PROCESS */
+#process{padding:100px 40px;max-width:1200px;margin:0 auto}
+.process-header{text-align:center;margin-bottom:70px}
+.process-header h2{font-size:clamp(2rem,5vw,3.5rem);font-weight:300;letter-spacing:-2px;margin-bottom:12px}
+.process-header p{color:var(--muted);font-size:.95rem}
+.process-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.process-col-label{font-size:.85rem;font-weight:700;margin-bottom:16px;letter-spacing:.5px}
+.label-cyan{color:var(--cyan)}
+.label-pink{color:var(--pink)}
+.proc-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;height:220px;display:flex;flex-direction:column;justify-content:flex-start;margin-bottom:20px}
+.proc-card-header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.proc-num{font-size:.78rem;color:var(--muted);margin-bottom:2px}
+.proc-title{font-size:1.05rem;font-weight:700}
+.proc-body{flex:1;display:flex;flex-direction:column;justify-content:center}
+
+/* 웹 콘텐츠 수집 바 */
+.collect-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.collect-bar-wrap{flex:1;height:5px;background:#222;border-radius:3px;overflow:hidden}
+.collect-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--blue))}
+.collect-label{font-size:.78rem;color:var(--muted);width:30px;text-align:right}
+.collect-icon{color:var(--muted);font-size:.8rem;width:16px}
+
+/* 분석 바 차트 */
+.bar-chart{display:flex;align-items:flex-end;gap:12px;height:80px;margin-top:8px}
+.bar-col{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+.bar{border-radius:4px 4px 0 0;width:100%;background:linear-gradient(180deg,var(--cyan),var(--blue))}
+.bar-pct{font-size:.75rem;color:var(--muted)}
+
+/* 인사이트 공유 */
+.email-sent{background:linear-gradient(135deg,rgba(180,30,120,.3),rgba(100,20,100,.3));border:1px solid rgba(180,50,150,.3);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:.85rem;margin-bottom:10px}
+.proc-sub{font-size:.82rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+
+/* 유저 니즈 */
+.feedback-item{display:flex;align-items:flex-start;gap:8px;font-size:.82rem;color:var(--muted);margin-bottom:8px}
+.feedback-item::before{content:'□';color:var(--pink);flex-shrink:0;margin-top:1px}
+.feedback-done{background:rgba(180,30,120,.2);border:1px solid rgba(180,50,150,.3);border-radius:6px;padding:8px 12px;font-size:.82rem;color:var(--pink);display:flex;align-items:center;gap:6px;margin-top:10px}
+
+/* 개발 QA */
+.dev-sub{font-size:.82rem;color:var(--cyan);display:flex;align-items:center;gap:6px;margin-bottom:14px}
+.progress-wrap{margin-top:4px}
+.progress-label{display:flex;justify-content:space-between;font-size:.78rem;color:var(--muted);margin-bottom:6px}
+.progress-pct{color:var(--purple)!important}
+.progress-bar-bg{background:#222;border-radius:4px;height:6px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--purple),var(--blue))}
+
+/* 변화 */
+.change-done{background:linear-gradient(135deg,rgba(20,180,80,.25),rgba(10,120,60,.25));border:1px solid rgba(30,200,80,.2);border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:.85rem;margin-bottom:14px;color:#4ade80}
+.change-stat{display:flex;justify-content:space-between;font-size:.85rem;padding:4px 0;border-bottom:1px solid var(--border)}
+.change-stat:last-child{border:none}
+.stat-pos{color:var(--green)}
+
+/* CTA */
+#cta{padding:120px 20px;text-align:center;background:#0d0d0d}
+#cta h2{font-size:clamp(2.5rem,6vw,5rem);font-weight:300;letter-spacing:-3px;margin-bottom:48px}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:40px 60px;text-align:center}
+.footer-logo{font-weight:700;margin-bottom:16px;font-size:.95rem}
+.footer-links{display:flex;justify-content:center;gap:24px;margin-bottom:16px}
+.footer-links a{color:var(--muted);text-decoration:none;font-size:.85rem}
+.footer-copy{font-size:.8rem;color:#555}
+
+/* AUTH MODAL */
+#auth-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:999;backdrop-filter:blur(8px)}
+.auth-modal{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a1a;border:1px solid var(--border);padding:40px;border-radius:20px;width:90%;max-width:400px;text-align:center}
+.auth-modal h2{margin-bottom:8px;font-size:1.5rem}
+.auth-modal p{color:var(--muted);font-size:.9rem;margin-bottom:24px}
+.auth-input{width:100%;padding:14px;border-radius:10px;border:1px solid var(--border);background:#111;color:#fff;font-size:.95rem;margin-bottom:12px;font-family:inherit}
+.auth-submit{width:100%;padding:14px;border-radius:10px;background:#fff;color:#000;border:none;font-weight:700;font-size:.95rem;cursor:pointer;transition:.2s}
+.auth-submit:hover{background:#e5e5e5}
+.auth-close{margin-top:14px;color:var(--muted);font-size:.82rem;cursor:pointer}
+</style>
 </head>
 <body>
-    <section class="hero">
-        <span style="font-weight:bold; color:var(--primary); margin-bottom:15px; display:block;">Professional AI Content Intelligence</span>
-        <h1 style="font-size:3.5rem; font-weight:800; letter-spacing:-2px; margin:0;">Fitz Intelligence</h1>
-        <p style="font-size:1.4rem; color:#555; margin-top:10px;">웹 콘텐츠 AI 분석 플랫폼</p>
-        <div class="flow-container">
-            <div class="flow-card"><h4>STEP 01</h4><p>내 관심 키워드 등록</p><div><span class="example-tag">#이커머스</span><span class="example-tag">#자율주행</span></div></div>
-            <div class="flow-card"><h4>STEP 02</h4><p>웹 콘텐츠 수집 및<br>AI 인사이트 분석</p></div>
-            <div class="flow-card"><h4>STEP 03</h4><p>매일 오전 09시<br>맞춤형 리포트 배달</p></div>
-        </div>
-        <button id="main-cta" class="auth-btn" onclick="handleStart()">베타 서비스 시작하기 →</button>
-    </section>
 
-    <div id="auth-overlay">
-        <div class="auth-modal">
-            <h2 style="margin-top:0;">VVIP 입장</h2>
-            <input type="email" id="email-input" placeholder="이메일 주소">
-            <button class="auth-btn" style="width:100%; padding:15px; border-radius:15px; font-size:1rem;" onclick="sendMagicLink()">로그인 링크 받기</button>
-            <p style="margin-top:15px; font-size:0.8em; color:#999; cursor:pointer;" onclick="document.getElementById('auth-overlay').style.display='none'">닫기</p>
-        </div>
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Fitz Intelligence</div>
+  <div class="nav-links">
+    <a href="#how">이용 방법</a>
+    <a href="#process">프로세스</a>
+    <a href="#" class="nav-cta" onclick="openAuth();return false">무료로 시작하기</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <p class="hero-label">Agentic AI Platform</p>
+  <h1 class="hero-title">Fitz Intelligence</h1>
+  <div class="hero-subs">
+    <p>오직 고객님의 목소리에 귀를 기울여요.</p>
+    <p>AI가 스스로 문제를 판단하고 개선해요.</p>
+    <p>소통을 통해 함께 만들어요.</p>
+  </div>
+  <button class="hero-btn" onclick="handleStart()">무료로 시작하기 →</button>
+</section>
+
+<!-- PRODUCT PREVIEW -->
+<section id="preview">
+  <div class="preview-grid">
+    <!-- 키워드 입력 -->
+    <div class="preview-card">
+      <div class="preview-card-header">
+        <div class="icon-box icon-pink">🔍</div>
+        <h3>키워드 입력</h3>
+      </div>
+      <div class="kw-item">AI 트렌드</div>
+      <div class="kw-item">생성형 AI</div>
+      <div class="kw-item">머신러닝</div>
+      <div class="kw-add">+ 새 키워드 추가</div>
     </div>
+    <!-- 비즈니스 인사이트 -->
+    <div class="preview-card">
+      <div class="preview-card-header">
+        <div class="icon-box icon-blue">📈</div>
+        <h3>비즈니스 인사이트</h3>
+      </div>
+      <div class="insight-item insight-1">🔆 AI 기술 채택률이 전년 대비 <span class="insight-num">45% 증가</span>했습니다</div>
+      <div class="insight-item insight-2">🔆 생성형 AI 시장은 <span class="insight-num2">2030년까지 $1.3T</span> 규모 예상</div>
+      <div class="insight-item insight-3">🔆 기업의 <span class="insight-num3">78%</span>가 AI 도입 계획 발표</div>
+    </div>
+    <!-- 요약 기사 -->
+    <div class="preview-card">
+      <div class="preview-card-header">
+        <div class="icon-box icon-purple">📄</div>
+        <h3>요약 기사</h3>
+      </div>
+      <div class="article-item">
+        <h4>OpenAI, GPT-5 개발 중단 발표</h4>
+        <p>새로운 AI 모델 아키텍처에 집중하기 위해...</p>
+        <a class="article-link" href="#">↗ 원문 보기</a>
+      </div>
+      <hr class="divider">
+      <div class="article-item">
+        <h4>AI 윤리 가이드라인 발표</h4>
+        <p>글로벌 AI 컨소시엄이 새로운 윤리 기준...</p>
+        <a class="article-link" href="#">↗ 원문 보기</a>
+      </div>
+      <div class="more-link">더 많은 기사 보기 →</div>
+    </div>
+  </div>
+</section>
 
-    <script>
-        const CONFIG = { url: 'https://zrlpwmpbrvohautldcon.supabase.co', key: 'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G' };
-        const sc = supabase.createClient(CONFIG.url, CONFIG.key);
-        let isLogged = false;
+<!-- HOW TO -->
+<section id="how" style="background:#0d0d0d;padding:100px 40px;text-align:center">
+  <h2 class="section-title">서비스 이용 방법</h2>
+  <div class="how-grid">
+    <div class="how-item">
+      <div class="how-circle">✉️</div>
+      <h4>이메일 인증</h4>
+      <p>이메일 정보만 입력하세요</p>
+    </div>
+    <div class="how-item">
+      <div class="how-circle">🏷️</div>
+      <h4>키워드 등록</h4>
+      <p>관심 키워드를 등록하세요</p>
+    </div>
+    <div class="how-item">
+      <div class="how-circle">✨</div>
+      <h4>인사이트 수신</h4>
+      <p>다음날 아침 이메일로 알려드려요</p>
+    </div>
+  </div>
+</section>
 
-        // [핵심] 로그인 세션을 확인하되, 강제 이동시키지 않습니다.
-        async function checkSession() {
-            const { data: { session } } = await sc.auth.getSession();
-            if (session) {
-                isLogged = true;
-                const btn = document.getElementById('main-cta');
-                btn.innerText = "대시보드로 바로가기 →";
-                btn.style.background = "#333"; // 로그인 유저는 검은색 버튼으로 차별화
-            }
-        }
+<!-- PROCESS -->
+<section id="process">
+  <div class="process-header">
+    <h2>프로세스</h2>
+    <p>지속적인 개선 사이클</p>
+  </div>
+  <div class="process-cols">
+    <!-- LEFT COL -->
+    <div>
+      <p class="process-col-label label-cyan">인사이트 전달</p>
+      <!-- 01 웹 콘텐츠 수집 -->
+      <div class="proc-card">
+        <div class="proc-card-header">
+          <div class="icon-box icon-blue">🌐</div>
+          <div>
+            <div class="proc-num">01</div>
+            <div class="proc-title">웹 콘텐츠 수집</div>
+          </div>
+        </div>
+        <div class="proc-body">
+          <div class="collect-row"><span class="collect-icon">🔍</span><div class="collect-bar-wrap"><div class="collect-bar" style="width:90%"></div></div><span class="collect-label">뉴스</span></div>
+          <div class="collect-row"><span class="collect-icon">🔍</span><div class="collect-bar-wrap"><div class="collect-bar" style="width:75%"></div></div><span class="collect-label">블로그</span></div>
+          <div class="collect-row"><span class="collect-icon">🔍</span><div class="collect-bar-wrap"><div class="collect-bar" style="width:60%"></div></div><span class="collect-label">SNS</span></div>
+        </div>
+      </div>
+      <!-- 02 분석 -->
+      <div class="proc-card">
+        <div class="proc-card-header">
+          <div class="icon-box icon-purple">🧠</div>
+          <div>
+            <div class="proc-num">02</div>
+            <div class="proc-title">분석</div>
+          </div>
+        </div>
+        <div class="proc-body">
+          <div class="bar-chart">
+            <div class="bar-col"><div class="bar" style="height:65%"></div><span class="bar-pct">65%</span></div>
+            <div class="bar-col"><div class="bar" style="height:80%"></div><span class="bar-pct">80%</span></div>
+            <div class="bar-col"><div class="bar" style="height:45%"></div><span class="bar-pct">45%</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- 03 인사이트 공유 -->
+      <div class="proc-card">
+        <div class="proc-card-header">
+          <div class="icon-box icon-pink">📤</div>
+          <div>
+            <div class="proc-num">03</div>
+            <div class="proc-title">인사이트 공유</div>
+          </div>
+        </div>
+        <div class="proc-body">
+          <div class="email-sent">✉️ 이메일 발송됨</div>
+          <div class="proc-sub">🔆 AI가 생성한 인사이트 3개 전달</div>
+        </div>
+      </div>
+    </div>
+    <!-- RIGHT COL -->
+    <div>
+      <p class="process-col-label label-pink">인사이트 가다듬기</p>
+      <!-- 04 유저 니즈 분석 -->
+      <div class="proc-card">
+        <div class="proc-card-header">
+          <div class="icon-box icon-pink">👥</div>
+          <div>
+            <div class="proc-num">04</div>
+            <div class="proc-title">유저 니즈 분석</div>
+          </div>
+        </div>
+        <div class="proc-body">
+          <div class="feedback-item">"더 상세한 분석이 필요해요"</div>
+          <div class="feedback-item">"경쟁사 비교 정보 추가해주세요"</div>
+          <div class="feedback-done">✓ 피드백 수집 완료</div>
+        </div>
+      </div>
+      <!-- 05 개발 & QA -->
+      <div class="proc-card">
+        <div class="proc-card-header">
+          <div class="icon-box icon-purple" style="background:linear-gradient(135deg,#6d28d9,#4f46e5)">&lt;/&gt;</div>
+          <div>
+            <div class="proc-num">05</div>
+            <div class="proc-title">개발 & QA</div>
+          </div>
+        </div>
+        <div class="proc-body">
+          <div class="dev-sub">🔗 새로운 분석 모델 개발</div>
+          <div class="progress-wrap">
+            <div class="progress-label"><span>Progress</span><span class="progress-pct">75%</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:75%"></div></div>
+          </div>
+        </div>
+      </div>
+      <!-- 06 변화 -->
+      <div class="proc-card">
+        <div class="proc-card-header">
+          <div class="icon-box" style="background:linear-gradient(135deg,#16a34a,#15803d)">✅</div>
+          <div>
+            <div class="proc-num">06</div>
+            <div class="proc-title">변화</div>
+          </div>
+        </div>
+        <div class="proc-body">
+          <div class="change-done">🔆 AI 자동 개선 완료</div>
+          <div class="change-stat"><span>정확도</span><span class="stat-pos">+15% ↑</span></div>
+          <div class="change-stat"><span>만족도</span><span class="stat-pos">+22% ↑</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-        function handleStart() {
-            if (isLogged) {
-                location.href = 'app.html'; // 로그인 상태면 대시보드로
-            } else {
-                document.getElementById('auth-overlay').style.display = 'block'; // 아니면 로그인창
-            }
-        }
+<!-- CTA -->
+<section id="cta">
+  <h2>지금 시작하세요</h2>
+  <button class="hero-btn" onclick="handleStart()">무료로 시작하기 →</button>
+</section>
 
-        async function sendMagicLink() {
-            const email = document.getElementById('email-input').value;
-            if(!email) return alert("이메일을 입력해주세요.");
-            const { error } = await sc.auth.signInWithOtp({ 
-                email: email,
-                options: { emailRedirectTo: window.location.origin + '/app.html' }
-            });
-            if (error) alert("에러: " + error.message);
-            else alert("메일로 로그인 링크가 전송되었습니다!");
-        }
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">Fitz Intelligence</div>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Contact</a>
+  </div>
+  <p class="footer-copy">© 2026 Fitz Intelligence</p>
+</footer>
 
-        checkSession();
-    </script>
+<!-- AUTH MODAL -->
+<div id="auth-overlay" onclick="closeAuth(event)">
+  <div class="auth-modal">
+    <h2>무료로 시작하기</h2>
+    <p>이메일만 입력하면 내일 아침부터<br>AI 인사이트를 받아볼 수 있어요.</p>
+    <input class="auth-input" type="email" id="email-input" placeholder="이메일 주소를 입력하세요">
+    <button class="auth-submit" onclick="sendMagicLink()">로그인 링크 받기</button>
+    <p class="auth-close" onclick="document.getElementById('auth-overlay').style.display='none'">닫기</p>
+  </div>
+</div>
+
+<script>
+const CFG = { url:'https://zrlpwmpbrvohautldcon.supabase.co', key:'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G' };
+const sc = supabase.createClient(CFG.url, CFG.key);
+let isLogged = false;
+
+async function checkSession() {
+  const { data: { session } } = await sc.auth.getSession();
+  if (session) { isLogged = true; }
+}
+
+function handleStart() {
+  if (isLogged) location.href = 'app.html';
+  else openAuth();
+}
+
+function openAuth() { document.getElementById('auth-overlay').style.display = 'block'; }
+function closeAuth(e) { if(e.target.id==='auth-overlay') document.getElementById('auth-overlay').style.display='none'; }
+
+async function sendMagicLink() {
+  const email = document.getElementById('email-input').value;
+  if(!email) return alert('이메일을 입력해주세요.');
+  const { error } = await sc.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.origin + '/app.html' }
+  });
+  if(error) alert('에러: ' + error.message);
+  else alert('메일로 로그인 링크가 전송되었습니다!');
+}
+
+checkSession();
+</script>
 </body>
 </html>
