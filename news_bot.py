@@ -303,9 +303,68 @@ def run_autonomous_engine():
 
 
 # ──────────────────────────────────────────────
+# 마이그레이션 함수 (1회 실행 후 삭제)
+# ──────────────────────────────────────────────
+def run_migration_once():
+    """flat 구조 → by_keyword 구조 일괄 변환"""
+    from collections import defaultdict
+    print("🚀 마이그레이션 시작...")
+
+    res     = supabase.table("reports").select("id, report_date, content").execute()
+    reports = res.data or []
+    print(f"📋 전체 리포트: {len(reports)}개")
+
+    migrated = skipped = failed = 0
+    for r in reports:
+        content = r.get("content") or {}
+
+        # 이미 변환된 리포트 스킵
+        if "by_keyword" in content:
+            print(f"  ⏭️  [{r['report_date']}] 이미 변환됨 — 스킵")
+            skipped += 1
+            continue
+
+        try:
+            articles  = content.get("articles", [])
+            ba        = content.get("ba_brief", "")
+            sec       = content.get("securities_brief", "")
+            pm        = content.get("pm_brief", "")
+            hr        = content.get("hr_proposal", "")
+
+            # keyword 필드 기준으로 기사 그룹화
+            kw_map = defaultdict(list)
+            for a in articles:
+                kw_map[a.get("keyword", "기타")].append(a)
+            if not kw_map:
+                kw_map["전체"] = articles
+
+            # by_keyword 구조 생성 (기존 통합 분석을 각 키워드에 복사)
+            by_keyword = {
+                kw: {"ba_brief": ba, "securities_brief": sec, "pm_brief": pm, "articles": arts}
+                for kw, arts in kw_map.items()
+            }
+
+            supabase.table("reports").update({
+                "content": {"by_keyword": by_keyword, "hr_proposal": hr}
+            }).eq("id", r["id"]).execute()
+
+            print(f"  ✅ [{r['report_date']}] 변환 완료 — 키워드: {list(by_keyword.keys())}")
+            migrated += 1
+
+        except Exception as e:
+            print(f"  ❌ [{r['report_date']}] 실패: {e}")
+            failed += 1
+
+    print(f"\n📊 완료 — 변환: {migrated}개 / 스킵: {skipped}개 / 실패: {failed}개")
+
+
+# ──────────────────────────────────────────────
 # 엔트리포인트
 # ──────────────────────────────────────────────
 if __name__ == "__main__":
-    manage_deadline_approvals()
-    run_self_evolution()
-    run_autonomous_engine()
+    # [임시] 마이그레이션 1회 실행 — 완료 후 아래 3줄 원복
+    run_migration_once()
+
+    # manage_deadline_approvals()
+    # run_self_evolution()
+    # run_autonomous_engine()
