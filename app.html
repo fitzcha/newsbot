@@ -216,7 +216,7 @@ body{font-family:'Pretendard',sans-serif;background:var(--g50);color:var(--g800)
 </div>
 
 <script>
-const SB_URL='https://zrlpwmpbrvohautldcon.supabase.co',SB_KEY='sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G',MASTER='positivecha@gmail.com';
+const SB_URL='https://zrlpwmpbrvohautldcon.supabase.co', SB_KEY='sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G', MASTER='positivecha@gmail.com';
 const sc=supabase.createClient(SB_URL,SB_KEY);
 let cu,curReport,curReportId,curRole='BA',curKw='ALL',kwList=[],fbVal=null;
 const ROLE_LABEL={BA:'🤖 비즈니스 분석',Stock:'📈 증권·투자',PM:'🎯 전략기획'};
@@ -247,11 +247,9 @@ async function decideView(){
   const{data}=await sc.from('reports').select('report_date').eq('user_id',cu.id).order('report_date',{ascending:false});
   const hasReport=data&&data.length>0;
   const hasKw=kwList.length>0;
-  // 온보딩 완료 플래그 (키워드 있고 둘러보기 클릭 or 이미 리포트 있는 유저)
   const toured=localStorage.getItem('fitz_toured_'+cu.id);
 
   if(hasReport||(hasKw&&toured)){
-    // 기존 유저 모드
     showKwBar();
     document.getElementById('main-area').style.display=hasReport?'block':'none';
     document.getElementById('wait-area').style.display=hasReport?'none':'block';
@@ -261,10 +259,9 @@ async function decideView(){
       await loadDay();
     }
   } else {
-    // 온보딩 모드
     document.getElementById('ob-card').style.display='block';
     renderObTags();
-    if(hasKw) showObStep();
+    if(hasKw)showObStep();
   }
 }
 
@@ -273,7 +270,7 @@ function showKwBar(){
   renderBarTags();
 }
 
-/* ── 온보딩 태그 렌더 ── */
+/* ── 온보딩 ── */
 function renderObTags(){
   document.getElementById('ob-tags').innerHTML=kwList.map(k=>`
     <span class="tag">#${k}<span class="tag-del" onclick="obRemove('${k}')">×</span></span>`).join('');
@@ -301,9 +298,7 @@ async function obRemove(k){
 }
 
 function showObStep(){
-  // Step1 바로 노출
   document.getElementById('ob-s1').style.display='block';
-  // 0.8초 후 Step2 노출
   setTimeout(()=>{document.getElementById('ob-s2').style.display='block';},800);
 }
 
@@ -314,7 +309,7 @@ function finishOnboarding(){
   showKwBar();
 }
 
-/* ── 키워드바 태그 렌더 ── */
+/* ── 키워드바 ── */
 function renderBarTags(){
   document.getElementById('kw-bar-tags').innerHTML=kwList.map(k=>`
     <span class="tag" style="font-size:.75rem;padding:4px 11px;">#${k}
@@ -377,11 +372,18 @@ function setRole(r){
 /* ── 리포트 렌더 ── */
 function renderReport(){
   if(!curReport)return;
-
-  // 브리핑: 키워드 필터링된 컨텍스트에서 가져오거나 전체 사용
-  // (키워드별 브리핑이 별도 없으므로 전체 브리핑 표시 + 뉴스만 필터)
   const k=ROLE_KEY[curRole];
-  const txt=(curReport[k]||'분석 중...').replace(/\[PROPOSAL\][\s\S]*|\[REASON\][\s\S]*/g,'');
+
+  // 키워드 탭 선택 시 by_keyword 우선, 없으면 전체 fallback
+  let txt;
+  if(curKw==='ALL'){
+    txt=curReport[k]||'분석 중...';
+  } else {
+    txt=curReport?.by_keyword?.[curKw]?.[k]
+      ||curReport[k]
+      ||'분석 중...';
+  }
+  txt=txt.replace(/\[PROPOSAL\][\s\S]*|\[REASON\][\s\S]*/g,'');
   document.getElementById('briefing-content').innerHTML=marked.parse(txt);
 
   // 뉴스: 키워드 필터
@@ -405,6 +407,7 @@ function thumb(pos){
   document.getElementById('btn-dn').className='eval-btn'+(!pos?' dn':'');
   document.getElementById('voc-area').style.display='block';
 }
+
 async function submitFb(){
   const txt=document.getElementById('voc-txt').value;
   const rm={BA:'BA',Stock:'STOCK',PM:'PM'};
