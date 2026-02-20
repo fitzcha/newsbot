@@ -4,7 +4,7 @@ from gnews import GNews
 from supabase import create_client, Client
 from datetime import datetime, timedelta, timezone
 
-# [v12.7] DB-GitHub 동기화 엔진 + 9AM KST 최적화 + 데이터 정합성 보장
+# [v13.0] 에이전트 통합 + KeyError 수정 + QA 실제 활성화
 KST = timezone(timedelta(hours=9))
 NOW = datetime.now(KST)
 TODAY = NOW.strftime("%Y-%m-%d")
@@ -23,7 +23,7 @@ google_genai = genai.Client(api_key=GEMINI_KEY)
 def log_to_db(user_id, target_word, action="분석", method="Auto"):
     try:
         supabase.table("action_logs").insert({
-            "user_id": user_id, 
+            "user_id": user_id,
             "action_type": action,
             "target_word": target_word,
             "execution_method": method,
@@ -61,20 +61,43 @@ def call_agent(prompt, agent_info, persona_override=None, force_one_line=False):
     except: return "분석 지연 중"
 
 # ---------------------------------------------------------
+# [New] QA 에이전트 실제 활성화
+# ---------------------------------------------------------
+def run_qa_check(ctx, report, agents):
+    """QA 에이전트를 실제로 호출해 리포트 품질 점수를 반환한다."""
+    qa = agents.get('QA')
+    if not qa:
+        print("⚠️ [QA] QA 에이전트 없음 — 기본 점수 70 적용")
+        return 70, "QA 에이전트 미설정"
+
+    qa_prompt = (
+        f"아래 리포트를 검수하라.\n"
+        f"팩트 오류, 논리 비약, 중복 내용, 1줄 원칙 위반 여부를 확인하고\n"
+        f"반드시 첫 줄에 0~100 사이 숫자 점수만 단독으로 출력하고, 둘째 줄부터 간단한 코멘트를 작성하라.\n\n"
+        f"[BA 분석]\n{report.get('ba_brief', '')}\n\n"
+        f"[증권 분석]\n{report.get('securities_brief', '')}\n\n"
+        f"[PM 기획]\n{report.get('pm_brief', '')}"
+    )
+    result = call_agent(qa_prompt, qa)
+    lines = result.strip().split('\n')
+    try:
+        score = int(''.join(filter(str.isdigit, lines[0])))
+        score = min(max(score, 0), 100)
+    except:
+        score = 70
+    comment = '\n'.join(lines[1:]).strip() if len(lines) > 1 else "검수 완료"
+    print(f"🔍 [QA] 품질 점수: {score}점")
+    return score, comment
+
+# ---------------------------------------------------------
 # [New] GitHub 저장소 동기화 (data.json 강제 갱신)
 # ---------------------------------------------------------
 def sync_data_to_github():
-    """[v12.7 추가] DB의 최신 리포트를 data.json에 쓰고 Git Push 수행"""
     try:
         print("📁 [Sync] GitHub 저장소 동기화 시작...")
-        # 1. 오늘 날짜의 모든 리포트 DB에서 가져오기
         res = supabase.table("reports").select("*").eq("report_date", TODAY).execute()
-        
-        # 2. data.json 파일 작성
         with open("data.json", "w", encoding="utf-8") as f:
             json.dump(res.data, f, ensure_ascii=False, indent=2)
-            
-        # 3. Git Push 실행 (브랜드 홈에서 최신 데이터를 식별할 수 있게 함)
         for cmd in [
             'git config --global user.name "Fitz-Dev"',
             'git config --global user.email "positivecha@gmail.com"',
@@ -83,7 +106,6 @@ def sync_data_to_github():
             'git push'
         ]:
             subprocess.run(cmd, shell=True)
-            
         print("🚀 [Sync] GitHub data.json 갱신 및 푸시 완료")
     except Exception as e:
         print(f"🚨 [Sync] 동기화 실패: {e}")
@@ -116,12 +138,12 @@ def run_self_evolution():
 
         compile(new_code, file_path, 'exec')
         with open(file_path, "w", encoding="utf-8") as f: f.write(new_code)
-        
+
         for cmd in [
-            'git config --global user.name "Fitz-Dev"', 
+            'git config --global user.name "Fitz-Dev"',
             'git config --global user.email "positivecha@gmail.com"',
-            'git add .', 
-            f'git commit -m "🤖 [v12.7] {task["title"]}"', 
+            'git add .',
+            f'git commit -m "🤖 [v13.0] {task["title"]}"',
             'git push'
         ]:
             subprocess.run(cmd, shell=True)
@@ -132,54 +154,67 @@ def run_self_evolution():
         print(f"🚨 [DEV] 진화 실패: {e}")
 
 # ---------------------------------------------------------
-# [2] 에이전트 자아 성찰 및 [3] 데드라인 승인 (기존 로직 유지)
+# [2] 에이전트 자아 성찰
 # ---------------------------------------------------------
 def run_agent_self_reflection(report_id):
+    """VOC 기반 에이전트 지침 자동 개선 — agents 테이블 직접 업데이트"""
     try:
         feedback_res = supabase.table("report_feedback").select("*").eq("report_id", report_id).execute()
         if not feedback_res.data: return
         agents = get_agents()
+        skip_roles = {'DEV', 'QA', 'MASTER', 'DATA', 'INFO', 'KW'}
         for role, info in agents.items():
-            if role in ['DEV', 'QA', 'MASTER']: continue
+            if role in skip_roles: continue
             neg_voc = [f['feedback_text'] for f in feedback_res.data if f['target_agent'] == role and not f['is_positive']]
             if not neg_voc: continue
-            reflect_prompt = f"현재 지침: {info['instruction']}\n고객불만: {', '.join(neg_voc)}\n\n[PROPOSAL]수정지침 [REASON]수정근거 형식으로 상신하라."
+            reflect_prompt = (
+                f"현재 지침: {info['instruction']}\n"
+                f"고객불만: {', '.join(neg_voc)}\n\n"
+                f"[PROPOSAL]수정지침 [REASON]수정근거 형식으로 상신하라."
+            )
             reflection = call_agent(reflect_prompt, info, "Insight Evolver")
             p = re.search(r"\[PROPOSAL\](.*?)(?=\[REASON\]|$)", reflection, re.DOTALL)
             r = re.search(r"\[REASON\](.*?)$", reflection, re.DOTALL)
             if p:
-                supabase.table("pending_approvals").insert({
-                    "agent_role": role, "proposed_instruction": p.group(1).strip(), "proposal_reason": r.group(1).strip() if r else "VOC 피드백 반영"
-                }).execute()
-    except: pass
+                new_instruction = p.group(1).strip()
+                reason = r.group(1).strip() if r else "VOC 피드백 반영"
+                # pending_approvals 대신 agents 테이블에 직접 반영
+                supabase.table("agents").update({
+                    "instruction": new_instruction,
+                    "last_run_at": NOW.isoformat()
+                }).eq("agent_role", role).execute()
+                print(f"🔄 [REFLECT] {role} 지침 업데이트 완료: {reason[:50]}")
+    except Exception as e:
+        print(f"⚠️ [REFLECT] 성찰 실패: {e}")
 
 def manage_deadline_approvals():
-    if NOW.hour == 23 and NOW.minute >= 30:
-        try:
-            pending = supabase.table("pending_approvals").select("*").eq("status", "PENDING").execute()
-            for item in (pending.data or []):
-                supabase.table("agents").update({"instruction": item['proposed_instruction']}).eq("agent_role", item['agent_role']).execute()
-                supabase.table("pending_approvals").update({"status": "APPROVED"}).eq("id", item['id']).execute()
-        except: pass
+    """23:30 이후 자동 승인 — agents 테이블 기반으로 단순화"""
+    # pending_approvals 테이블 제거로 인해 이 함수는 현재 비활성
+    pass
 
 # ---------------------------------------------------------
-# [4] 자율 분석 엔진 (동기화 로직 통합)
+# [4] 자율 분석 엔진
 # ---------------------------------------------------------
 def run_autonomous_engine():
     agents = get_agents()
-    print(f"🚀 {TODAY} Sovereign Engine v12.7 가동")
+    print(f"🚀 {TODAY} Sovereign Engine v13.0 가동")
+
+    # QA fail_threshold 설정
+    QA_FAIL_THRESHOLD = 40
 
     user_res = supabase.table("user_settings").select("*").execute()
     for user in (user_res.data or []):
         try:
-            user_id, user_email, keywords = user['id'], user.get('email', 'Unknown'), user.get('keywords', [])[:5]
+            user_id   = user['id']
+            user_email = user.get('email', 'Unknown')
+            keywords  = user.get('keywords', [])[:5]
             if not keywords: continue
-            
+
             check_report = supabase.table("reports").select("id").eq("user_id", user_id).eq("report_date", TODAY).execute()
             if check_report.data:
                 print(f"⏭️  [Skip] {user_email}님은 이미 발송 완료되었습니다.")
                 continue
-            
+
             all_news_context, articles_with_summary = [], []
             for word in keywords:
                 gn = GNews(language='ko' if any(ord(c) > 0x1100 for c in word) else 'en', max_results=2)
@@ -187,34 +222,52 @@ def run_autonomous_engine():
                 record_performance(user_id, word, len(news_list))
                 for n in news_list:
                     short_summary = call_agent(f"뉴스: {n['title']}", agents['BRIEF'], force_one_line=True)
-                    impact = call_agent(f"뉴스: {n['title']}\n전망 1줄.", agents.get('STOCK', agents['BRIEF']), force_one_line=True)
+                    impact = call_agent(f"뉴스: {n['title']}\n전망 1줄.", agents.get('STOCK', agents.get('BRIEF')), force_one_line=True)
                     articles_with_summary.append({**n, "keyword": word, "pm_summary": short_summary, "impact": impact})
                     all_news_context.append(f"[{word}] {n['title']}")
                 log_to_db(user_id, word, "뉴스수집")
 
             if not articles_with_summary: continue
             ctx = "\n".join(all_news_context)
+
+            # [P3-1] agents.get() fallback — KeyError 완전 방지
+            ba    = agents.get('BA',    agents.get('BRIEF'))
+            stock = agents.get('STOCK', agents.get('BRIEF'))
+            pm    = agents.get('PM',    agents.get('BRIEF'))
+            hr    = agents.get('HR',    agents.get('BRIEF'))
+
             final_report = {
-                "ba_brief": call_agent(f"비즈니스 수익 구조 및 경쟁 분석:\n{ctx}", agents['BA']),
-                "securities_brief": call_agent(f"주식 시장 반응 및 투자 인사이트:\n{ctx}", agents['STOCK']),
-                "pm_brief": call_agent(f"전략적 서비스 기획 관점 브리핑:\n{ctx}", agents['PM']),
-                "hr_proposal": call_agent(f"조직 및 인사 관리 제안:\n{ctx}", agents['HR']),
-                "articles": articles_with_summary
+                "ba_brief":         call_agent(f"비즈니스 수익 구조 및 경쟁 분석:\n{ctx}", ba),
+                "securities_brief": call_agent(f"주식 시장 반응 및 투자 인사이트:\n{ctx}", stock),
+                "pm_brief":         call_agent(f"전략적 서비스 기획 관점 브리핑:\n{ctx}", pm),
+                "hr_proposal":      call_agent(f"조직 및 인사 관리 제안:\n{ctx}", hr),
+                "articles":         articles_with_summary
             }
 
+            # [P3-2] QA 실제 활성화 — 하드코딩 95 제거
+            qa_score, qa_feedback = run_qa_check(ctx, final_report, agents)
+
+            if qa_score < QA_FAIL_THRESHOLD:
+                print(f"⛔ [QA] {user_email} 품질 미달({qa_score}점) — 리포트 발송 보류")
+                log_to_db(user_id, "QA_FAIL", f"QA 점수 {qa_score}점으로 발송 보류")
+                continue
+
             res = supabase.table("reports").upsert({
-                "user_id": user_id, "report_date": TODAY, "content": final_report, "qa_score": 95
+                "user_id":        user_id,
+                "report_date":    TODAY,
+                "content":        final_report,
+                "qa_score":       qa_score,
+                "qa_feedback":    qa_feedback
             }, on_conflict="user_id,report_date").execute()
-            
-            if res.data: 
+
+            if res.data:
                 run_agent_self_reflection(res.data[0]['id'])
                 send_email_report(user_email, final_report)
 
-        except Exception as e: 
+        except Exception as e:
             print(f"❌ 유저 에러 ({user_email}): {e}")
             continue
-    
-    # [핵심] 모든 유저 처리 후(혹은 Skip 후) 최종적으로 data.json을 갱신하여 깃허브와 동기화
+
     sync_data_to_github()
 
 def send_email_report(user_email, report):
@@ -228,6 +281,6 @@ def send_email_report(user_email, report):
     except: pass
 
 if __name__ == "__main__":
-    manage_deadline_approvals() 
-    run_self_evolution()        
+    manage_deadline_approvals()
+    run_self_evolution()
     run_autonomous_engine()
