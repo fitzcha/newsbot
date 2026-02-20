@@ -97,8 +97,39 @@ def sync_data_to_github():
 # [1] DEV 엔진: 마스터 CONFIRMED 작업 집행
 # ──────────────────────────────────────────────
 def run_self_evolution():
+    """
+    DEV 안전장치 v1
+    ① 백업 → Supabase DB 영구 저장 (Actions 환경 소멸 대비)
+    ② 문법 검사 실패 시 명시적 롤백 + git push 차단
+    ③ 성공/실패 모두 이메일 알림
+    """
+    task     = None
+    cur_code = None
+
+    def _notify(subject, body, is_fail=False):
+        """내부 알림 발송 헬퍼"""
+        icon = "🚨" if is_fail else "✅"
+        try:
+            resend.Emails.send({
+                "from":    "Fitz Intelligence <onboarding@resend.dev>",
+                "to":      ["positivecha@gmail.com"],
+                "subject": f"{icon} [DEV] {subject}",
+                "html":    f"<pre style='font-family:monospace'>{body}</pre>"
+            })
+        except Exception as mail_err:
+            print(f"  ⚠️ [DEV] 알림 이메일 발송 실패: {mail_err}")
+            try:
+                supabase.table("action_logs").insert({
+                    "action_type": "DEV_NOTIFY_FAIL",
+                    "target_word": subject,
+                    "execution_method": "Auto",
+                    "details": str(mail_err)[:200]
+                }).execute()
+            except: pass
+
     try:
-        task_res = supabase.table("dev_backlog").select("*").eq("status", "CONFIRMED").order("priority").limit(1).execute()
+        task_res = supabase.table("dev_backlog").select("*")\
+            .eq("status", "CONFIRMED").order("priority").limit(1).execute()
         if not task_res.data:
             return print("💤 [DEV] 마스터의 '실행 확정' 대기 작업 없음.")
 
@@ -106,19 +137,89 @@ def run_self_evolution():
         file_path = task.get('affected_file', 'news_bot.py')
         print(f"🛠️ [DEV] 마스터 지휘 업무 착수: {task['title']}")
 
+        # ──────────────────────────────────────────────
+        # ① 백업: Supabase DB에 영구 저장 (로컬 환경 소멸 대비)
+        # ──────────────────────────────────────────────
+        with open(file_path, "r", encoding="utf-8") as f:
+            cur_code = f.read()
+
+        try:
+            supabase.table("code_backups").insert({
+                "file_path":    file_path,
+                "code":         cur_code,
+                "task_id":      task['id'],
+                "task_title":   task['title'],
+                "backed_up_at": NOW.isoformat()
+            }).execute()
+            print(f"  💾 [DEV] 백업 저장 완료 (Supabase code_backups)")
+        except Exception as bk_err:
+            # 백업 실패 시 → 작업 중단 (안전 우선)
+            msg = f"백업 저장 실패로 작업 중단.\n오류: {bk_err}"
+            print(f"  🚨 [DEV] {msg}")
+            _notify(f"백업 실패 — '{task['title']}' 중단", msg, is_fail=True)
+            supabase.table("dev_backlog").update({"status": "BACKUP_FAILED"})\
+                .eq("id", task['id']).execute()
+            return
+
+        # 로컬 백업도 유지 (참고용)
         bk = "backups"
         if not os.path.exists(bk): os.makedirs(bk)
         shutil.copy2(file_path, f"{bk}/{file_path}.{NOW.strftime('%H%M%S')}.bak")
 
-        with open(file_path, "r", encoding="utf-8") as f: cur = f.read()
+        # ──────────────────────────────────────────────
+        # Gemini 코드 생성
+        # ──────────────────────────────────────────────
         agents     = get_agents()
-        dev_prompt = f"요구사항: {task['task_detail']}\n\n반드시 전체 코드를 ```python ... ``` 안에 출력.\n--- 현재 코드 ---\n{cur}"
-        raw        = call_agent(dev_prompt, agents.get('DEV'), "Senior Python Engineer")
-        m          = re.search(r"```python\s+(.*?)\s+```", raw, re.DOTALL)
-        new_code   = m.group(1).strip() if m else raw.strip()
+        dev_prompt = (
+            f"요구사항: {task['task_detail']}\n\n"
+            "반드시 전체 코드를 ```python ... ``` 안에 출력.\n"
+            f"--- 현재 코드 ---\n{cur_code}"
+        )
+        raw      = call_agent(dev_prompt, agents.get('DEV'), "Senior Python Engineer")
+        m        = re.search(r"```python\s+(.*?)\s+```", raw, re.DOTALL)
+        new_code = m.group(1).strip() if m else raw.strip()
 
-        compile(new_code, file_path, 'exec')
-        with open(file_path, "w", encoding="utf-8") as f: f.write(new_code)
+        # ──────────────────────────────────────────────
+        # ② 문법 검사 → 실패 시 롤백 + 알림, git push 완전 차단
+        # ──────────────────────────────────────────────
+        try:
+            compile(new_code, file_path, 'exec')
+            print(f"  ✅ [DEV] 문법 검사 통과")
+        except SyntaxError as syn_err:
+            # 파일이 이미 덮어쓰여진 경우를 대비해 원본 복원
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(cur_code)
+            print(f"  🚨 [DEV] 문법 오류 감지 → 롤백 완료, push 차단")
+
+            err_detail = (
+                f"작업: {task['title']}\n"
+                f"오류 유형: SyntaxError\n"
+                f"위치: {syn_err.filename} line {syn_err.lineno}\n"
+                f"내용: {syn_err.msg}\n\n"
+                f"조치: 원본 코드로 자동 롤백 완료. GitHub push는 차단되었습니다.\n"
+                f"백업 ID는 Supabase code_backups 테이블에서 확인하세요."
+            )
+            _notify(f"문법 오류 감지 — '{task['title']}' 롤백 완료", err_detail, is_fail=True)
+
+            try:
+                supabase.table("action_logs").insert({
+                    "action_type": "DEV_SYNTAX_ROLLBACK",
+                    "target_word": task['title'],
+                    "execution_method": "Auto",
+                    "details": f"SyntaxError line {syn_err.lineno}: {syn_err.msg}"[:200]
+                }).execute()
+            except: pass
+
+            supabase.table("dev_backlog").update({"status": "SYNTAX_ERROR"})\
+                .eq("id", task['id']).execute()
+            return  # ← git push 없이 종료
+
+        # ──────────────────────────────────────────────
+        # 문법 통과 → 파일 저장 + GitHub push
+        # ──────────────────────────────────────────────
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(new_code)
+
         for cmd in [
             'git config --global user.name "Fitz-Dev"',
             'git config --global user.email "positivecha@gmail.com"',
@@ -127,10 +228,33 @@ def run_self_evolution():
             'git push'
         ]:
             subprocess.run(cmd, shell=True)
-        supabase.table("dev_backlog").update({"status": "COMPLETED", "completed_at": NOW.isoformat()}).eq("id", task['id']).execute()
+
+        supabase.table("dev_backlog").update({
+            "status": "COMPLETED",
+            "completed_at": NOW.isoformat()
+        }).eq("id", task['id']).execute()
         print(f"✨ [DEV] 배포 완료: {task['title']}")
+
+        # ③ 성공 알림
+        _notify(
+            f"코드 수정 배포 완료 — '{task['title']}'",
+            f"작업: {task['title']}\n"
+            f"파일: {file_path}\n"
+            f"시각: {NOW.strftime('%Y-%m-%d %H:%M')} KST\n\n"
+            f"요구사항:\n{task['task_detail'][:300]}\n\n"
+            f"문법 검사: 통과\n"
+            f"GitHub push: 완료\n"
+            f"백업: Supabase code_backups 저장 완료"
+        )
+
     except Exception as e:
         print(f"🚨 [DEV] 진화 실패: {e}")
+        if task:
+            _notify(
+                f"예상치 못한 오류 — '{task.get('title', '알 수 없음')}'",
+                f"오류 내용: {str(e)}\n\n원본 파일은 변경되지 않았습니다.",
+                is_fail=True
+            )
 
 # ──────────────────────────────────────────────
 # [2] 에이전트 자아 성찰
@@ -194,7 +318,6 @@ def send_email_report(user_email, report):
         print(f"  📧 [{user_email}] 이메일 발송 성공")
 
     except Exception as e:
-        # ③ 실패 시 무음 처리 대신 명확히 로그 기록
         print(f"  ❌ [{user_email}] 이메일 발송 실패: {e}")
         try:
             supabase.table("action_logs").insert({
@@ -229,8 +352,8 @@ def run_autonomous_engine():
             print(f"🔍 [{user_email}] 키워드 {keywords} 분석 시작")
 
             # ── [핵심] 키워드별 루프 ──────────────────────────
-            by_keyword     = {}   # 최종 저장될 구조
-            all_articles   = []   # HR 통합 분석용 전체 컨텍스트
+            by_keyword     = {}
+            all_articles   = []
 
             for word in keywords:
                 print(f"  📰 [{word}] 뉴스 수집 중...")
@@ -250,7 +373,6 @@ def run_autonomous_engine():
                     }
                     continue
 
-                # 기사별 요약
                 articles = []
                 kw_ctx   = []
                 for n in news_list:
@@ -266,7 +388,6 @@ def run_autonomous_engine():
 
                 ctx = "\n".join(kw_ctx)
 
-                # ── 키워드별 에이전트 3종 분석 ──────────────
                 print(f"  🤖 [{word}] 에이전트 분석 중...")
                 by_keyword[word] = {
                     "ba_brief": call_agent(
@@ -289,20 +410,17 @@ def run_autonomous_engine():
                 print(f"⚠️  [{user_email}] 분석 결과 없음 — 스킵")
                 continue
 
-            # ── HR은 전체 통합 (비용 절감) ──────────────────
-            all_ctx    = "\n".join(all_articles)
+            all_ctx     = "\n".join(all_articles)
             hr_proposal = call_agent(
                 f"조직 및 인사 관리 제안 (전체 키워드 기반):\n{all_ctx}",
                 agents['HR']
             )
 
-            # ── 최종 리포트 구조 ─────────────────────────────
             final_report = {
-                "by_keyword":   by_keyword,    # ← app.html이 읽는 핵심 구조
-                "hr_proposal":  hr_proposal,   # ← master.html HR 탭용
+                "by_keyword":  by_keyword,
+                "hr_proposal": hr_proposal,
             }
 
-            # DB 저장
             res = supabase.table("reports").upsert({
                 "user_id":     user_id,
                 "report_date": TODAY,
@@ -320,7 +438,6 @@ def run_autonomous_engine():
             print(f"❌ 유저 에러 ({user_email}): {e}")
             continue
 
-    # 전체 처리 후 GitHub 동기화
     sync_data_to_github()
 
 
