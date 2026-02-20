@@ -330,3 +330,127 @@ if __name__ == "__main__":
     run_self_evolution()          # CONFIRMED 개발 안건 배포
     run_agent_self_reflection()   # 에이전트 자율 진화 제안 (매일 실행)
     run_autonomous_engine()       # 리포트 생성 + 이메일 발송
+def send_email_report(user_email, report):
+    """뉴스레터 수준 HTML 이메일 발송"""
+    try:
+        articles = report.get('articles', [])
+        
+        # 뉴스 카드 HTML 생성
+        news_cards_html = ""
+        for i, a in enumerate(articles[:6]):  # 최대 6개
+            keyword_color = ["#007bff","#28a745","#fd7e14","#6f42c1","#20c997","#dc3545"][i % 6]
+            news_cards_html += f"""
+            <tr>
+              <td style="padding:0 0 16px 0;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa; border-radius:12px; border-left:4px solid {keyword_color};">
+                  <tr>
+                    <td style="padding:16px 20px;">
+                      <span style="background:{keyword_color}; color:#fff; font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; letter-spacing:0.5px;">#{a.get('keyword','')}</span>
+                      <p style="margin:8px 0 6px 0; font-size:14px; font-weight:700; color:#1a1a2e; line-height:1.5;">
+                        <a href="{a.get('url','#')}" style="color:#1a1a2e; text-decoration:none;">{a.get('title','')}</a>
+                      </p>
+                      <p style="margin:0; font-size:13px; color:#555; line-height:1.6;">💡 {a.get('pm_summary','')}</p>
+                      <p style="margin:6px 0 0 0; font-size:12px; color:#888;">📈 {a.get('impact','')}</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>"""
+
+        # 분석 섹션 HTML 생성
+        def analysis_block(icon, title, color, content):
+            return f"""
+            <tr>
+              <td style="padding:0 0 20px 0;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff; border-radius:16px; border:1px solid #e8ecf0; overflow:hidden;">
+                  <tr>
+                    <td style="background:{color}; padding:14px 20px;">
+                      <span style="color:#fff; font-size:14px; font-weight:800;">{icon} {title}</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding:18px 20px; font-size:13px; color:#333; line-height:1.8;">
+                      {content.replace(chr(10), '<br>')}
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>"""
+
+        from datetime import datetime
+        today_str = datetime.now().strftime("%Y년 %m월 %d일")
+
+        html = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#eef2f7; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+
+  <!-- Wrapper -->
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#eef2f7; padding:30px 0;">
+    <tr><td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
+
+        <!-- HEADER -->
+        <tr>
+          <td style="background:linear-gradient(135deg,#0f0c29,#302b63,#24243e); border-radius:20px 20px 0 0; padding:36px 40px; text-align:center;">
+            <p style="margin:0 0 4px 0; color:#a78bfa; font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase;">Fitz Intelligence</p>
+            <h1 style="margin:0 0 6px 0; color:#fff; font-size:26px; font-weight:800; letter-spacing:-0.5px;">비즈니스 인사이트 리포트</h1>
+            <p style="margin:0; color:#94a3b8; font-size:13px;">{today_str} 오전 9시 브리핑</p>
+          </td>
+        </tr>
+
+        <!-- BODY -->
+        <tr>
+          <td style="background:#fff; padding:32px 40px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+
+              <!-- 오늘의 뉴스 -->
+              <tr><td style="padding:0 0 24px 0;">
+                <h2 style="margin:0 0 16px 0; font-size:16px; font-weight:800; color:#1a1a2e; border-bottom:2px solid #eef2f7; padding-bottom:12px;">📰 오늘의 핵심 뉴스</h2>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  {news_cards_html}
+                </table>
+              </td></tr>
+
+              <!-- 에이전트 분석 -->
+              <tr><td style="padding:0 0 8px 0;">
+                <h2 style="margin:0 0 16px 0; font-size:16px; font-weight:800; color:#1a1a2e; border-bottom:2px solid #eef2f7; padding-bottom:12px;">🤖 AI 에이전트 심층 분석</h2>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  {analysis_block("📊","비즈니스 분석 (BA)","#007bff", report.get('ba_brief',''))}
+                  {analysis_block("📈","증권·투자 인사이트","#28a745", report.get('securities_brief',''))}
+                  {analysis_block("🎯","전략 기획 (PM)","#6f42c1", report.get('pm_brief',''))}
+                  {analysis_block("👥","조직·인사 제안 (HR)","#fd7e14", report.get('hr_proposal',''))}
+                </table>
+              </td></tr>
+
+            </table>
+          </td>
+        </tr>
+
+        <!-- FOOTER -->
+        <tr>
+          <td style="background:#1a1a2e; border-radius:0 0 20px 20px; padding:24px 40px; text-align:center;">
+            <p style="margin:0 0 6px 0; color:#a78bfa; font-size:13px; font-weight:700;">Fitz Intelligence</p>
+            <p style="margin:0; color:#64748b; font-size:11px; line-height:1.7;">
+              본 리포트는 AI 에이전트가 자율 분석한 정보입니다.<br>투자 결정의 최종 책임은 본인에게 있습니다.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+
+</body>
+</html>"""
+
+        resend.Emails.send({
+            "from": "Fitz Intelligence <report@yourdomain.com>",  # 도메인 연결 후 변경
+            "to": [user_email],
+            "subject": f"[{today_str}] Fitz 비즈니스 인사이트 — 오전 브리핑",
+            "html": html
+        })
+        print(f"✅ [Email] 발송 완료: {user_email}")
+    except Exception as e:
+        print(f"🚨 [Email] 발송 실패: {e}")
