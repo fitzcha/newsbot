@@ -1,0 +1,98 @@
+name: Daily News Analysis & Governance Bot
+
+on:
+  schedule:
+    # 1. 한국 시간 오전 09:00 (KST) - 정기 브리핑 및 데이터 동기화
+    - cron: '0 0 * * *'
+    # 2. 한국 시간 밤 23:30 (KST) - 지능 자동 승인 및 마감 작업
+    - cron: '30 14 * * *'
+  workflow_dispatch:
+    # [핵심] 사령부(HQ)에서 실행 버튼을 눌렀을 때 백로그 ID를 전달받음
+    inputs:
+      backlog_id:
+        description: '처리할 개발 백로그 ID (HQ 연동)'
+        required: false
+        default: ''
+
+jobs:
+  execute-bot:
+    runs-on: ubuntu-latest
+    # [v14.5 추가] 봇이 코드를 수정하고 푸시할 수 있도록 권한 부여
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # 모든 히스토리를 가져와야 충돌 없이 푸시 가능
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # 필수 라이브러리 강제 설치 (안전장치)
+          pip install supabase google-genai gnews resend
+
+      - name: Run news_bot.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          # 봇 내부에서 git push를 수행할 때 사용할 마스터 토큰
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }} 
+          # [핵심] 백엔드 코드에서 이 ID를 읽어 처리 상태를 기록
+          CURRENT_BACKLOG_ID: ${{ github.event.inputs.backlog_id }}
+        run: python news_bot.py
+
+      # [안전장치] 만약 파이썬 코드 내부에서 푸시하지 못한 파일이 있다면 여기서 최종 푸시
+      - name: Final Git Sync
+        run: |
+          git config --global user.name "Fitz Intelligence Bot"
+          git config --global user.email "positivecha@gmail.com"
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "🤖 [System Evolution] $(date +'%Y-%m-%d %H:%M') KST Update"
+            git push origin main
+          else
+            echo "No file changes detected to push."
+          fi
+
+      # [자동화 보고] 배포 성공 시 사령부에 즉시 보고 (백로그 ID가 있을 때만)
+      - name: Notify Sovereign HQ (Success)
+        if: success() && github.event.inputs.backlog_id != ''
+        run: |
+          curl -X PATCH "${{ secrets.SUPABASE_URL }}/rest/v1/dev_backlog?id=eq.${{ github.event.inputs.backlog_id }}" \
+          -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{"status": "DEPLOYED", "completed_at": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"}'
+
+          curl -X POST "${{ secrets.SUPABASE_URL }}/rest/v1/action_logs" \
+          -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{"action_type": "DEV_DEPLOY", "target_word": "SYSTEM", "details": "✅ AI 배포 완료: 백로그 #${{ github.event.inputs.backlog_id }}가 성공적으로 반영되었습니다."}'
+
+      # [자동화 보고] 배포 실패 시 사령부에 즉시 경고
+      - name: Notify Sovereign HQ (Failure)
+        if: failure() && github.event.inputs.backlog_id != ''
+        run: |
+          curl -X PATCH "${{ secrets.SUPABASE_URL }}/rest/v1/dev_backlog?id=eq.${{ github.event.inputs.backlog_id }}" \
+          -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{"status": "FAILED"}'
+
+          curl -X POST "${{ secrets.SUPABASE_URL }}/rest/v1/action_logs" \
+          -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+          -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{"action_type": "DEV_DEPLOY", "target_word": "SYSTEM", "details": "❌ AI 배포 실패: 백로그 #${{ github.event.inputs.backlog_id }} 실행 중 오류 발생"}'

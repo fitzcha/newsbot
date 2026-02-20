@@ -1,0 +1,165 @@
+import os, json, time, traceback, random, resend, re, subprocess, shutil
+from google import genai
+from gnews import GNews
+from supabase import create_client, Client
+from datetime import datetime, timedelta, timezone
+from difflib import SequenceMatcher
+
+# [v11.0] 환경 변수 및 타임존 설정
+KST = timezone(timedelta(hours=9))
+TODAY = datetime.now(KST).strftime("%Y-%m-%d")
+
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
+SB_URL = os.environ.get("SUPABASE_URL")
+SB_KEY = os.environ.get("SUPABASE_KEY")
+resend.api_key = os.environ.get("RESEND_API_KEY")
+
+supabase: Client = create_client(SB_URL, SB_KEY)
+google_genai = genai.Client(api_key=GEMINI_KEY)
+
+# ---------------------------------------------------------
+# [1] DEV 에이전트: 자율 진화 엔진 (v11.0 핵심)
+# ---------------------------------------------------------
+def run_self_evolution():
+    """CEO의 개발 지시를 읽고 스스로 코드를 수정 및 배포합니다."""
+    try:
+        task_res = supabase.table("dev_backlog").select("*").eq("status", "PENDING").order("priority").limit(1).execute()
+        if not task_res.data:
+            print("💤 처리할 개발 백로그가 없습니다.")
+            return
+
+        task = task_res.data[0]
+        file_path = task.get('affected_file', 'news_bot.py')
+        print(f"🛠️ [DEV] 자율 진화 착수: {task['title']}")
+
+        # 안전 백업
+        backup_dir = "backups"
+        if not os.path.exists(backup_dir): os.makedirs(backup_dir)
+        shutil.copy2(file_path, f"{backup_dir}/{file_path}.{datetime.now(KST).strftime('%H%M%S')}.bak")
+
+        with open(file_path, "r", encoding="utf-8") as f:
+            current_code = f.read()
+
+        agents = get_agents()
+        dev_agent = agents.get('DEV')
+        prompt = (
+            f"당신은 이 시스템의 수석 개발자입니다. 다음 요구사항을 반영하여 '{file_path}' 전체 코드를 다시 작성하십시오.\n"
+            f"요구사항: {task['task_detail']}\n\n"
+            f"주의: 마크다운 기호 없이 순수 Python 코드만 출력하십시오.\n\n"
+            f"--- 현재 코드 ---\n{current_code}"
+        )
+        
+        new_code = call_agent(prompt, dev_agent, persona_override="Senior Developer")
+        new_code = new_code.replace("```python", "").replace("```", "").strip()
+
+        # 문법 검사 및 배포
+        compile(new_code, file_path, 'exec')
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(new_code)
+        
+        commands = [
+            'git config --global user.name "Dev-Agent-AI"',
+            'git config --global user.email "positivecha@gmail.com"',
+            'git add .',
+            f'git commit -m "🤖 [Auto-Dev] {task["title"]} [skip ci]"',
+            'git push'
+        ]
+        for cmd in commands: subprocess.run(cmd, shell=True)
+
+        supabase.table("dev_backlog").update({"status": "COMPLETED", "completed_at": datetime.now(KST).isoformat()}).eq("id", task['id']).execute()
+        print(f"✨ {task['title']} 진화 완료")
+
+    except Exception as e:
+        print(f"🚨 진화 중 에러: {e}")
+        if 'task' in locals(): supabase.table("dev_backlog").update({"status": "FAILED"}).eq("id", task['id']).execute()
+
+# ---------------------------------------------------------
+# [2] 8대 에이전트 연쇄 호출 로직 (v10.1 계승)
+# ---------------------------------------------------------
+def get_agents():
+    res = supabase.table("agent_config").select("*").execute()
+    return {a['agent_role']: a for a in (res.data or [])}
+
+def call_agent(prompt, agent_info, persona_override=None, max_retries=3):
+    role = persona_override if persona_override else agent_info['agent_role']
+    for attempt in range(max_retries):
+        try:
+            time.sleep(2)
+            res = google_genai.models.generate_content(
+                model=agent_info.get('model_name', 'gemini-2.0-flash'),
+                contents=f"당신은 {role}입니다.\n지침: {agent_info['instruction']}\n\n{prompt}",
+                config={'temperature': 0.1 if "Developer" in role else agent_info.get('temperature', 0.7)}
+            )
+            return res.text
+        except Exception: time.sleep(15)
+    return "분석 지연"
+
+def marked_parse_pseudo(text):
+    return text.replace("\n", "<br>").replace("**", "<b>").replace("* ", "• ")
+
+def run_autonomous_engine():
+    agents = get_agents()
+    if not agents: return
+    print(f"🚀 {TODAY} 자율 분석 가동")
+
+    kw_res = supabase.table("user_settings").select("id, email, keywords").execute()
+    for user in (kw_res.data or []):
+        user_id, user_email, keywords = user['id'], user.get('email', 'Unknown'), user.get('keywords', [])[:5]
+        raw_collection, all_titles = [], []
+        
+        # [INFO] 에이전트 정책 기반 뉴스 수집
+        for word in keywords:
+            gn = GNews(language='ko' if any(ord(c) > 0x1100 for c in word) else 'en', max_results=5)
+            items = gn.get_news(word)
+            for n in items[:2]:
+                raw_collection.append({"keyword": word, "title": n['title'], "url": n['url']})
+                all_titles.append(f"[{word}] {n['title']}")
+
+        if not raw_collection: continue
+        
+        # [DATA] -> [BRIEF] -> [QA] -> [HR] 연쇄 호출
+        refined_context = call_agent("\n".join(all_titles), agents['DATA'])
+        
+        articles_with_summary = []
+        for news in raw_collection:
+            articles_with_summary.append({
+                **news, 
+                "pm_summary": call_agent(news['title'], agents['BRIEF'], "PM"),
+                "ba_summary": call_agent(news['title'], agents['BRIEF'], "BA"),
+                "sec_summary": call_agent(news['title'], agents['BRIEF'], "SEC")
+            })
+
+        pm_brief = call_agent(refined_context, agents['BRIEF'], "PM")
+        ba_brief = call_agent(refined_context, agents['BRIEF'], "BA")
+        sec_brief = call_agent(refined_context, agents['BRIEF'], "SEC")
+        
+        qa_feedback = call_agent(f"Briefing: {pm_brief}\nTitles: {str(all_titles)}", agents['QA'])
+        hr_proposal = call_agent(f"Performance Context: {refined_context}", agents['HR'])
+
+        final_report = {
+            "date": TODAY, "pm_brief": pm_brief, "ba_brief": ba_brief, "securities_brief": sec_brief,
+            "hr_proposal": hr_proposal, "articles": articles_with_summary, "qa_feedback": qa_feedback
+        }
+
+        # DB 저장 및 메일 발송
+        score_match = re.search(r"(\d+)(?=/100|점)", qa_feedback)
+        supabase.table("reports").insert({
+            "user_id": user_id, "report_date": TODAY, "content": final_report,
+            "qa_score": int(score_match.group(1)) if score_match else 70, "qa_feedback": qa_feedback
+        }).execute()
+        send_email_report(user_email, final_report)
+
+def send_email_report(user_email, report):
+    try:
+        hr_html = f"<div style='background:#fff2f2; padding:15px; border-left:5px solid red;'>{marked_parse_pseudo(report['hr_proposal'])}</div>"
+        resend.Emails.send({
+            "from": "Fitz Intelligence <onboarding@resend.dev>",
+            "to": [user_email],
+            "subject": f"[{TODAY}] 자율 진화 기업 리포트",
+            "html": f"<h2>📊 PM 분석</h2>{marked_parse_pseudo(report['pm_brief'])}<h3>👨‍💼 HR 제안</h3>{hr_html}"
+        })
+    except Exception as e: print(f"📧 메일 실패: {e}")
+
+if __name__ == "__main__":
+    run_self_evolution() # 개발 먼저
+    run_autonomous_engine() # 분석 나중

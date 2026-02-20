@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitz Intelligence | 웹 콘텐츠 AI 분석 플랫폼</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <style>
+        :root { --primary: #007bff; --bg: #f8f9fa; }
+        body { font-family: 'Pretendard', sans-serif; margin: 0; background: #fff; color: #333; text-align: center; }
+        .hero { padding: 100px 20px; background: linear-gradient(180deg, #fff 0%, #f8f9fa 100%); border-radius: 0 0 50px 50px; }
+        .flow-container { display: flex; justify-content: center; gap: 25px; margin: 60px 0; flex-wrap: wrap; }
+        .flow-card { background: #fff; padding: 30px; border-radius: 24px; box-shadow: 0 15px 40px rgba(0,0,0,0.06); width: 230px; border-top: 5px solid var(--primary); text-align: left; transition: 0.3s; }
+        .flow-card h4 { margin: 0 0 12px 0; color: var(--primary); font-size: 0.8em; letter-spacing: 1px; }
+        .example-tag { background: #eef2f7; padding: 4px 10px; border-radius: 12px; font-size: 0.75em; display: inline-block; margin-top: 15px; color: var(--primary); font-weight: 800; }
+        .auth-btn { padding: 22px 65px; border-radius: 50px; background: var(--primary); color: #fff; border: none; font-weight: bold; cursor: pointer; font-size: 1.2rem; box-shadow: 0 10px 25px rgba(0,123,255,0.25); }
+        #auth-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index: 9999; backdrop-filter: blur(8px); }
+        .auth-modal { position: absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:40px; border-radius:30px; width:90%; max-width:400px; }
+        input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 15px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <section class="hero">
+        <span style="font-weight:bold; color:var(--primary); margin-bottom:15px; display:block;">Professional AI Content Intelligence</span>
+        <h1 style="font-size:3.5rem; font-weight:800; letter-spacing:-2px; margin:0;">Fitz Intelligence</h1>
+        <p style="font-size:1.4rem; color:#555; margin-top:10px;">웹 콘텐츠 AI 분석 플랫폼</p>
+        <div class="flow-container">
+            <div class="flow-card"><h4>STEP 01</h4><p>내 관심 키워드 등록</p><div><span class="example-tag">#이커머스</span><span class="example-tag">#자율주행</span></div></div>
+            <div class="flow-card"><h4>STEP 02</h4><p>웹 콘텐츠 수집 및<br>AI 인사이트 분석</p></div>
+            <div class="flow-card"><h4>STEP 03</h4><p>매일 오전 09시<br>맞춤형 리포트 배달</p></div>
+        </div>
+        <button id="main-cta" class="auth-btn" onclick="handleStart()">베타 서비스 시작하기 →</button>
+    </section>
+
+    <div id="auth-overlay">
+        <div class="auth-modal">
+            <h2 style="margin-top:0;">VVIP 입장</h2>
+            <input type="email" id="email-input" placeholder="이메일 주소">
+            <button class="auth-btn" style="width:100%; padding:15px; border-radius:15px; font-size:1rem;" onclick="sendMagicLink()">로그인 링크 받기</button>
+            <p style="margin-top:15px; font-size:0.8em; color:#999; cursor:pointer;" onclick="document.getElementById('auth-overlay').style.display='none'">닫기</p>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = { url: 'https://zrlpwmpbrvohautldcon.supabase.co', key: 'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G' };
+        const sc = supabase.createClient(CONFIG.url, CONFIG.key);
+        let isLogged = false;
+
+        // [핵심] 로그인 세션을 확인하되, 강제 이동시키지 않습니다.
+        async function checkSession() {
+            const { data: { session } } = await sc.auth.getSession();
+            if (session) {
+                isLogged = true;
+                const btn = document.getElementById('main-cta');
+                btn.innerText = "대시보드로 바로가기 →";
+                btn.style.background = "#333"; // 로그인 유저는 검은색 버튼으로 차별화
+            }
+        }
+
+        function handleStart() {
+            if (isLogged) {
+                location.href = 'app.html'; // 로그인 상태면 대시보드로
+            } else {
+                document.getElementById('auth-overlay').style.display = 'block'; // 아니면 로그인창
+            }
+        }
+
+        async function sendMagicLink() {
+            const email = document.getElementById('email-input').value;
+            if(!email) return alert("이메일을 입력해주세요.");
+            const { error } = await sc.auth.signInWithOtp({ 
+                email: email,
+                options: { emailRedirectTo: window.location.origin + '/app.html' }
+            });
+            if (error) alert("에러: " + error.message);
+            else alert("메일로 로그인 링크가 전송되었습니다!");
+        }
+
+        checkSession();
+    </script>
+</body>
+</html>

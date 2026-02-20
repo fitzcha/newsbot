@@ -1,0 +1,228 @@
+import os, json, time, traceback, random, resend, re, subprocess, shutil
+from google import genai
+from gnews import GNews
+from supabase import create_client, Client
+from datetime import datetime, timedelta, timezone
+
+# [v12.6] BA 전면 배치 + 고객용 인사이트 필터링 + 성과 기록 + 자율 진화 통합 엔진
+KST = timezone(timedelta(hours=9))
+NOW = datetime.now(KST)
+TODAY = NOW.strftime("%Y-%m-%d")
+
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
+SB_URL = os.environ.get("SUPABASE_URL")
+SB_KEY = os.environ.get("SUPABASE_KEY")
+resend.api_key = os.environ.get("RESEND_API_KEY")
+
+supabase: Client = create_client(SB_URL, SB_KEY)
+google_genai = genai.Client(api_key=GEMINI_KEY)
+
+# ---------------------------------------------------------
+# [보조] 시스템 로그 및 성과 기록
+# ---------------------------------------------------------
+def log_to_db(user_id, target_word, action="분석", method="Auto"):
+    try:
+        supabase.table("action_logs").insert({
+            "user_id": user_id, 
+            "action_type": action,
+            "target_word": target_word,
+            "execution_method": method,
+            "details": "Success"
+        }).execute()
+    except: pass
+
+def record_performance(user_id, keyword, count):
+    """[v12.5 추가] 키워드별 뉴스 검색 성과 자동 적재"""
+    try:
+        supabase.table("keyword_performance").insert({
+            "user_id": user_id,
+            "keyword": keyword,
+            "hit_count": count,
+            "report_date": TODAY
+        }).execute()
+    except: pass
+
+def get_agents():
+    """[v12.5 수정] agents 테이블을 지능의 원천으로 사용"""
+    res = supabase.table("agents").select("*").execute()
+    return {a['agent_role']: a for a in (res.data or [])}
+
+def call_agent(prompt, agent_info, persona_override=None, force_one_line=False):
+    if not agent_info: return "분석 데이터 없음"
+    role = persona_override if persona_override else agent_info['agent_role']
+    
+    # [v12.6 핵심 가드] 고객용 리포트에는 내부 제안을 섞지 않도록 명령
+    guard = " (주의: 고객 리포트이므로 내부 학습 제안이나 '수정하겠습니다' 같은 말은 절대 포함하지 마십시오.)"
+    final_prompt = f"(경고: 반드시 '딱 1줄'로만 핵심을 작성하라) {prompt}" if force_one_line else prompt + guard
+
+    try:
+        res = google_genai.models.generate_content(
+            model='gemini-2.0-flash',
+            contents=f"당신은 {role}입니다.\n지침: {agent_info['instruction']}\n\n입력: {final_prompt}"
+        )
+        output = res.text.strip()
+        return output.split('\n')[0] if force_one_line else output
+    except: return "분석 지연 중"
+
+# ---------------------------------------------------------
+# [1] DEV 엔진: 마스터 'CONFIRMED' 작업 집행 (백업 및 Git 동기화 포함)
+# ---------------------------------------------------------
+def run_self_evolution():
+    try:
+        task_res = supabase.table("dev_backlog").select("*").eq("status", "CONFIRMED").order("priority").limit(1).execute()
+        if not task_res.data:
+            return print("💤 [DEV] 마스터의 '실행 확정' 대기 작업 없음.")
+
+        task = task_res.data[0]
+        file_path = task.get('affected_file', 'news_bot.py')
+        print(f"🛠️ [DEV] 마스터 지휘 업무 착수: {task['title']}")
+
+        # 백업 생성
+        backup_dir = "backups"
+        if not os.path.exists(backup_dir): os.makedirs(backup_dir)
+        shutil.copy2(file_path, f"{backup_dir}/{file_path}.{NOW.strftime('%H%M%S')}.bak")
+
+        with open(file_path, "r", encoding="utf-8") as f: current_code = f.read()
+
+        agents = get_agents()
+        dev_prompt = f"요구사항: {task['task_detail']}\n\n반드시 전체 코드를 ```python ... ``` 안에 출력.\n--- 현재 코드 ---\n{current_code}"
+        raw_output = call_agent(dev_prompt, agents.get('DEV'), "Senior Python Engineer")
+
+        code_match = re.search(r"```python\s+(.*?)\s+```", raw_output, re.DOTALL)
+        new_code = code_match.group(1).strip() if code_match else raw_output.strip()
+
+        # 정적 검사 및 반영
+        compile(new_code, file_path, 'exec')
+        with open(file_path, "w", encoding="utf-8") as f: f.write(new_code)
+        
+        # Git Push (시스템 진화 기록)
+        for cmd in [
+            'git config --global user.name "Fitz-Dev"', 
+            'git config --global user.email "positivecha@gmail.com"',
+            'git add .', 
+            f'git commit -m "🤖 [v12.6] {task["title"]}"', 
+            'git push'
+        ]:
+            subprocess.run(cmd, shell=True)
+
+        supabase.table("dev_backlog").update({"status": "COMPLETED", "completed_at": NOW.isoformat()}).eq("id", task['id']).execute()
+        print(f"✨ [DEV] 배포 완료: {task['title']}")
+    except Exception as e:
+        print(f"🚨 [DEV] 진화 실패: {e}")
+
+# ---------------------------------------------------------
+# [2] 에이전트 자아 성찰: 전자 결재 상신 (v12.6 결재함 연동)
+# ---------------------------------------------------------
+def run_agent_self_reflection(report_id):
+    try:
+        feedback_res = supabase.table("report_feedback").select("*").eq("report_id", report_id).execute()
+        if not feedback_res.data: return
+        
+        agents = get_agents()
+        for role, info in agents.items():
+            if role in ['DEV', 'QA', 'MASTER']: continue
+            neg_voc = [f['feedback_text'] for f in feedback_res.data if f['target_agent'] == role and not f['is_positive']]
+            if not neg_voc: continue
+
+            reflect_prompt = f"현재 지침: {info['instruction']}\n고객불만: {', '.join(neg_voc)}\n\n[PROPOSAL]수정지침 [REASON]수정근거 형식으로 상신하라."
+            reflection = call_agent(reflect_prompt, info, "Insight Evolver")
+            
+            p = re.search(r"\[PROPOSAL\](.*?)(?=\[REASON\]|$)", reflection, re.DOTALL)
+            r = re.search(r"\[REASON\](.*?)$", reflection, re.DOTALL)
+            
+            if p:
+                supabase.table("pending_approvals").insert({
+                    "agent_role": role,
+                    "proposed_instruction": p.group(1).strip(),
+                    "proposal_reason": r.group(1).strip() if r else "VOC 피드백 반영"
+                }).execute()
+                print(f"📄 [{role}] 결재 서류 상신 완료")
+    except: pass
+
+# ---------------------------------------------------------
+# [3] 23:30 지능 자동 승인 매니저
+# ---------------------------------------------------------
+def manage_deadline_approvals():
+    if NOW.hour == 23 and NOW.minute >= 30:
+        print("⏰ 23:30 데드라인 처리 중...")
+        try:
+            pending = supabase.table("pending_approvals").select("*").eq("status", "PENDING").execute()
+            for item in (pending.data or []):
+                # agents 테이블에 실제 지능 업데이트
+                supabase.table("agents").update({"instruction": item['proposed_instruction']}).eq("agent_role", item['agent_role']).execute()
+                supabase.table("pending_approvals").update({"status": "APPROVED"}).eq("id", item['id']).execute()
+        except: pass
+
+# ---------------------------------------------------------
+# [4] 자율 분석 엔진 (v12.6 통합 완성형)
+# ---------------------------------------------------------
+def run_autonomous_engine():
+    agents = get_agents()
+    print(f"🚀 {TODAY} Sovereign Engine v12.6 가동")
+
+    user_res = supabase.table("user_settings").select("*").execute()
+    for user in (user_res.data or []):
+        try:
+            user_id, user_email, keywords = user['id'], user.get('email', 'Unknown'), user.get('keywords', [])[:5]
+            if not keywords: continue
+            
+            # 중복 발송 차단 로직
+            check_report = supabase.table("reports").select("id").eq("user_id", user_id).eq("report_date", TODAY).execute()
+            if check_report.data:
+                print(f"⏭️  [Skip] {user_email}님은 이미 발송 완료되었습니다.")
+                continue
+            
+            all_news_context, articles_with_summary = [], []
+            for word in keywords:
+                gn = GNews(language='ko' if any(ord(c) > 0x1100 for c in word) else 'en', max_results=2)
+                news_list = gn.get_news(word)
+                record_performance(user_id, word, len(news_list))
+                
+                for n in news_list:
+                    short_summary = call_agent(f"뉴스: {n['title']}", agents['BRIEF'], force_one_line=True)
+                    impact = call_agent(f"뉴스: {n['title']}\n전망 1줄.", agents.get('STOCK', agents['BRIEF']), force_one_line=True)
+                    
+                    articles_with_summary.append({**n, "keyword": word, "pm_summary": short_summary, "impact": impact})
+                    all_news_context.append(f"[{word}] {n['title']}")
+                log_to_db(user_id, word, "뉴스수집")
+
+            if not articles_with_summary: continue
+            ctx = "\n".join(all_news_context)
+
+            # [v12.6] BA(비즈니스 분석)를 최우선으로 리포트 구성
+            final_report = {
+                "ba_brief": call_agent(f"비즈니스 수익 구조 및 경쟁 분석:\n{ctx}", agents['BA']),
+                "securities_brief": call_agent(f"주식 시장 반응 및 투자 인사이트:\n{ctx}", agents['STOCK']),
+                "pm_brief": call_agent(f"전략적 서비스 기획 관점 브리핑:\n{ctx}", agents['PM']),
+                "hr_proposal": call_agent(f"조직 및 인사 관리 제안:\n{ctx}", agents['HR']),
+                "articles": articles_with_summary
+            }
+
+            res = supabase.table("reports").upsert({
+                "user_id": user_id, "report_date": TODAY, "content": final_report, "qa_score": 95
+            }, on_conflict="user_id,report_date").execute()
+            
+            if res.data: 
+                run_agent_self_reflection(res.data[0]['id'])
+                send_email_report(user_email, final_report)
+                log_to_db(user_id, "리포트 발송", "성공")
+
+        except Exception as e: 
+            print(f"❌ 유저 에러 ({user_email}): {e}")
+            continue
+
+def send_email_report(user_email, report):
+    try:
+        # 이메일 리포트에서도 BA(비즈니스 분석)를 헤드로 배치
+        resend.Emails.send({
+            "from": "Fitz Intelligence <onboarding@resend.dev>",
+            "to": [user_email],
+            "subject": f"[{TODAY}] Fitz 비즈니스 인사이트 리포트",
+            "html": f"<h2>📊 비즈니스 분석</h2>{report['ba_brief'].replace(chr(10), '<br>')}"
+        })
+    except: pass
+
+if __name__ == "__main__":
+    manage_deadline_approvals() 
+    run_self_evolution()        
+    run_autonomous_engine()
