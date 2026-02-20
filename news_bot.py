@@ -46,18 +46,31 @@ def get_agents():
 # [보조] Gemini 호출
 # ──────────────────────────────────────────────
 def call_agent(prompt, agent_info, persona_override=None, force_one_line=False):
+    # ② BRIEF 등 에이전트 누락 방어
     if not agent_info: return "분석 데이터 없음"
-    role  = persona_override or agent_info['agent_role']
+    role  = persona_override or agent_info.get('agent_role', 'Assistant')
     guard = " (주의: 고객 리포트이므로 내부 학습 제안이나 '수정하겠습니다' 같은 말은 절대 포함하지 마십시오.)"
     fp    = f"(경고: 반드시 '딱 1줄'로만 핵심을 작성하라) {prompt}" if force_one_line else prompt + guard
-    try:
-        res    = google_genai.models.generate_content(
-            model='gemini-2.0-flash',
-            contents=f"당신은 {role}입니다.\n지침: {agent_info['instruction']}\n\n입력: {fp}"
-        )
-        output = res.text.strip()
-        return output.split('\n')[0] if force_one_line else output
-    except: return "분석 지연 중"
+
+    # ① Gemini 429 재시도 로직 (최대 3회, 5초 간격)
+    for attempt in range(3):
+        try:
+            res    = google_genai.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=f"당신은 {role}입니다.\n지침: {agent_info['instruction']}\n\n입력: {fp}"
+            )
+            output = res.text.strip()
+            return output.split('\n')[0] if force_one_line else output
+        except Exception as e:
+            err = str(e)
+            if '429' in err and attempt < 2:
+                wait = 5 * (attempt + 1)   # 5초, 10초
+                print(f"  ⏳ [Gemini 429] {wait}초 후 재시도 ({attempt+1}/3)...")
+                time.sleep(wait)
+            else:
+                print(f"  ❌ [Gemini 오류] {err[:80]}")
+                return "분석 지연 중"
+    return "분석 지연 중"
 
 # ──────────────────────────────────────────────
 # [보조] GitHub 동기화
@@ -159,14 +172,11 @@ def manage_deadline_approvals():
 # [4] 이메일 발송 — by_keyword 구조 대응
 # ──────────────────────────────────────────────
 def send_email_report(user_email, report):
-    """by_keyword 구조에서 첫 번째 키워드의 ba_brief를 본문으로 사용."""
+    """by_keyword 구조에서 키워드별 ba_brief를 모아 이메일 발송. ③ 실패 시 로그 기록."""
     try:
         bk       = report.get("by_keyword", {})
-        kw_keys  = list(bk.keys())
-        # 이메일 본문: 키워드별 요약을 모아서 구성
         sections = []
-        for kw in kw_keys:
-            kd = bk[kw]
+        for kw, kd in bk.items():
             ba = kd.get("ba_brief", "").replace('\n', '<br>')
             sections.append(f"<h3>#{kw}</h3><p>{ba}</p><hr>")
 
@@ -181,7 +191,19 @@ def send_email_report(user_email, report):
             "subject": f"[{TODAY}] Fitz 키워드별 인사이트 리포트",
             "html":    html_body
         })
-    except: pass
+        print(f"  📧 [{user_email}] 이메일 발송 성공")
+
+    except Exception as e:
+        # ③ 실패 시 무음 처리 대신 명확히 로그 기록
+        print(f"  ❌ [{user_email}] 이메일 발송 실패: {e}")
+        try:
+            supabase.table("action_logs").insert({
+                "action_type":      "EMAIL_FAIL",
+                "target_word":      user_email,
+                "execution_method": "Auto",
+                "details":          str(e)[:200]
+            }).execute()
+        except: pass
 
 # ──────────────────────────────────────────────
 # [5] 핵심 변경: 자율 분석 엔진 — by_keyword 구조
