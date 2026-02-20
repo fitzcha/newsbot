@@ -316,6 +316,15 @@ def send_email_report(user_email, report):
             "html":    html_body
         })
         print(f"  📧 [{user_email}] 이메일 발송 성공")
+        # ⑤ 성공 결과 action_logs 기록
+        try:
+            supabase.table("action_logs").insert({
+                "action_type":      "EMAIL_SUCCESS",
+                "target_word":      user_email,
+                "execution_method": "Auto",
+                "details":          f"[{TODAY}] 키워드 리포트 발송 완료"
+            }).execute()
+        except: pass
 
     except Exception as e:
         print(f"  ❌ [{user_email}] 이메일 발송 실패: {e}")
