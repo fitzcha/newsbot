@@ -122,7 +122,7 @@ def run_self_evolution():
             'git config --global user.name "Fitz-Dev"',
             'git config --global user.email "positivecha@gmail.com"',
             'git add .',
-            f'git commit -m "🤖 [DEV] {task[\"title\"]}"',
+            'git commit -m "🤖 [DEV] ' + task.get('title', 'update') + '"',
             'git push'
         ]:
             subprocess.run(cmd, shell=True)
