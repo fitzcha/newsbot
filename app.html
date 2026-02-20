@@ -7,263 +7,360 @@
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
 <style>
-:root{--primary:#007bff;--admin:#ff4d4f;--success:#28a745;--bg:#f8f9fa}
-*{box-sizing:border-box}
-body{font-family:'Pretendard',sans-serif;margin:0;padding:20px;background:#fff;color:#333;line-height:1.6}
-.container{max-width:950px;margin:0 auto}
-.nav-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;background:#fff;padding:15px;border-radius:16px;border:1px solid #eee;flex-wrap:wrap;gap:10px}
-.auth-btn{padding:9px 20px;border-radius:8px;border:1px solid var(--primary);background:#fff;color:var(--primary);cursor:pointer;font-weight:bold;font-size:.88rem;transition:.2s}
-.auth-btn.active{background:var(--primary);color:#fff;border:none}
-.keyword-manager{background:#fff;padding:25px;border-radius:20px;box-shadow:0 4px 15px rgba(0,0,0,.05);margin-bottom:20px;border-top:5px solid #ccc}
-.tag{background:#eef2f7;padding:8px 16px;border-radius:25px;font-size:.85em;color:var(--primary);font-weight:bold;display:flex;align-items:center}
-.briefing-box{background:#343a40;color:#fff;padding:25px;border-radius:16px;margin-bottom:20px;position:relative}
-.news-card{background:#fff;padding:25px;border-radius:20px;margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,.05);border-left:6px solid #eee;color:#333}
+  :root {
+    --primary: #4f46e5;
+    --primary-light: #eef2ff;
+    --success: #10b981;
+    --danger: #ef4444;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-400: #9ca3af;
+    --gray-600: #4b5563;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    --radius: 16px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; }
+  body { font-family: 'Pretendard', sans-serif; margin: 0; background: var(--gray-50); color: var(--gray-800); line-height: 1.6; }
 
-/* ── 피드백 섹션 ── */
-.feedback-section{background:#1a1a2e;border:1px solid #2a2a4a;border-radius:20px;padding:28px;margin-top:10px;margin-bottom:30px}
-.feedback-section h4{font-size:1rem;font-weight:700;color:#fff;margin-bottom:6px}
-.feedback-section p{font-size:.82rem;color:#888;margin-bottom:20px}
-.agent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-.agent-card{background:#111827;border:1px solid #2a2a4a;border-radius:12px;padding:16px;cursor:pointer;transition:.2s;text-align:center}
-.agent-card:hover{border-color:#555}
-.agent-card.selected-good{border-color:#28a745;background:rgba(40,167,69,.12)}
-.agent-card.selected-bad{border-color:#ff4d4f;background:rgba(255,77,79,.12)}
-.agent-name{font-size:.88rem;font-weight:700;color:#fff;margin-bottom:8px}
-.agent-btns{display:flex;gap:6px;justify-content:center}
-.agent-eval{background:transparent;border:1px solid #333;color:#888;padding:5px 10px;border-radius:20px;cursor:pointer;font-size:.78rem;transition:.2s}
-.agent-eval:hover{border-color:#777;color:#fff}
-.agent-eval.good{background:rgba(40,167,69,.2);border-color:#28a745;color:#28a745}
-.agent-eval.bad{background:rgba(255,77,79,.2);border-color:#ff4d4f;color:#ff4d4f}
-.feedback-text-wrap{margin-bottom:16px}
-.feedback-text-wrap label{font-size:.82rem;color:#aaa;display:block;margin-bottom:8px}
-.feedback-textarea{width:100%;background:rgba(0,0,0,.3);color:#fff;border:1px solid #333;padding:13px;border-radius:12px;font-size:.88rem;resize:none;font-family:inherit;transition:.2s}
-.feedback-textarea:focus{outline:none;border-color:#555}
-.feedback-submit{width:100%;padding:13px;border-radius:12px;background:#fff;color:#000;border:none;font-weight:700;font-size:.9rem;cursor:pointer;transition:.2s}
-.feedback-submit:hover{background:#e5e5e5}
-.feedback-submit:disabled{background:#333;color:#666;cursor:default}
-.feedback-done{display:none;text-align:center;padding:16px;color:#28a745;font-weight:700;font-size:.95rem}
-.feedback-done span{display:block;font-size:.82rem;color:#888;font-weight:400;margin-top:4px}
+  /* NAV */
+  .nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--gray-200); padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+  .nav-logo { font-size: 1rem; font-weight: 800; color: var(--gray-900); letter-spacing: -0.5px; cursor: pointer; }
+  .nav-right { display: flex; align-items: center; gap: 8px; }
+  .nav-user { font-size: 0.8rem; color: var(--gray-600); font-weight: 600; }
+  .btn-ghost { background: none; border: 1px solid var(--gray-200); color: var(--gray-600); padding: 6px 14px; border-radius: 8px; font-size: 0.78rem; cursor: pointer; font-family: inherit; font-weight: 600; transition: 0.15s; }
+  .btn-ghost:hover { background: var(--gray-100); }
+  .btn-hq { background: none; border: 1px solid var(--danger); color: var(--danger); padding: 5px 10px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; font-family: inherit; font-weight: 700; }
+
+  /* LAYOUT */
+  .page { max-width: 860px; margin: 0 auto; padding: 32px 20px 60px; }
+
+  /* CARD */
+  .card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--gray-200); }
+
+  /* ── ONBOARDING ── */
+  .onboarding { padding: 48px 40px; text-align: center; }
+  .onboarding-badge { display: inline-block; background: var(--primary-light); color: var(--primary); font-size: 0.75rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; letter-spacing: 0.5px; margin-bottom: 16px; }
+  .onboarding h2 { font-size: 1.6rem; font-weight: 800; color: var(--gray-900); margin: 0 0 8px; letter-spacing: -0.5px; }
+  .onboarding p { color: var(--gray-400); font-size: 0.9rem; margin: 0 0 32px; }
+  .kw-input-row { display: flex; gap: 8px; max-width: 400px; margin: 0 auto 16px; }
+  .kw-input { flex: 1; padding: 12px 16px; border: 1.5px solid var(--gray-200); border-radius: 10px; font-size: 0.9rem; font-family: inherit; outline: none; transition: 0.15s; }
+  .kw-input:focus { border-color: var(--primary); }
+  .btn-primary { background: var(--primary); color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-size: 0.9rem; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; transition: 0.15s; }
+  .btn-primary:hover { background: #4338ca; }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; min-height: 36px; }
+  .tag { background: var(--primary-light); color: var(--primary); padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+  .tag-del { cursor: pointer; color: #a5b4fc; font-size: 1rem; line-height: 1; }
+  .tag-del:hover { color: var(--danger); }
+  .onboarding-hint { margin-top: 12px; font-size: 0.78rem; color: var(--gray-400); }
+
+  /* 완료 상태 */
+  .onboarding-done { background: linear-gradient(135deg, #ecfdf5, #d1fae5); border: 1.5px solid #a7f3d0; padding: 28px; border-radius: var(--radius); text-align: center; display: none; }
+  .onboarding-done h3 { margin: 0 0 6px; color: var(--success); font-size: 1.1rem; }
+  .onboarding-done p { margin: 0; color: #065f46; font-size: 0.85rem; }
+
+  /* ── KEYWORD BAR (리포트 있는 유저용) ── */
+  .kw-bar { padding: 16px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--gray-100); }
+  .kw-bar-label { font-size: 0.78rem; font-weight: 700; color: var(--gray-400); letter-spacing: 0.5px; }
+
+  /* ── REPORT AREA ── */
+  #main-content-area { display: none; }
+  .report-header { padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-bottom: 1px solid var(--gray-100); }
+  .tab-group { display: flex; gap: 4px; background: var(--gray-100); padding: 4px; border-radius: 10px; }
+  .tab-btn { padding: 7px 16px; border-radius: 8px; border: none; background: none; font-size: 0.82rem; font-weight: 600; color: var(--gray-600); cursor: pointer; font-family: inherit; transition: 0.15s; }
+  .tab-btn.active { background: #fff; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .date-select { border: 1px solid var(--gray-200); background: #fff; padding: 7px 12px; border-radius: 8px; font-size: 0.82rem; font-family: inherit; font-weight: 600; cursor: pointer; color: var(--gray-600); }
+
+  /* BRIEFING */
+  .briefing-card { margin: 16px; background: var(--gray-900); border-radius: 14px; padding: 24px; color: #fff; }
+  .briefing-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .briefing-label { font-size: 0.82rem; font-weight: 700; color: #a5b4fc; }
+  .eval-btns { display: flex; gap: 6px; }
+  .eval-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.78rem; font-family: inherit; transition: 0.15s; }
+  .eval-btn.up { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .eval-btn.down { background: var(--danger); color: #fff; border-color: var(--danger); }
+  .voc-area { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .voc-input { width: 100%; background: rgba(255,255,255,0.06); color: #fff; border: 1px solid rgba(255,255,255,0.15); padding: 10px 14px; border-radius: 10px; font-size: 0.85rem; font-family: inherit; resize: none; }
+  .btn-voc-submit { margin-top: 8px; background: #fff; color: var(--gray-900); border: none; padding: 8px 20px; border-radius: 8px; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: inherit; }
+  .success-msg { display: none; color: #6ee7b7; font-size: 0.82rem; font-weight: 700; text-align: center; margin-bottom: 8px; }
+  #briefing-content { font-size: 0.95rem; line-height: 1.8; color: rgba(255,255,255,0.88); }
+
+  /* NEWS CARDS */
+  .news-section { padding: 16px; }
+  .news-section-title { font-size: 0.78rem; font-weight: 700; color: var(--gray-400); letter-spacing: 0.5px; margin-bottom: 12px; }
+  .news-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px 18px; margin-bottom: 10px; }
+  .news-kw-tag { display: inline-block; background: var(--primary-light); color: var(--primary); font-size: 0.72rem; font-weight: 700; padding: 2px 10px; border-radius: 20px; margin-bottom: 8px; }
+  .news-title { font-size: 0.9rem; font-weight: 700; color: var(--gray-900); text-decoration: none; line-height: 1.5; display: block; margin-bottom: 6px; }
+  .news-title:hover { color: var(--primary); }
+  .news-summary { font-size: 0.82rem; color: var(--gray-600); margin-bottom: 4px; }
+  .news-impact { font-size: 0.78rem; color: var(--gray-400); }
+
+  /* EMPTY */
+  .empty-state { padding: 60px 20px; text-align: center; color: var(--gray-400); }
+  .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+  .empty-state p { font-size: 0.88rem; }
 </style>
 </head>
 <body>
-<div class="container">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-    <h2 style="letter-spacing:-1px;cursor:pointer;margin:0" onclick="location.href='index.html'">Fitz Intelligence</h2>
-    <div id="user-display"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <span class="nav-logo" onclick="location.href='index.html'">Fitz Intelligence</span>
+  <div class="nav-right">
+    <span class="nav-user" id="nav-user"></span>
+    <button class="btn-ghost" id="btn-hq" style="display:none;" onclick="location.href='master.html'">🔴 HQ</button>
+    <button class="btn-ghost" onclick="location.href='index.html'">홈</button>
+    <button class="btn-ghost" id="btn-logout">로그아웃</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- 키워드 설정 카드 (항상 상단 노출) -->
+  <div class="card" style="margin-bottom:20px;">
+
+    <!-- 온보딩 (키워드 없는 신규 유저) -->
+    <div id="onboarding-new" class="onboarding">
+      <div class="onboarding-badge">WELCOME</div>
+      <h2>첫 리포트를 받아보세요</h2>
+      <p>관심 키워드를 최대 5개 등록하면<br>매일 오전 9시에 AI 브리핑이 이메일로 도착합니다.</p>
+      <div class="kw-input-row">
+        <input class="kw-input" id="new-kw" placeholder="예: 삼성전자, AI반도체, 테슬라" onkeydown="if(event.key==='Enter') addKw()">
+        <button class="btn-primary" onclick="addKw()">추가</button>
+      </div>
+      <div class="tag-list" id="tag-list-onboarding"></div>
+      <p class="onboarding-hint" id="kw-count-hint">아직 키워드가 없습니다</p>
+    </div>
+
+    <!-- 등록 완료 메시지 -->
+    <div id="onboarding-done" class="onboarding-done" style="margin:16px;">
+      <h3>✅ 키워드 등록 완료!</h3>
+      <p>내일 오전 9시에 첫 리포트가 이메일로 발송됩니다.<br>오늘 리포트는 아직 준비 중이에요.</p>
+    </div>
+
+    <!-- 키워드 바 (기존 유저: 리포트 있음) -->
+    <div id="kw-bar" class="kw-bar" style="display:none;">
+      <span class="kw-bar-label">📌 내 키워드</span>
+      <div id="tag-list-bar" style="display:flex; flex-wrap:wrap; gap:6px; flex:1;"></div>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <input class="kw-input" id="new-kw-bar" placeholder="키워드 추가" style="width:130px; padding:7px 12px; font-size:0.82rem;" onkeydown="if(event.key==='Enter') addKwBar()">
+        <button class="btn-primary" style="padding:7px 14px; font-size:0.82rem;" onclick="addKwBar()">추가</button>
+      </div>
+    </div>
+
   </div>
 
-  <section class="keyword-manager">
-    <strong>📌 내 관심 키워드 (최대 5개)</strong>
-    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-      <input type="text" id="new-kw" placeholder="키워드 입력" style="width:150px;padding:10px;border-radius:8px;border:1px solid #ddd">
-      <button class="auth-btn active" onclick="addKw()">추가</button>
-    </div>
-    <div id="tag-list" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:15px"></div>
-  </section>
+  <!-- 리포트 영역 -->
+  <div id="main-content-area">
+    <div class="card">
 
-  <div id="main-content-area" style="display:none">
-    <div class="nav-bar">
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button id="role-BA" class="auth-btn active" onclick="changeRole('BA')">비즈니스 분석</button>
-        <button id="role-Stock" class="auth-btn" onclick="changeRole('Stock')">주식</button>
-        <button id="role-PM" class="auth-btn" onclick="changeRole('PM')">PM</button>
+      <!-- 리포트 헤더 -->
+      <div class="report-header">
+        <div class="tab-group">
+          <button class="tab-btn active" id="role-BA" onclick="changeRole('BA')">비즈니스 분석</button>
+          <button class="tab-btn" id="role-Stock" onclick="changeRole('Stock')">증권·투자</button>
+          <button class="tab-btn" id="role-PM" onclick="changeRole('PM')">전략 기획</button>
+        </div>
+        <select class="date-select" id="date-select" onchange="fetchDayData()"></select>
       </div>
-      <select id="date-select" onchange="fetchDayData()" style="font-weight:bold;border:1px solid #ddd;border-radius:8px;padding:8px 12px;cursor:pointer"></select>
-    </div>
 
-    <div class="briefing-box">
-      <div style="margin-bottom:15px">
-        <span id="eval-role-name" style="font-weight:bold">🤖 비즈니스 분석 인사이트</span>
-      </div>
-      <div id="briefing-content" style="font-size:1.05rem;line-height:1.8"></div>
-    </div>
-
-    <div id="news-list"></div>
-
-    <!-- ── 피드백 섹션 ── -->
-    <div class="feedback-section" id="feedback-section">
-      <h4>💬 오늘 리포트는 어떠셨나요?</h4>
-      <p>에이전트별로 평가해주시면 AI가 직접 학습해서 내일 더 나은 리포트를 만들어드립니다.</p>
-
-      <div class="agent-grid">
-        <div class="agent-card" id="card-BA">
-          <div class="agent-name">🔍 비즈니스 분석</div>
-          <div class="agent-btns">
-            <button class="agent-eval" id="eval-BA-good" onclick="evalAgent('BA',true)">👍 좋아요</button>
-            <button class="agent-eval" id="eval-BA-bad"  onclick="evalAgent('BA',false)">👎 아쉬워요</button>
+      <!-- 브리핑 -->
+      <div class="briefing-card">
+        <div class="briefing-top">
+          <span class="briefing-label" id="eval-role-name">🤖 비즈니스 분석 인사이트</span>
+          <div class="eval-btns">
+            <button class="eval-btn" id="btn-up" onclick="handleThumb(true)">👍 도움돼요</button>
+            <button class="eval-btn" id="btn-down" onclick="handleThumb(false)">👎 아쉬워요</button>
           </div>
         </div>
-        <div class="agent-card" id="card-STOCK">
-          <div class="agent-name">📈 주식 인사이트</div>
-          <div class="agent-btns">
-            <button class="agent-eval" id="eval-STOCK-good" onclick="evalAgent('STOCK',true)">👍 좋아요</button>
-            <button class="agent-eval" id="eval-STOCK-bad"  onclick="evalAgent('STOCK',false)">👎 아쉬워요</button>
-          </div>
+        <div class="voc-area" id="voc-area">
+          <div class="success-msg" id="success-msg">✅ 의견이 반영되었습니다!</div>
+          <textarea class="voc-input" id="voc-text" rows="3" placeholder="에이전트에게 바라는 점을 남겨주세요."></textarea>
+          <button class="btn-voc-submit" onclick="submitFeedback()">제출</button>
         </div>
-        <div class="agent-card" id="card-PM">
-          <div class="agent-name">🗂 PM 브리핑</div>
-          <div class="agent-btns">
-            <button class="agent-eval" id="eval-PM-good" onclick="evalAgent('PM',true)">👍 좋아요</button>
-            <button class="agent-eval" id="eval-PM-bad"  onclick="evalAgent('PM',false)">👎 아쉬워요</button>
-          </div>
-        </div>
+        <div id="briefing-content">분석 내용을 불러오는 중...</div>
       </div>
 
-      <div class="feedback-text-wrap">
-        <label>에이전트에게 직접 전달할 메시지 (선택)</label>
-        <textarea class="feedback-textarea" id="voc-text" rows="3" placeholder="예: 주식 분석에 ETF 관련 내용도 포함해줬으면 해요"></textarea>
+      <!-- 뉴스 카드 -->
+      <div class="news-section">
+        <div class="news-section-title">오늘의 수집 뉴스</div>
+        <div id="news-list"></div>
       </div>
 
-      <button class="feedback-submit" id="feedback-submit-btn" onclick="submitAllFeedback()">피드백 전달하기</button>
-      <div class="feedback-done" id="feedback-done">
-        ✅ 피드백이 에이전트에게 전달되었습니다
-        <span>내일 리포트에 반영될 거예요. 감사합니다!</span>
-      </div>
     </div>
   </div>
 
-  <div id="onboarding-guide" style="display:none;background:#343a40;color:#fff;padding:50px;border-radius:30px;text-align:center">
-    <h3>🌱 환영합니다!</h3>
-    <p>관심 키워드를 등록하시면 매일 오전 09시 AI 리포트가 발송됩니다.</p>
+  <!-- 리포트 없는 기존 유저 (키워드는 있지만 오늘 리포트 없음) -->
+  <div id="empty-report" style="display:none;">
+    <div class="card empty-state">
+      <div class="icon">⏳</div>
+      <p>오늘 리포트가 아직 준비 중입니다.<br><b>매일 오전 9시</b>에 자동 발송됩니다.</p>
+    </div>
   </div>
+
 </div>
 
 <script>
-const SUPABASE_URL='https://zrlpwmpbrvohautldcon.supabase.co', SUPABASE_KEY='sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G', MASTER_EMAIL='positivecha@gmail.com';
-const sc = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-let currentUser, currentReport, currentReportId, currentRole='BA', userKeywords=[];
+const SB_URL = 'https://zrlpwmpbrvohautldcon.supabase.co';
+const SB_KEY = 'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G';
+const MASTER = 'positivecha@gmail.com';
+const sc = supabase.createClient(SB_URL, SB_KEY);
 
-// 에이전트별 평가 상태 저장
-const agentEvals = { BA: null, STOCK: null, PM: null };
+let cu, curReport, curReportId, curRole = 'BA', kwList = [], fbVal = null;
 
 async function init() {
-  const {data:{session}} = await sc.auth.getSession();
-  if(!session){ location.href='index.html'; return; }
-  currentUser = session.user;
-  document.getElementById('user-display').innerHTML = `
-    <button class="auth-btn" style="font-size:.7em;margin-right:5px" onclick="location.href='index.html'">브랜드 홈</button>
-    👤 <b>${currentUser.email.split('@')[0]}님</b>
-    <button class="auth-btn" style="font-size:.7em;margin-left:10px" onclick="sc.auth.signOut().then(()=>location.href='index.html')">Logout</button>`;
-  if(currentUser.email===MASTER_EMAIL)
-    document.getElementById('user-display').innerHTML += ` <button onclick="location.href='master.html'" style="color:red;font-weight:bold;border:1px solid red;border-radius:5px;padding:2px 5px;cursor:pointer;font-size:.7em">HQ</button>`;
-  await fetchUserKeywords();
+  const { data: { session } } = await sc.auth.getSession();
+  if (!session) return location.href = 'index.html';
+  cu = session.user;
+
+  document.getElementById('nav-user').textContent = cu.email.split('@')[0] + '님';
+  document.getElementById('btn-logout').onclick = () => sc.auth.signOut().then(() => location.href = 'index.html');
+  if (cu.email === MASTER) document.getElementById('btn-hq').style.display = '';
+
+  await fetchKw();
   await loadDates();
 }
 
-/* ── 에이전트 개별 평가 ── */
-function evalAgent(role, isGood) {
-  agentEvals[role] = isGood;
-  // 버튼 스타일 업데이트
-  ['good','bad'].forEach(t => {
-    const btn = document.getElementById(`eval-${role}-${t}`);
-    btn.className = 'agent-eval' + (isGood && t==='good' ? ' good' : (!isGood && t==='bad' ? ' bad' : ''));
-  });
-  // 카드 하이라이트
-  const card = document.getElementById(`card-${role}`);
-  card.className = 'agent-card ' + (isGood ? 'selected-good' : 'selected-bad');
-  updateSubmitBtn();
+/* ── 키워드 ── */
+async function fetchKw() {
+  const { data } = await sc.from('user_settings').select('keywords').eq('id', cu.id).maybeSingle();
+  kwList = data?.keywords || [];
+  renderKw();
 }
 
-function updateSubmitBtn() {
-  const hasAny = Object.values(agentEvals).some(v => v !== null);
-  const btn = document.getElementById('feedback-submit-btn');
-  btn.disabled = !hasAny;
+function renderKw() {
+  const hasKw = kwList.length > 0;
+  const tagHtml = kwList.map(k => `
+    <span class="tag">#${k}
+      <span class="tag-del" onclick="removeKw('${k}')">×</span>
+    </span>`).join('');
+
+  // 온보딩 상태 제어는 loadDates() 이후에 결정
+  document.getElementById('tag-list-onboarding').innerHTML = tagHtml;
+  document.getElementById('tag-list-bar').innerHTML = tagHtml;
+  const hint = document.getElementById('kw-count-hint');
+  if (hint) hint.textContent = hasKw ? `${kwList.length}/5개 등록됨` : '아직 키워드가 없습니다';
 }
 
-/* ── 전체 피드백 제출 ── */
-async function submitAllFeedback() {
-  const text = document.getElementById('voc-text').value.trim();
-  const inserts = [];
+async function saveKw() {
+  await sc.from('user_settings').upsert({ id: cu.id, keywords: kwList, email: cu.email });
+}
 
-  for(const [role, val] of Object.entries(agentEvals)) {
-    if(val === null) continue;
-    inserts.push({
-      user_id: currentUser.id,
-      report_id: currentReportId,
-      is_positive: val,
-      feedback_text: text || (val ? '만족' : '개선 필요'),
-      target_agent: role
-    });
-  }
-
-  // 텍스트만 있고 에이전트 선택 없을 때도 저장 (general 피드백)
-  if(inserts.length === 0 && text) {
-    inserts.push({
-      user_id: currentUser.id,
-      report_id: currentReportId,
-      is_positive: true,
-      feedback_text: text,
-      target_agent: 'GENERAL'
-    });
-  }
-
-  if(inserts.length === 0) return;
-
-  try {
-    await sc.from('report_feedback').insert(inserts);
-    document.getElementById('feedback-submit-btn').style.display = 'none';
-    document.getElementById('feedback-done').style.display = 'block';
-    // 평가 버튼 비활성화
-    document.querySelectorAll('.agent-eval').forEach(b => b.disabled = true);
-  } catch(e) {
-    alert('제출 실패: ' + e.message);
+async function addKw() {
+  const el = document.getElementById('new-kw');
+  const v = el.value.trim();
+  if (v && kwList.length < 5 && !kwList.includes(v)) {
+    kwList.push(v); el.value = '';
+    await saveKw(); renderKw();
+    // 처음 등록 시 완료 메시지 표시
+    document.getElementById('onboarding-done').style.display = 'block';
   }
 }
 
-/* ── 오늘 이미 피드백 했는지 확인 ── */
-async function checkExistingFeedback() {
-  if(!currentReportId) return;
-  const {data} = await sc.from('report_feedback').select('id').eq('report_id', currentReportId).eq('user_id', currentUser.id);
-  if(data?.length > 0) {
-    document.getElementById('feedback-submit-btn').style.display = 'none';
-    document.getElementById('feedback-done').style.display = 'block';
-    document.getElementById('feedback-done').innerHTML = '✅ 이미 피드백을 남겨주셨어요 <span>소중한 의견 감사합니다!</span>';
-    document.querySelectorAll('.agent-eval').forEach(b => b.disabled = true);
+async function addKwBar() {
+  const el = document.getElementById('new-kw-bar');
+  const v = el.value.trim();
+  if (v && kwList.length < 5 && !kwList.includes(v)) {
+    kwList.push(v); el.value = '';
+    await saveKw(); renderKw();
+  }
+}
+
+async function removeKw(k) {
+  kwList = kwList.filter(x => x !== k);
+  await saveKw(); renderKw();
+}
+
+/* ── 리포트 로드 ── */
+async function loadDates() {
+  const { data } = await sc.from('reports').select('report_date').eq('user_id', cu.id).order('report_date', { ascending: false });
+  const hasReport = data && data.length > 0;
+  const hasKw = kwList.length > 0;
+
+  if (hasReport) {
+    // 기존 유저: 키워드바 + 리포트
+    document.getElementById('onboarding-new').style.display = 'none';
+    document.getElementById('kw-bar').style.display = 'flex';
+    document.getElementById('main-content-area').style.display = 'block';
+    const dates = [...new Set(data.map(d => d.report_date))];
+    document.getElementById('date-select').innerHTML = dates.map(d => `<option value="${d}">${d}</option>`).join('');
+    await fetchDayData();
+  } else if (hasKw) {
+    // 키워드는 있지만 리포트 없음 (오늘 가입)
+    document.getElementById('onboarding-new').style.display = 'none';
+    document.getElementById('kw-bar').style.display = 'flex';
+    document.getElementById('empty-report').style.display = 'block';
+    document.getElementById('onboarding-done').style.display = 'block';
   } else {
-    // 초기화
-    document.getElementById('feedback-submit-btn').style.display = 'block';
-    document.getElementById('feedback-submit-btn').disabled = true;
-    document.getElementById('feedback-done').style.display = 'none';
-    Object.keys(agentEvals).forEach(k => agentEvals[k] = null);
-    document.querySelectorAll('.agent-card').forEach(c => c.className = 'agent-card');
-    document.querySelectorAll('.agent-eval').forEach(b => { b.className='agent-eval'; b.disabled=false; });
-    document.getElementById('voc-text').value = '';
+    // 완전 신규: 온보딩
+    document.getElementById('onboarding-new').style.display = 'block';
+    document.getElementById('kw-bar').style.display = 'none';
   }
 }
 
-async function fetchUserKeywords(){
-  const {data}=await sc.from('user_settings').select('keywords').eq('id',currentUser.id).maybeSingle();
-  userKeywords=data?.keywords||[]; renderTags();
-  document.getElementById('main-content-area').style.display=(userKeywords.length>0)?'block':'none';
-  document.getElementById('onboarding-guide').style.display=(userKeywords.length===0)?'block':'none';
+async function fetchDayData() {
+  const d = document.getElementById('date-select').value;
+  const { data } = await sc.from('reports').select('*').eq('report_date', d).eq('user_id', cu.id).limit(1);
+  if (data && data.length > 0) { curReport = data[0].content; curReportId = data[0].id; renderReport(); }
 }
 
-function renderTags(){ document.getElementById('tag-list').innerHTML=userKeywords.map(k=>`<span class="tag">#${k} <span onclick="removeKw('${k}')" style="cursor:pointer;margin-left:8px;color:red">×</span></span>`).join(''); }
-async function addKw(){ const v=document.getElementById('new-kw').value.trim(); if(v&&userKeywords.length<5){ userKeywords.push(v); await sc.from('user_settings').upsert({id:currentUser.id,keywords:userKeywords,email:currentUser.email}); document.getElementById('new-kw').value=''; fetchUserKeywords(); } }
-async function removeKw(k){ userKeywords=userKeywords.filter(x=>x!==k); await sc.from('user_settings').upsert({id:currentUser.id,keywords:userKeywords}); fetchUserKeywords(); }
-
-async function loadDates(){
-  const {data}=await sc.from('reports').select('report_date').eq('user_id',currentUser.id).order('report_date',{ascending:false});
-  if(data?.length>0){ document.getElementById('date-select').innerHTML=[...new Set(data.map(d=>d.report_date))].map(d=>`<option value="${d}">${d}</option>`).join(''); await fetchDayData(); }
+/* ── 탭 & 렌더 ── */
+function changeRole(r) {
+  curRole = r;
+  ['BA','Stock','PM'].forEach(x => {
+    document.getElementById('role-' + x).className = 'tab-btn' + (x === r ? ' active' : '');
+  });
+  const labels = { BA: '🤖 비즈니스 분석 인사이트', Stock: '📈 증권·투자 인사이트', PM: '🎯 전략 기획 인사이트' };
+  document.getElementById('eval-role-name').textContent = labels[r];
+  fbVal = null;
+  document.getElementById('btn-up').className = 'eval-btn';
+  document.getElementById('btn-down').className = 'eval-btn';
+  document.getElementById('voc-area').style.display = 'none';
+  document.getElementById('success-msg').style.display = 'none';
+  renderReport();
 }
 
-async function fetchDayData(){
-  const d=document.getElementById('date-select').value;
-  const {data}=await sc.from('reports').select('*').eq('report_date',d).eq('user_id',currentUser.id).limit(1);
-  if(data?.length>0){ currentReport=data[0].content; currentReportId=data[0].id; renderDisplay(); await checkExistingFeedback(); }
+function renderReport() {
+  if (!curReport) return;
+  const k = curRole === 'BA' ? 'ba_brief' : curRole === 'Stock' ? 'securities_brief' : 'pm_brief';
+  const txt = (curReport[k] || '분석 중...').replace(/\[PROPOSAL\].*|\[REASON\].*/gs, '');
+  document.getElementById('briefing-content').innerHTML = marked.parse(txt);
+
+  const arts = curReport.articles || [];
+  document.getElementById('news-list').innerHTML = arts.length
+    ? arts.map(a => `
+        <div class="news-card">
+          <span class="news-kw-tag">#${a.keyword || ''}</span>
+          <a class="news-title" href="${a.url||'#'}" target="_blank">${a.title||''}</a>
+          <p class="news-summary">💡 ${a.pm_summary||''}</p>
+          <p class="news-impact">📈 ${a.impact||''}</p>
+        </div>`).join('')
+    : '<div style="color:var(--gray-400); font-size:0.85rem;">수집된 뉴스가 없습니다.</div>';
 }
 
-function renderDisplay(){
-  if(!currentReport) return;
-  const k=currentRole==='BA'?'ba_brief':currentRole==='Stock'?'securities_brief':'pm_brief';
-  const roleNames={BA:'🔍 비즈니스 분석 인사이트',Stock:'📈 주식 인사이트',PM:'🗂 PM 브리핑'};
-  document.getElementById('eval-role-name').textContent = roleNames[currentRole]||'';
-  let txt=(currentReport[k]||'분석 중...').replace(/\[PROPOSAL\].*|\[REASON\].*/gs,"").trim();
-  document.getElementById('briefing-content').innerHTML=marked.parse(txt);
-  document.getElementById('news-list').innerHTML=(currentReport.articles||[]).map(a=>`<div class="news-card"><small class="tag">#${a.keyword}</small><h3>${a.title}</h3><div>${marked.parse(a.pm_summary||a.impact||'')}</div><a href="${a.url}" target="_blank" style="font-size:.8em;color:var(--primary);text-decoration:none;font-weight:bold">원문 ↗</a></div>`).join('');
+/* ── 피드백 ── */
+function handleThumb(pos) {
+  fbVal = pos;
+  document.getElementById('btn-up').className = 'eval-btn' + (pos ? ' up' : '');
+  document.getElementById('btn-down').className = 'eval-btn' + (!pos ? ' down' : '');
+  document.getElementById('voc-area').style.display = 'block';
 }
 
-function changeRole(r){ currentRole=r; ['BA','Stock','PM'].forEach(x=>document.getElementById(`role-${x}`).classList.toggle('active',x===r)); renderDisplay(); }
+async function submitFeedback() {
+  const txt = document.getElementById('voc-text').value;
+  const roleMap = { BA: 'BA', Stock: 'STOCK', PM: 'PM' };
+  await sc.from('report_feedback').insert([{
+    user_id: cu.id, report_id: curReportId,
+    is_positive: fbVal, feedback_text: txt || '만족',
+    target_agent: roleMap[curRole]
+  }]);
+  document.getElementById('success-msg').style.display = 'block';
+  document.getElementById('voc-area').style.display = 'none';
+  document.getElementById('voc-text').value = '';
+}
 
 init();
 </script>
