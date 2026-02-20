@@ -1,7 +1,7 @@
 import os, re, json, shutil, subprocess
 from datetime import datetime, timezone, timedelta
 import resend
-import google.generativeai as genai
+from google import genai
 from supabase import create_client
 from gnews import GNews
 
@@ -16,7 +16,7 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-genai.configure(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 resend.api_key = RESEND_API_KEY
 
 # ──────────────────────────────────────────
@@ -31,11 +31,11 @@ def call_agent(prompt, agent_info, fallback_role="Assistant", force_one_line=Fal
         instruction = agent_info.get('instruction', '') if agent_info else ''
         if force_one_line:
             prompt += "\n반드시 1줄로만 답하라."
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=instruction or fallback_role
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            config=genai.types.GenerateContentConfig(system_instruction=instruction or fallback_role),
+            contents=prompt
         )
-        response = model.generate_content(prompt)
         return response.text.strip()
     except Exception as e:
         print(f"⚠️ [AI] 호출 실패: {e}")
