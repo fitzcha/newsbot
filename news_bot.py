@@ -654,6 +654,17 @@ def _build_email_html(report, yt_videos=None):
 
     yt_block = build_youtube_email_block(yt_videos)
 
+    dashboard_block = f"""
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px; margin-bottom:8px;">
+          <tr>
+            <td align="center" style="background:linear-gradient(135deg,#0f172a,#1e293b); border-radius:12px; padding:28px 32px;">
+              <p style="margin:0 0 6px 0; font-size:11px; font-weight:700; color:#64748b; letter-spacing:2px; text-transform:uppercase;">FITZ INTELLIGENCE</p>
+              <p style="margin:0 0 16px 0; font-size:18px; font-weight:700; color:#fff;">오늘의 전체 인사이트 확인하기</p>
+              <a href="{DASHBOARD_URL}" style="display:inline-block; background:#e8472a; color:#fff; font-size:14px; font-weight:700; padding:14px 32px; border-radius:10px; text-decoration:none; letter-spacing:.5px;">📊 대시보드 바로가기 →</a>
+            </td>
+          </tr>
+        </table>"""
+
     return f"""<!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -681,6 +692,7 @@ def _build_email_html(report, yt_videos=None):
             <td style="background:#fff; padding:32px;">
               {keyword_sections}
               {yt_block}
+              {dashboard_block}
             </td>
           </tr>
           <tr>
