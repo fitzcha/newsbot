@@ -516,7 +516,7 @@ def run_autonomous_engine():
             for word in keywords:
                 print(f"  📰 [{word}] 뉴스 수집 중...")
                 is_korean = any(ord(c) > 0x1100 for c in word)
-                gn        = GNews(language='ko' if is_korean else 'en', max_results=3)
+                gn        = GNews(language='ko' if is_korean else 'en', max_results=10)
                 news_list = gn.get_news(word)
 
                 record_performance(user_id, word, len(news_list))
