@@ -985,11 +985,16 @@ def run_agent_initiative(by_keyword_all: dict):
     # 각 에이전트별 자율 발의 프롬프트 정의
     initiative_prompts = {
         "KW": (
-            f"오늘 키워드 성과:\n{perf_ctx}\n\n오늘 뉴스 컨텍스트:\n{today_ctx}\n\n"
+            f"오늘 키워드 성과 (hit_count가 낮을수록 뉴스가 적게 수집됨):\n{perf_ctx}\n\n"
+            f"오늘 뉴스 컨텍스트:\n{today_ctx}\n\n"
             f"산업군 동향:\n{industry_ctx}\n\n"
-            "위 데이터를 기반으로 유저에게 새롭게 추천할 키워드와 그 이유를 제안하라. "
-            "현재 키워드 instruction을 개선하는 형태로 작성하라. "
-            "반드시 구체적인 키워드 추천 로직을 포함할 것."
+            "위 데이터를 분석하여 유저 키워드를 관리하라.\n"
+            "반드시 아래 형식으로만 응답하라:\n"
+            "[ADD]추가추천키워드1,추가추천키워드2,추가추천키워드3\n"
+            "[REMOVE]제거추천키워드1,제거추천키워드2\n"
+            "[REASON]추가/제거 이유를 각각 키워드별로 한 줄씩 설명\n\n"
+            "ADD 기준: 산업군 동향에서 급부상 중이거나 뉴스 밀도가 높은 키워드\n"
+            "REMOVE 기준: hit_count 3 이하이거나 오늘 뉴스가 없는 키워드"
         ),
         "QA": (
             f"오늘 브리핑 데이터:\n{today_ctx}\n\n"
@@ -1027,7 +1032,43 @@ def run_agent_initiative(by_keyword_all: dict):
                 print(f"  ⚠️ [{role}] 발의 내용 없음 — 스킵")
                 continue
 
-            # MASTER 에이전트는 dev_backlog에 직접 등록
+            # KW 에이전트는 ADD/REMOVE 파싱 후 pending_approvals에 구조화해서 등록
+            if role == "KW":
+                add_m    = re.search(r"\[ADD\](.*?)(?=\[REMOVE\]|\[REASON\]|$)", proposal, re.DOTALL)
+                remove_m = re.search(r"\[REMOVE\](.*?)(?=\[ADD\]|\[REASON\]|$)", proposal, re.DOTALL)
+                reason_m = re.search(r"\[REASON\](.*?)$", proposal, re.DOTALL)
+
+                add_kws    = [k.strip() for k in (add_m.group(1).split(",") if add_m else []) if k.strip()]
+                remove_kws = [k.strip() for k in (remove_m.group(1).split(",") if remove_m else []) if k.strip()]
+                reason     = reason_m.group(1).strip() if reason_m else "KW 에이전트 자율 분석"
+
+                if not add_kws and not remove_kws:
+                    print(f"  ⚠️ [KW] 파싱 실패 — 원문 등록")
+                    # 파싱 실패 시 원문 그대로 등록
+                    supabase.table("pending_approvals").insert({
+                        "agent_role":           "KW",
+                        "proposed_instruction": proposal,
+                        "proposal_reason":      f"{TODAY} KW 자율 발의 (파싱 실패)",
+                        "needs_dev":            False,
+                        "status":               "PENDING",
+                    }).execute()
+                    continue
+
+                structured = (
+                    f"[키워드 관리 제안]\n"
+                    f"✅ 추가 추천: {', '.join(add_kws) if add_kws else '없음'}\n"
+                    f"❌ 제거 추천: {', '.join(remove_kws) if remove_kws else '없음'}\n\n"
+                    f"[근거]\n{reason}"
+                )
+                supabase.table("pending_approvals").insert({
+                    "agent_role":           "KW",
+                    "proposed_instruction": structured,
+                    "proposal_reason":      f"{TODAY} 키워드 추가/제거 제안 — 추가 {len(add_kws)}개 / 제거 {len(remove_kws)}개",
+                    "needs_dev":            False,
+                    "status":               "PENDING",
+                }).execute()
+                print(f"  ✅ [KW] 키워드 제안 등록 완료 — 추가 {len(add_kws)}개 / 제거 {len(remove_kws)}개")
+                continue
             if role == "MASTER":
                 t = re.search(r"\[TITLE\](.*?)(?=\[DETAIL\]|$)", proposal, re.DOTALL)
                 d = re.search(r"\[DETAIL\](.*?)$", proposal, re.DOTALL)
