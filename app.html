@@ -1,334 +1,585 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fitz Intelligence | Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
-  <style>
-    :root { --primary: #007bff; --admin: #ff4d4f; --success: #28a745; }
-    * { box-sizing: border-box; }
-    body { font-family: 'Pretendard', sans-serif; margin: 0; padding: 20px; background: #fff; color: #333; line-height: 1.6; }
-    .container { max-width: 950px; margin: 0 auto; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fitz Intelligence</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
 
-    /* 키워드 매니저 */
-    .keyword-manager { background: #fff; padding: 25px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 5px solid #ccc; }
-    .tag { background: #eef2f7; padding: 8px 16px; border-radius: 25px; font-size: 0.85em; color: var(--primary); font-weight: bold; display: inline-flex; align-items: center; }
+.top-bar { position:sticky; top:0; z-index:200; background:#fff; border-bottom:1px solid #e2e8f0; }
+.header-row { display:flex; justify-content:space-between; align-items:center; padding:14px 20px 10px; }
+.brand { font-size:14px; font-weight:800; color:#1e293b; }
+.collapse-btn { background:none; border:none; cursor:pointer; padding:6px 10px; border-radius:8px; color:#94a3b8; font-size:12px; font-weight:600; }
 
-    /* 버튼 공통 */
-    .btn { padding: 9px 20px; border-radius: 8px; border: 1px solid var(--primary); background: #fff; color: var(--primary); cursor: pointer; font-weight: bold; font-family: inherit; }
-    .btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+/* 접힌 상태 */
+.collapsed-bar { display:none; padding:6px 20px 10px; align-items:center; gap:0; }
+.collapsed-bar.hidden { display:none; }
+.c-chip { position:relative; display:inline-flex; align-items:center; gap:4px; flex-shrink:0; font-size:11px; font-weight:600; padding:5px 10px; border-radius:8px; cursor:pointer; white-space:nowrap; border:1px solid #e2e8f0; background:#f8fafc; color:#475569; user-select:none; }
+.c-chip .arrow { font-size:8px; color:#94a3b8; margin-left:2px; }
+.c-chip.date-c  { background:#f1f5f9; border-color:#e2e8f0; color:#475569; }
+.c-chip.agent-c { background:#eff6ff; border-color:#bfdbfe; color:#2563eb; }
+.c-chip.agent-c[data-a="STOCK"] { background:#ecfeff; border-color:#a5f3fc; color:#0891b2; }
+.c-chip.agent-c[data-a="PM"]    { background:#f5f3ff; border-color:#ddd6fe; color:#7c3aed; }
+.c-chip.kw-c    { background:#f1f5f9; border-color:#e2e8f0; color:#1e293b; }
+.c-sep { color:#e2e8f0; font-size:14px; padding:0 5px; flex-shrink:0; }
 
-    /* ── 키워드 탭 바 ── */
-    .kw-tab-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-    .kw-tab { padding: 8px 18px; border-radius: 25px; border: 2px solid #ddd; background: #fff; color: #555; font-weight: bold; cursor: pointer; font-size: 0.9em; transition: all .2s; font-family: inherit; }
-    .kw-tab.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+.c-dropdown { display:none; position:absolute; top:calc(100% + 6px); left:0; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.1); z-index:400; min-width:140px; overflow:hidden; }
+.c-dropdown.open { display:block; }
+.c-dd-item { padding:10px 14px; font-size:12px; font-weight:600; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px; }
+.c-dd-item:hover { background:#f8fafc; }
+.c-dd-item.active { color:#2563eb; background:#eff6ff; }
+.c-dd-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 
-    /* ── 에이전트 탭 바 ── */
-    .agent-tab-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 15px; }
-    .agent-tab { padding: 7px 16px; border-radius: 8px; border: 1px solid var(--primary); background: #fff; color: var(--primary); font-weight: bold; cursor: pointer; font-size: 0.85em; font-family: inherit; }
-    .agent-tab.active { background: var(--primary); color: #fff; }
+/* 펼쳐진 상태 */
+.date-row { padding:0 20px 10px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; }
+.date-row::-webkit-scrollbar { display:none; }
+.date-chip { flex-shrink:0; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:600; border:1px solid #e2e8f0; color:#64748b; background:#fff; cursor:pointer; }
+.date-chip.active { background:#1e293b; color:#fff; border-color:#1e293b; }
 
-    /* 날짜 선택 영역 */
-    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    #date-select { font-weight: bold; border: 1px solid #ddd; border-radius: 8px; padding: 7px 12px; cursor: pointer; font-family: inherit; }
+.agent-row { padding:0 20px 10px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; }
+.agent-row::-webkit-scrollbar { display:none; }
+.agent-chip { flex-shrink:0; display:flex; align-items:center; gap:5px; padding:7px 14px; border-radius:20px; font-size:12px; font-weight:600; border:1.5px solid #e2e8f0; color:#64748b; background:#fff; cursor:pointer; transition:all .15s; }
+.agent-chip[data-a="BA"].active    { background:#2563eb; border-color:#2563eb; color:#fff; }
+.agent-chip[data-a="STOCK"].active { background:#0891b2; border-color:#0891b2; color:#fff; }
+.agent-chip[data-a="PM"].active    { background:#7c3aed; border-color:#7c3aed; color:#fff; }
+.agent-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
 
-    /* 브리핑 박스 */
-    .briefing-box { background: #343a40; color: #fff; padding: 25px; border-radius: 16px; margin-bottom: 20px; }
-    .briefing-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-    .eval-btn { background: none; border: 1px solid #666; color: #ccc; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 0.8em; margin-left: 5px; font-family: inherit; }
-    .eval-btn.active-up { background: var(--primary); color: #fff; border: none; }
-    .eval-btn.active-down { background: var(--admin); color: #fff; border: none; }
-    .voc-area { display: none; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; }
-    .voc-input { width: 100%; background: rgba(0,0,0,0.2); color: #fff; border: 1px solid #555; padding: 12px; border-radius: 12px; font-size: 0.9rem; resize: none; margin-bottom: 10px; }
+.kw-nav { padding:0 20px 12px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid #f1f5f9; align-items:center; }
+.kw-nav::-webkit-scrollbar { display:none; }
+.kw-chip { flex-shrink:0; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600; border:1.5px solid #e2e8f0; color:#94a3b8; background:#fff; cursor:pointer; transition:all .2s; }
+.kw-chip.active { background:#f1f5f9; color:#1e293b; border-color:#cbd5e1; }
+.kw-edit-btn { flex-shrink:0; margin-left:4px; padding:5px 10px; border-radius:20px; font-size:11px; font-weight:600; border:1.5px dashed #94a3b8; color:#94a3b8; background:transparent; cursor:pointer; display:flex; align-items:center; gap:4px; }
 
-    /* 뉴스 카드 */
-    .news-card { background: #fff; padding: 25px; border-radius: 20px; margin-bottom: 15px; box-shadow: 0 2px 12px rgba(0,0,0,0.05); border-left: 6px solid var(--primary); color: #333; }
+.collapsible { }
+.top-bar.collapsed .collapsible { display:none; }
+.top-bar.collapsed .collapsed-bar { display:flex; }
+.top-bar.collapsed .collapsed-bar.hidden { display:none; }
 
-    /* 온보딩 */
-    #onboarding-guide { display: none; background: #343a40; color: #fff; padding: 50px; border-radius: 30px; text-align: center; }
+/* 피드 */
+.feed { padding:20px; display:flex; flex-direction:column; gap:28px; padding-bottom:80px; }
+.kw-section { display:flex; flex-direction:column; gap:12px; }
+.kw-section-header { display:flex; align-items:center; justify-content:space-between; }
+.kw-title { font-size:18px; font-weight:800; color:#0f172a; }
+.kw-meta { font-size:11px; color:#94a3b8; }
 
-    /* 로딩 */
-    .loading { color: #aaa; font-style: italic; padding: 20px 0; }
+/* 브리핑 카드 */
+.brief-card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; }
+.brief-card[data-a="BA"]    { border-top:3px solid #2563eb; }
+.brief-card[data-a="STOCK"] { border-top:3px solid #0891b2; }
+.brief-card[data-a="PM"]    { border-top:3px solid #7c3aed; }
+.brief-header { padding:16px 18px 12px; }
+.brief-agent-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; }
+.brief-agent-label[data-a="BA"]    { color:#2563eb; }
+.brief-agent-label[data-a="STOCK"] { color:#0891b2; }
+.brief-agent-label[data-a="PM"]    { color:#7c3aed; }
+.brief-summary { font-size:15px; font-weight:700; color:#0f172a; line-height:1.5; }
+.brief-points { padding:4px 18px 14px; display:flex; flex-direction:column; gap:8px; }
+.brief-point { display:flex; gap:8px; align-items:flex-start; }
+.brief-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; margin-top:7px; }
+.brief-dot[data-a="BA"]    { background:#2563eb; }
+.brief-dot[data-a="STOCK"] { background:#0891b2; }
+.brief-dot[data-a="PM"]    { background:#7c3aed; }
+.brief-text { font-size:13px; color:#475569; line-height:1.7; }
 
-    @media (max-width: 600px) {
-      body { padding: 12px; }
-      .briefing-header { flex-direction: column; align-items: flex-start; }
-    }
-  </style>
+/* 봉투 버튼 */
+.secret-btn { margin:0 14px 14px; border:1.5px solid #e2e8f0; width:calc(100% - 28px); background:#fff; border-radius:10px; padding:10px 14px; cursor:pointer; display:flex; align-items:center; gap:10px; transition:background .15s; }
+.secret-btn:active { background:#f8fafc; }
+.envelope-wrap { position:relative; width:32px; height:24px; flex-shrink:0; }
+.envelope-wrap svg { width:32px; height:24px; }
+.env-lid { transform-origin:50% 0%; transition:transform .35s ease; }
+.secret-btn.open .env-lid { transform:rotateX(160deg); }
+.secret-text-wrap { display:flex; flex-direction:column; align-items:flex-start; gap:1px; flex:1; }
+.secret-title { font-size:12px; font-weight:700; color:#334155; }
+.secret-sub { font-size:10px; color:#94a3b8; }
+.secret-chevron { font-size:10px; color:#cbd5e1; transition:transform .3s; }
+.secret-btn.open .secret-chevron { transform:rotate(180deg); }
+
+/* 시크릿 패널 */
+.secret-panel { max-height:0; overflow:hidden; transition:max-height .4s ease; background:#f8fafc; border-top:1px solid #e2e8f0; }
+.secret-panel.open { max-height:700px; }
+.secret-inner { padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
+.secret-agent-header { display:flex; align-items:center; gap:8px; padding-bottom:10px; border-bottom:1px solid #e2e8f0; }
+.secret-agent-badge { font-size:10px; font-weight:700; letter-spacing:.8px; padding:3px 10px; border-radius:20px; }
+.secret-agent-badge[data-a="BA"]    { background:#eff6ff; color:#2563eb; }
+.secret-agent-badge[data-a="STOCK"] { background:#ecfeff; color:#0891b2; }
+.secret-agent-badge[data-a="PM"]    { background:#f5f3ff; color:#7c3aed; }
+.secret-agent-sub { font-size:11px; color:#94a3b8; font-weight:600; }
+.s-headline { font-size:13px; font-weight:700; color:#1e293b; line-height:1.55; margin-bottom:6px; }
+.s-text { font-size:13px; color:#475569; line-height:1.75; }
+
+/* 헤드라인 */
+.headlines-card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; }
+.hl-label { padding:12px 18px 8px; font-size:10px; font-weight:700; color:#94a3b8; letter-spacing:1.5px; text-transform:uppercase; }
+.hl-item { padding:11px 18px; border-top:1px solid #f1f5f9; display:flex; gap:10px; align-items:flex-start; cursor:pointer; }
+.hl-item:active { background:#f8fafc; }
+.hl-num { font-size:11px; font-weight:700; color:#cbd5e1; flex-shrink:0; padding-top:2px; }
+.hl-title { font-size:13px; font-weight:600; color:#334155; line-height:1.5; margin-bottom:2px; }
+.hl-summary { font-size:11px; color:#94a3b8; line-height:1.5; }
+
+.fab { position:fixed; bottom:28px; right:20px; background:#1e293b; color:#fff; border:none; border-radius:50px; padding:12px 18px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 20px rgba(0,0,0,.15); z-index:100; }
+
+/* 모달 */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:300; align-items:flex-end; }
+.modal-overlay.open { display:flex; }
+.modal { background:#fff; border-radius:20px 20px 0 0; padding:24px 20px 40px; width:100%; max-height:85vh; overflow-y:auto; }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.modal-title { font-size:16px; font-weight:700; color:#0f172a; }
+.modal-close { font-size:20px; color:#94a3b8; border:none; background:none; cursor:pointer; }
+.modal-notice { font-size:11px; color:#f59e0b; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:8px 12px; margin-bottom:16px; display:flex; align-items:center; gap:6px; }
+.form-label { font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px; display:block; }
+.form-textarea { width:100%; border:1.5px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:14px; color:#1e293b; margin-bottom:14px; outline:none; font-family:inherit; resize:none; height:100px; }
+.rating-row { display:flex; gap:8px; margin-bottom:14px; }
+.rating-btn { flex:1; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:20px; background:#fff; cursor:pointer; }
+.rating-btn.selected { border-color:#2563eb; background:#eff6ff; }
+.submit-btn { width:100%; background:#2563eb; color:#fff; border:none; border-radius:12px; padding:14px; font-size:14px; font-weight:700; cursor:pointer; }
+.kw-list { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.kw-manage-item { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; }
+.kw-manage-name { font-size:14px; font-weight:600; color:#1e293b; }
+.kw-del-btn { background:none; border:none; color:#94a3b8; font-size:16px; cursor:pointer; padding:4px; }
+.kw-add-row { display:flex; gap:8px; }
+.kw-add-input { flex:1; border:1.5px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:14px; outline:none; font-family:inherit; }
+.kw-add-input:focus { border-color:#2563eb; }
+.kw-add-btn { background:#2563eb; color:#fff; border:none; border-radius:10px; padding:10px 16px; font-size:13px; font-weight:700; cursor:pointer; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+</style>
 </head>
 <body>
-<div class="container">
 
-  <!-- 헤더 -->
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-    <h2 style="letter-spacing:-1px; cursor:pointer; margin:0;" onclick="location.href='index.html'">Fitz Intelligence</h2>
-    <div id="user-display"></div>
+<div class="top-bar" id="topBar">
+  <div class="header-row">
+    <span class="brand">Fitz Intelligence</span>
+    <button class="collapse-btn" onclick="toggleTopBar()" id="collapseBtn">접기 ▲</button>
   </div>
 
-  <!-- 키워드 매니저 -->
-  <section class="keyword-manager">
-    <strong>📌 내 관심 키워드 (최대 5개)</strong>
-    <div style="display:flex; gap:8px; margin-top:10px;">
-      <input type="text" id="new-kw" placeholder="키워드 입력"
-        style="flex:1; padding:10px; border-radius:8px; border:1px solid #ddd; font-family:inherit;"
-        onkeydown="if(event.key==='Enter') addKw()">
-      <button class="btn active" onclick="addKw()">추가</button>
+  <!-- 접힌 상태 드롭다운 칩 -->
+  <div class="collapsed-bar hidden" id="collapsedBar">
+    <div class="c-chip date-c" id="chip-date" onclick="toggleDD('dd-date',event)">
+      <span id="chip-date-txt">02.21 오늘</span><span class="arrow">▼</span>
+      <div class="c-dropdown" id="dd-date">
+        <div class="c-dd-item active" onclick="selectDate('02.21 오늘',event)">02.21 오늘</div>
+        <div class="c-dd-item" onclick="selectDate('02.20',event)">02.20</div>
+        <div class="c-dd-item" onclick="selectDate('02.19',event)">02.19</div>
+      </div>
     </div>
-    <div id="tag-list" style="display:flex; flex-wrap:wrap; gap:10px; margin-top:15px;"></div>
-  </section>
-
-  <!-- 메인 콘텐츠 -->
-  <div id="main-content-area" style="display:none;">
-
-    <!-- 상단: 날짜 선택 -->
-    <div class="top-bar">
-      <span style="font-weight:bold; color:#555;">📅 리포트 날짜</span>
-      <select id="date-select" onchange="fetchDayData()"></select>
+    <span class="c-sep">·</span>
+    <div class="c-chip agent-c" id="chip-agent" data-a="BA" onclick="toggleDD('dd-agent',event)">
+      <span id="chip-agent-txt">비즈니스</span><span class="arrow">▼</span>
+      <div class="c-dropdown" id="dd-agent">
+        <div class="c-dd-item active" onclick="selectAgentDD('BA','비즈니스',event)"><span class="c-dd-dot" style="background:#2563eb"></span>비즈니스</div>
+        <div class="c-dd-item" onclick="selectAgentDD('STOCK','주식',event)"><span class="c-dd-dot" style="background:#0891b2"></span>주식</div>
+        <div class="c-dd-item" onclick="selectAgentDD('PM','기획',event)"><span class="c-dd-dot" style="background:#7c3aed"></span>기획</div>
+      </div>
     </div>
-
-    <!-- ① 키워드 탭 -->
-    <div class="kw-tab-bar" id="kw-tab-bar"></div>
-
-    <!-- ② 에이전트 탭 -->
-    <div class="agent-tab-bar">
-      <button class="agent-tab active" id="agent-BA"    onclick="changeAgent('BA')">📊 비즈니스 분석</button>
-      <button class="agent-tab"        id="agent-Stock" onclick="changeAgent('Stock')">📈 주식</button>
-      <button class="agent-tab"        id="agent-PM"    onclick="changeAgent('PM')">🧩 PM 전략</button>
+    <span class="c-sep">·</span>
+    <div class="c-chip kw-c" id="chip-kw" onclick="toggleDD('dd-kw',event)">
+      <span id="chip-kw-txt"># K-바이오</span><span class="arrow">▼</span>
+      <div class="c-dropdown" id="dd-kw">
+        <div class="c-dd-item active" onclick="jumpKwDD(0,event)"># K-바이오</div>
+        <div class="c-dd-item" onclick="jumpKwDD(1,event)"># AI반도체</div>
+        <div class="c-dd-item" onclick="jumpKwDD(2,event)"># 미국증시</div>
+      </div>
     </div>
+  </div>
 
-    <!-- 브리핑 박스 -->
-    <div class="briefing-box">
-      <div class="briefing-header">
-        <span id="briefing-title" style="font-weight:bold; font-size:1em;">🤖 분석 인사이트</span>
-        <div>
-          <button id="btn-up"   class="eval-btn" onclick="handleThumb(true)">👍 도움이 돼요</button>
-          <button id="btn-down" class="eval-btn" onclick="handleThumb(false)">👎 아쉬워요</button>
+  <div class="collapsible">
+    <div class="date-row">
+      <div class="date-chip active">02.21 오늘</div>
+      <div class="date-chip">02.20</div>
+      <div class="date-chip">02.19</div>
+    </div>
+    <div class="agent-row">
+      <div class="agent-chip active" data-a="BA"    onclick="selectAgent('BA','비즈니스',this)"><span class="agent-dot"></span>비즈니스</div>
+      <div class="agent-chip"        data-a="STOCK" onclick="selectAgent('STOCK','주식',this)"><span class="agent-dot"></span>주식</div>
+      <div class="agent-chip"        data-a="PM"    onclick="selectAgent('PM','기획',this)"><span class="agent-dot"></span>기획</div>
+    </div>
+    <div class="kw-nav">
+      <div class="kw-chip active" id="nav-kw-0" onclick="scrollToKw('kw-0',this)"># K-바이오</div>
+      <div class="kw-chip"        id="nav-kw-1" onclick="scrollToKw('kw-1',this)"># AI반도체</div>
+      <div class="kw-chip"        id="nav-kw-2" onclick="scrollToKw('kw-2',this)"># 미국증시</div>
+      <button class="kw-edit-btn" onclick="openModal('kw-modal')">✏️ 수정하기</button>
+    </div>
+  </div>
+</div>
+
+<div class="feed">
+
+  <!-- K-바이오 -->
+  <div class="kw-section" id="kw-0">
+    <div class="kw-section-header"><span class="kw-title"># K-바이오</span><span class="kw-meta">기사 3건</span></div>
+    <div class="brief-card" id="card-0" data-a="BA">
+      <div class="brief-header">
+        <div class="brief-agent-label" id="card-0-label" data-a="BA">● 비즈니스 분석</div>
+        <div class="brief-summary" id="card-0-summary">CMO 수주·바이오시밀러 글로벌 진출로 K-바이오 성장 모멘텀 강화</div>
+      </div>
+      <div class="brief-points" id="card-0-points"></div>
+      <button class="secret-btn" id="sbtn-0" onclick="toggleSecret(0)">
+        <div class="envelope-wrap" id="env-0"></div>
+        <div class="secret-text-wrap">
+          <span class="secret-title">맞춤 브리핑 도착</span>
+          <span class="secret-sub" id="secret-sub-0">불러오는 중...</span>
         </div>
-      </div>
-      <div id="voc-area" class="voc-area">
-        <textarea id="voc-text" class="voc-input" rows="3" placeholder="에이전트에게 바라는 점을 남겨주세요."></textarea>
-        <button class="btn" style="background:#fff; color:#000; width:100%;" onclick="submitFeedback()">피드백 제출</button>
-      </div>
-      <div id="success-msg" style="display:none; color:#6fcf97; font-weight:bold; text-align:center; margin-bottom:10px;">✅ 의견이 반영되었습니다!</div>
-      <div id="briefing-content" style="font-size:1.05rem; line-height:1.8;">
-        <span class="loading">리포트를 불러오는 중...</span>
-      </div>
+        <span class="secret-chevron">▼</span>
+      </button>
+      <div class="secret-panel" id="s0"><div class="secret-inner" id="si-0"></div></div>
     </div>
-
-    <!-- 뉴스 카드 목록 -->
-    <div id="news-list"></div>
-
+    <div class="headlines-card">
+      <div class="hl-label">오늘의 헤드라인</div>
+      <div class="hl-item"><span class="hl-num">01</span><div><div class="hl-title">삼성바이오로직스, 유럽 CMO 수주 1조 달성…글로벌 1위 굳히기</div><div class="hl-summary">글로벌 위탁생산 경쟁에서 유럽 시장 점유율 확대</div></div></div>
+      <div class="hl-item"><span class="hl-num">02</span><div><div class="hl-title">셀트리온, 바이오시밀러 미국 FDA 최종 승인…연내 출시 확정</div><div class="hl-summary">미국 시장 진입으로 연간 매출 30% 성장 전망</div></div></div>
+      <div class="hl-item"><span class="hl-num">03</span><div><div class="hl-title">K-바이오 펀드 외국인 순매수 3개월 연속…기관 관심 집중</div><div class="hl-summary">중장기 성장 기대감 반영</div></div></div>
+    </div>
   </div>
 
-  <!-- 온보딩 -->
-  <div id="onboarding-guide">
-    <h3>🌱 환영합니다!</h3>
-    <p>관심 키워드를 등록하시면 매일 오전 09시 AI 리포트가 발송됩니다.</p>
+  <!-- AI반도체 -->
+  <div class="kw-section" id="kw-1">
+    <div class="kw-section-header"><span class="kw-title"># AI반도체</span><span class="kw-meta">기사 3건</span></div>
+    <div class="brief-card" id="card-1" data-a="BA">
+      <div class="brief-header">
+        <div class="brief-agent-label" id="card-1-label" data-a="BA">● 비즈니스 분석</div>
+        <div class="brief-summary" id="card-1-summary">AI 인프라 투자 확대로 반도체 수요 구조적 성장 국면 진입</div>
+      </div>
+      <div class="brief-points" id="card-1-points"></div>
+      <button class="secret-btn" id="sbtn-1" onclick="toggleSecret(1)">
+        <div class="envelope-wrap" id="env-1"></div>
+        <div class="secret-text-wrap">
+          <span class="secret-title">맞춤 브리핑 도착</span>
+          <span class="secret-sub" id="secret-sub-1">불러오는 중...</span>
+        </div>
+        <span class="secret-chevron">▼</span>
+      </button>
+      <div class="secret-panel" id="s1"><div class="secret-inner" id="si-1"></div></div>
+    </div>
+    <div class="headlines-card">
+      <div class="hl-label">오늘의 헤드라인</div>
+      <div class="hl-item"><span class="hl-num">01</span><div><div class="hl-title">엔비디아 GB300 공급 확대…삼성·SK하이닉스 HBM 수혜 전망</div><div class="hl-summary">차세대 GPU 출하량 증가로 HBM 공급 계약 확대 예상</div></div></div>
+      <div class="hl-item"><span class="hl-num">02</span><div><div class="hl-title">미국 AI 데이터센터 투자 2026년 사상 최대…반도체 수요 폭증</div><div class="hl-summary">빅테크 투자 집중으로 AI 가속기·메모리 수요 증가</div></div></div>
+      <div class="hl-item"><span class="hl-num">03</span><div><div class="hl-title">TSMC, 2nm 공정 양산 개시…파운드리 경쟁 본격화</div><div class="hl-summary">삼성전자의 추격 전략과 수율 개선 여부 주목</div></div></div>
+    </div>
+  </div>
+
+  <!-- 미국증시 -->
+  <div class="kw-section" id="kw-2">
+    <div class="kw-section-header"><span class="kw-title"># 미국증시</span><span class="kw-meta">기사 3건</span></div>
+    <div class="brief-card" id="card-2" data-a="BA">
+      <div class="brief-header">
+        <div class="brief-agent-label" id="card-2-label" data-a="BA">● 비즈니스 분석</div>
+        <div class="brief-summary" id="card-2-summary">연준 금리 동결 기조 속 빅테크 중심 상승 모멘텀 유지</div>
+      </div>
+      <div class="brief-points" id="card-2-points"></div>
+      <button class="secret-btn" id="sbtn-2" onclick="toggleSecret(2)">
+        <div class="envelope-wrap" id="env-2"></div>
+        <div class="secret-text-wrap">
+          <span class="secret-title">맞춤 브리핑 도착</span>
+          <span class="secret-sub" id="secret-sub-2">불러오는 중...</span>
+        </div>
+        <span class="secret-chevron">▼</span>
+      </button>
+      <div class="secret-panel" id="s2"><div class="secret-inner" id="si-2"></div></div>
+    </div>
+    <div class="headlines-card">
+      <div class="hl-label">오늘의 헤드라인</div>
+      <div class="hl-item"><span class="hl-num">01</span><div><div class="hl-title">나스닥 연고점 재도전…AI 랠리 지속 여부 주목</div><div class="hl-summary">빅테크 실적 서프라이즈가 상승 동력으로 작용</div></div></div>
+      <div class="hl-item"><span class="hl-num">02</span><div><div class="hl-title">연준, 금리 동결 유지…인하 시점 불확실성 지속</div><div class="hl-summary">파월 의장 발언 후 채권 수익률 소폭 상승</div></div></div>
+      <div class="hl-item"><span class="hl-num">03</span><div><div class="hl-title">달러 강세 지속…신흥국 자금 이탈 압력 확대</div><div class="hl-summary">원/달러 환율 1,440원대, 외국인 매도 지속</div></div></div>
+    </div>
   </div>
 
 </div>
+
+<button class="fab" onclick="openModal('feedback-modal')">💬 피드백</button>
+
+<!-- 키워드 관리 모달 -->
+<div class="modal-overlay" id="kw-modal" onclick="closeModal('kw-modal',event)">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">키워드 관리</span><button class="modal-close" onclick="closeModal('kw-modal')">✕</button></div>
+    <div class="modal-notice">⏰ 변경 사항은 내일 오전 9시 브리핑부터 적용됩니다.</div>
+    <label class="form-label">등록된 키워드 (최대 5개)</label>
+    <div class="kw-list">
+      <div class="kw-manage-item"><span class="kw-manage-name"># K-바이오</span><button class="kw-del-btn">✕</button></div>
+      <div class="kw-manage-item"><span class="kw-manage-name"># AI반도체</span><button class="kw-del-btn">✕</button></div>
+      <div class="kw-manage-item"><span class="kw-manage-name"># 미국증시</span><button class="kw-del-btn">✕</button></div>
+    </div>
+    <label class="form-label">키워드 추가</label>
+    <div class="kw-add-row">
+      <input class="kw-add-input" type="text" placeholder="새 키워드 입력">
+      <button class="kw-add-btn">추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- 피드백 모달 -->
+<div class="modal-overlay" id="feedback-modal" onclick="closeModal('feedback-modal',event)">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">만족도 & 건의사항</span><button class="modal-close" onclick="closeModal('feedback-modal')">✕</button></div>
+    <label class="form-label">오늘 브리핑은 어떠셨나요?</label>
+    <div class="rating-row">
+      <button class="rating-btn" onclick="selectRating(this)">😞</button>
+      <button class="rating-btn" onclick="selectRating(this)">😐</button>
+      <button class="rating-btn" onclick="selectRating(this)">🙂</button>
+      <button class="rating-btn" onclick="selectRating(this)">😊</button>
+      <button class="rating-btn" onclick="selectRating(this)">🤩</button>
+    </div>
+    <label class="form-label">건의사항 또는 개선 요청</label>
+    <textarea class="form-textarea" placeholder="자유롭게 남겨주세요. 에이전트 개선에 반영됩니다."></textarea>
+    <button class="submit-btn">제출하기</button>
+  </div>
+</div>
+
 <script>
-  const SB_URL = 'https://zrlpwmpbrvohautldcon.supabase.co';
-  const SB_KEY = 'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G';
-  const MASTER = 'positivecha@gmail.com';
-  const sc = supabase.createClient(SB_URL, SB_KEY);
+/* ── Supabase 클라이언트 ── */
+const sc = supabase.createClient(
+  'https://zrlpwmpbrvohautldcon.supabase.co',
+  'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G'
+);
 
-  let currentUser, currentReport, currentReportId;
-  let currentKw  = null;   // 선택된 키워드
-  let currentAgent = 'BA'; // 선택된 에이전트
-  let userKeywords = [];
-  let feedbackValue = null;
+/* ── 전역 유저 상태 ── */
+window.CURRENT_USER = { email: '', userName: '' };
 
-  // ── 에이전트 → by_keyword 내부 키 매핑 ─────────────────
-  // news_bot.py v16.0: content.by_keyword[키워드].{ba_brief, securities_brief, pm_brief, articles}
-  const AGENT_KEY = { BA: 'ba_brief', Stock: 'securities_brief', PM: 'pm_brief' };
-  const AGENT_LABEL = { BA: '📊 비즈니스 분석', Stock: '📈 주식 인사이트', PM: '🧩 PM 전략' };
+function getUserName() {
+  return window.CURRENT_USER.userName || '사용자';
+}
 
-  // ── 초기화 ────────────────────────────────────────────
-  async function init() {
+/* ── 봉투 SVG ── */
+function makeSVG(a) {
+  const colors = { BA:'#2563eb', STOCK:'#0891b2', PM:'#7c3aed' };
+  const c = colors[a] || '#64748b';
+  return `<svg viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="1" y="5" width="30" height="18" rx="2.5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.2"/>
+    <path class="env-lid" d="M1 7 L16 16 L31 7 L31 5.5 Q31 4 29.5 4 L2.5 4 Q1 4 1 5.5 Z" fill="${c}" opacity="0.9"/>
+    <path d="M1 7 L13 15" stroke="${c}" stroke-width="1" stroke-opacity="0.3"/>
+    <path d="M31 7 L19 15" stroke="${c}" stroke-width="1" stroke-opacity="0.3"/>
+    <circle cx="26" cy="5" r="3.5" fill="#ef4444" stroke="#fff" stroke-width="1.2"/>
+    <line x1="10" y1="9" x2="22" y2="9" stroke="#fff" stroke-width="1" stroke-opacity="0.5" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function renderEnvelopes() {
+  [0,1,2].forEach(i => {
+    document.getElementById('env-'+i).innerHTML = makeSVG(curAgent);
+  });
+}
+
+/* ── 브리핑 서브 텍스트 렌더 ── */
+function renderSecretSubs() {
+  const name = getUserName();
+  [0,1,2].forEach(i => {
+    const el = document.getElementById('secret-sub-'+i);
+    if (el) el.textContent = `${name}님을 위해 정리했어요.`;
+  });
+}
+
+/* ── 데이터 ── */
+const DATA = {
+  0:{
+    BA:    { label:'● 비즈니스 분석', summary:'CMO 수주·바이오시밀러 글로벌 진출로 K-바이오 성장 모멘텀 강화', points:['삼성바이오·셀트리온, 유럽·미국 동시 수주 달성으로 수익성 개선 중','외국인 투자 유입 증가, 글로벌 경쟁력 입증 단계 진입','원가 절감·생산 효율화로 마진율 지속 개선 전망','중장기 수출 주력 산업 자리잡을 가능성 높음'] },
+    STOCK: { label:'● 주식 브리핑',   summary:'단기 주가 모멘텀 유효, 바이오 ETF 비중 확대 시점', points:['셀트리온 FDA 승인 후 단기 모멘텀 유효','삼성바이오 CMO 수주 확대로 EPS 상향 가능성','바이오 ETF 비중 확대 시점 검토 권장','임상 리스크 및 환율 변동성 유의 필요'] },
+    PM:    { label:'● 기획 브리핑',   summary:'디지털 바이오 플랫폼 서비스 기획 기회 증가', points:['CMO 공정 관리 SaaS 수요 증가 예상','임상 데이터 추적 툴 서비스 기획 기회','디지털 헬스케어 연계 전략 검토','규제 샌드박스 활용 서비스 기획 유효'] }
+  },
+  1:{
+    BA:    { label:'● 비즈니스 분석', summary:'AI 인프라 투자 확대로 반도체 수요 구조적 성장 국면 진입', points:['HBM 수요 급증, 국내 업체 ASP 개선 기대','TSMC 2nm 양산으로 파운드리 경쟁 심화','미·중 규제 속 한국 기업 미국 동맹 수혜','2026년 섹터 전체 실적 전년 대비 개선 전망'] },
+    STOCK: { label:'● 주식 브리핑',   summary:'HBM3E 전환 수혜 집중, SK하이닉스 단기 모멘텀 유효', points:['HBM3E 전환 수혜 집중','SK하이닉스 단기 모멘텀 유효','반도체 장비주 선행 매수 전략 고려','엔비디아 공급망 내 삼성 비중 회복 여부 모니터링'] },
+    PM:    { label:'● 기획 브리핑',   summary:'AI 칩 수요 모니터링 SaaS, 공급망 플랫폼 기획 기회', points:['AI 칩 수요 모니터링 SaaS 기획 기회','공급망 가시성 플랫폼 수요 증가','데이터센터 운영 효율화 툴 수요 증가 예상','반도체 설계 자동화 연계 서비스 검토'] }
+  },
+  2:{
+    BA:    { label:'● 비즈니스 분석', summary:'연준 금리 동결 기조 속 빅테크 중심 상승 모멘텀 유지', points:['S&P500 기술주 강세, 나스닥 연고점 근접','AI 투자 수요가 금리 동결에도 버팀목 역할','달러 강세로 신흥국 자금 이탈 압력 존재','실적 시즌 마무리 후 매크로 변수 주목'] },
+    STOCK: { label:'● 주식 브리핑',   summary:'나스닥 단기 과열 신호, 분할 매수 전략 유효', points:['나스닥 단기 과열 신호 일부 감지','분할 매수 전략 유효','채권 수익률 상승 시 성장주 변동성 확대 유의','빅테크 실적 서프라이즈 지속 여부가 단기 방향성 결정'] },
+    PM:    { label:'● 기획 브리핑',   summary:'달러 강세로 미국 시장 진출 SaaS 기업 매출 환산 유리', points:['달러 강세로 미국 진출 기업 매출 환산 유리','미국 현지 법인 설립 검토 적절한 시기','핀테크·AI 서비스 미국 진출 기회 존재','글로벌 시장 다변화 전략 검토'] }
+  }
+};
+
+const AGENT_NAME = { BA:'비즈니스 분석', STOCK:'주식 브리핑', PM:'기획 브리핑' };
+const AGENT_ICON = { BA:'📊', STOCK:'📈', PM:'🎯' };
+const KW_NAMES   = ['# K-바이오','# AI반도체','# 미국증시'];
+let curAgent = 'BA';
+let curDate  = '02.21 오늘';
+
+const DEEP = {
+  BA:{
+    0:{h:'K-바이오, 단순 수주를 넘어 글로벌 공급망 재편의 수혜자로',b:'삼성바이오·셀트리온의 잇따른 대형 수주는 단순 실적 이벤트가 아닙니다. 미·중 갈등으로 중국 CMO 공급망이 흔들리는 구조 속에서, 한국 바이오가 서방 제약사들의 대체 파트너로 자리매김하는 장기 전환점입니다. FDA·EMA 동시 승인 역량을 갖춘 국내 기업은 전 세계에서 3~4곳뿐이라는 점이 경쟁 해자를 더욱 공고히 합니다.'},
+    1:{h:'AI반도체, 수요 폭증은 맞지만 수익 귀속 구조를 봐야 합니다',b:'HBM·파운드리 수요 급증의 수혜는 실제로 엔비디아와 TSMC에 집중됩니다. 국내 메모리 기업은 공급자 위치에 머물러 있어 ASP 협상력이 제한적입니다. 진짜 기회는 AI 가속기 설계 내재화(NPU)와 온디바이스 AI 칩 시장이며, 이 두 분야에서 국내 팹리스 생태계가 어떻게 자리를 잡느냐가 중기 비즈니스 구조를 결정합니다.'},
+    2:{h:'미국 증시 강세, 한국 기업의 시장 진입 타이밍 관점에서 읽어야 합니다',b:'달러 강세와 미국 빅테크 중심 상승은 역설적으로 한국 SaaS·AI 스타트업에게 미국 법인 설립 및 현지 매출 전환의 최적 구간입니다. 원화 가치 하락으로 인건비 경쟁력이 올라간 지금, 미국 고객을 확보하면 달러 매출이 자동으로 환차익을 포함합니다. 단, 연준 동결 장기화는 성장주 밸류에이션 압축 리스크를 내포해 IPO 타이밍 설계 시 유의해야 합니다.'}
+  },
+  STOCK:{
+    0:{h:'셀트리온·삼성바이오, 지금 매수해야 하는 이유와 주의해야 할 한 가지',b:'FDA 최종 승인 이후 주가 모멘텀은 통상 3~6개월 유효합니다. 셀트리온은 미국 시장 침투율이 실제 매출로 전환되는 Q2~Q3 실적 확인 전까지 단기 트레이딩 관점이 적합합니다. 삼성바이오는 CMO 수주 잔고가 중기 가시성을 제공하지만, 원/달러 1,380원 이하 하락 시 EPS에 부정적 영향을 줄 수 있어 환율 모니터링이 필수입니다.'},
+    1:{h:'HBM 수혜주, 선도 매수 타이밍은 지났습니다—다음 사이클을 봐야 합니다',b:'SK하이닉스의 HBM3E 수혜는 이미 주가에 상당 부분 반영됐습니다. 지금 시점 진입은 HBM4 전환 발표(2025 H2 예상)까지의 공백기 리스크를 감수해야 합니다. 오히려 장비주(한미반도체, 이오테크닉스)가 선행 수혜 기회를 제공합니다. AI 서버 증설 사이클이 2026년까지 지속된다면, 장비 수주 잔고가 쌓이는 Q3부터가 진입 시점입니다.'},
+    2:{h:'나스닥 과열 신호, 숏은 아직—조정 구간의 섹터 로테이션이 핵심입니다',b:'나스닥 RSI 70 근접과 밸류에이션 부담은 명확하지만, 연준 동결 기조가 유지되는 한 하락 트리거가 제한적입니다. 기술주 비중을 줄이고 에너지·소재 등 매크로 수혜 섹터로 부분 이동하는 전략이 유효합니다. 한국 투자자는 원/달러 헤지 여부에 따라 나스닥 ETF 실질 수익률이 크게 달라지므로, 환헤지형 상품 비중 조절을 먼저 검토해야 합니다.'}
+  },
+  PM:{
+    0:{h:'K-바이오 성장이 만드는 SaaS 기회, 지금 기획해야 할 이유',b:'CMO 수주가 늘수록 배치 추적, 품질 문서화, 규제 제출 자동화 수요가 폭발적으로 증가합니다. 글로벌 바이오 CMO 특화 SaaS는 공급이 극도로 부족한 블루오션입니다. FDA 21 CFR Part 11 준수 기능을 내재화한 국내 플랫폼이라면, 국내 CMO 레퍼런스를 기반으로 글로벌 진출까지 가능합니다. 초기 MVP는 배치 기록 디지털화 하나의 기능으로 충분합니다.'},
+    1:{h:'AI반도체 공급망 가시성, 이것이 만들어야 할 제품입니다',b:'반도체 공급망은 여전히 엑셀과 이메일로 관리됩니다. HBM·파운드리 수급 데이터를 실시간 집계해 의사결정 인텔리전스를 제공하는 B2B SaaS는 구매 담당자·SCM 팀 모두에게 절실합니다. 구독 ACV $50K~200K 수준의 엔터프라이즈 계약이 가능한 시장으로, 초기 파일럿은 반도체 중간 유통상이나 EMS 기업을 타깃으로 빠르게 검증할 수 있습니다.'},
+    2:{h:'달러 강세 지금, 미국 시장 진입 제품의 포지셔닝을 재설계해야 합니다',b:'달러 강세 구간은 한국 팀의 번인 레이트를 달러 환산으로 낮춰줍니다. 같은 원화 비용으로 더 오래 미국 시장을 실험할 수 있습니다. 이 구간에 해야 할 것은 제품 현지화(영문 UX, 미국 결제 인프라, SOC 2 준비)와 미국 파트너·채널 구축입니다. 연준 동결 장기화로 미국 스타트업 투자 심리가 위축된 만큼 B2B SaaS로 빠른 수익화를 설계하는 것이 현 환경에 최적입니다.'}
+  }
+};
+
+/* ── 카드 업데이트 ── */
+function updateCard(i, key) {
+  const d = DATA[i][key];
+  const card = document.getElementById('card-'+i);
+  const lbl  = document.getElementById('card-'+i+'-label');
+  const sum  = document.getElementById('card-'+i+'-summary');
+  const pts  = document.getElementById('card-'+i+'-points');
+  card.setAttribute('data-a', key);
+  lbl.setAttribute('data-a', key);
+  lbl.textContent = d.label;
+  sum.textContent = d.summary;
+  pts.innerHTML = d.points.map(p =>
+    `<div class="brief-point"><div class="brief-dot" data-a="${key}"></div><div class="brief-text">${p}</div></div>`
+  ).join('');
+  card.style.animation='none'; card.offsetHeight; card.style.animation='fadeUp .2s ease';
+}
+
+function renderDeep(i) {
+  const dp = DEEP[curAgent][i];
+  document.getElementById('si-'+i).innerHTML = `
+    <div class="secret-agent-header">
+      <span class="secret-agent-badge" data-a="${curAgent}">${AGENT_ICON[curAgent]} ${AGENT_NAME[curAgent]}</span>
+      <span class="secret-agent-sub">심층 분석</span>
+    </div>
+    <div>
+      <div class="s-headline">${dp.h}</div>
+      <div class="s-text">${dp.b}</div>
+    </div>
+  `;
+}
+
+/* ── 에이전트 선택 ── */
+function selectAgent(key, label, el) {
+  curAgent = key;
+  document.querySelectorAll('.agent-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const chip = document.getElementById('chip-agent');
+  chip.setAttribute('data-a', key);
+  document.getElementById('chip-agent-txt').textContent = label;
+  document.querySelectorAll('#dd-agent .c-dd-item').forEach((it,idx) => {
+    it.classList.toggle('active', ['BA','STOCK','PM'][idx] === key);
+  });
+  [0,1,2].forEach(i => { updateCard(i, key); renderDeep(i); });
+  renderEnvelopes();
+}
+
+function selectAgentDD(key, label, e) {
+  e.stopPropagation();
+  closeAllDD();
+  selectAgent(key, label, document.querySelector(`.agent-chip[data-a="${key}"]`));
+}
+
+/* ── 날짜 선택 ── */
+function selectDate(val, e) {
+  e.stopPropagation();
+  closeAllDD();
+  curDate = val;
+  document.getElementById('chip-date-txt').textContent = val;
+  document.querySelectorAll('#dd-date .c-dd-item').forEach(it =>
+    it.classList.toggle('active', it.textContent.trim() === val)
+  );
+  document.querySelectorAll('.date-chip').forEach(c =>
+    c.classList.toggle('active', c.textContent.trim() === val)
+  );
+}
+
+/* ── 키워드 DD ── */
+function jumpKwDD(i, e) {
+  e.stopPropagation();
+  closeAllDD();
+  document.getElementById('chip-kw-txt').textContent = KW_NAMES[i];
+  document.querySelectorAll('#dd-kw .c-dd-item').forEach((it,j) => it.classList.toggle('active', j===i));
+  scrollToKw('kw-'+i, document.getElementById('nav-kw-'+i));
+}
+
+/* ── 드롭다운 ── */
+function toggleDD(id, e) {
+  e.stopPropagation();
+  const el = document.getElementById(id);
+  const isOpen = el.classList.contains('open');
+  closeAllDD();
+  if (!isOpen) el.classList.add('open');
+}
+function closeAllDD() {
+  document.querySelectorAll('.c-dropdown').forEach(d => d.classList.remove('open'));
+}
+document.addEventListener('click', closeAllDD);
+
+/* ── 접기 ── */
+function toggleTopBar() {
+  const bar  = document.getElementById('topBar');
+  const btn  = document.getElementById('collapseBtn');
+  const cBar = document.getElementById('collapsedBar');
+  bar.classList.toggle('collapsed');
+  const c = bar.classList.contains('collapsed');
+  btn.textContent = c ? '펼치기 ▼' : '접기 ▲';
+  cBar.classList.toggle('hidden', !c);
+}
+
+/* ── 키워드 스크롤 ── */
+function scrollToKw(id, el) {
+  document.querySelectorAll('.kw-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const target = document.getElementById(id);
+  const offset = document.getElementById('topBar').offsetHeight + 12;
+  window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - offset, behavior:'smooth' });
+}
+
+/* ── 스크롤 감지 ── */
+const sections = [0,1,2].map(i => document.getElementById('kw-'+i));
+window.addEventListener('scroll', () => {
+  const topH = document.getElementById('topBar').offsetHeight;
+  let active = 0;
+  sections.forEach((s,i) => { if (s.getBoundingClientRect().top <= topH + 40) active = i; });
+  document.querySelectorAll('.kw-chip').forEach((c,i) => c.classList.toggle('active', i===active));
+  document.getElementById('chip-kw-txt').textContent = KW_NAMES[active];
+  document.querySelectorAll('#dd-kw .c-dd-item').forEach((it,j) => it.classList.toggle('active', j===active));
+}, { passive:true });
+
+/* ── 시크릿 토글 ── */
+function toggleSecret(i) {
+  document.getElementById('s'+i).classList.toggle('open');
+  document.getElementById('sbtn-'+i).classList.toggle('open');
+}
+
+/* ── 모달 ── */
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id, e) {
+  if (!e || e.target.classList.contains('modal-overlay'))
+    document.getElementById(id).classList.remove('open');
+}
+function selectRating(el) {
+  document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+/* ── 초기화 (Supabase 세션 기반) ── */
+async function init() {
+  try {
     const { data: { session } } = await sc.auth.getSession();
-    if (!session) { location.href = 'index.html'; return; }
-    currentUser = session.user;
 
-    const name = currentUser.email.split('@')[0];
-    let headerHTML = `
-      <button class="btn" style="font-size:0.7em; margin-right:5px;" onclick="location.href='index.html'">브랜드 홈</button>
-      👤 <b>${name}님</b>
-      <button class="btn" style="font-size:0.7em; margin-left:10px;"
-        onclick="sc.auth.signOut().then(()=>location.href='index.html')">Logout</button>`;
-    if (currentUser.email === MASTER)
-      headerHTML += ` <button onclick="location.href='master.html'"
-        style="color:red; font-weight:bold; border:1px solid red; border-radius:5px; padding:2px 6px; cursor:pointer; font-size:0.7em; background:none;">HQ</button>`;
-    document.getElementById('user-display').innerHTML = headerHTML;
-
-    await fetchUserKeywords();
-    await loadDates();
-  }
-
-  // ── 키워드 관리 ───────────────────────────────────────
-  async function fetchUserKeywords() {
-    const { data } = await sc.from('user_settings').select('keywords').eq('id', currentUser.id).maybeSingle();
-    userKeywords = data?.keywords || [];
-    renderTags();
-    const hasKw = userKeywords.length > 0;
-    document.getElementById('main-content-area').style.display = hasKw ? 'block' : 'none';
-    document.getElementById('onboarding-guide').style.display  = hasKw ? 'none'  : 'block';
-  }
-
-  function renderTags() {
-    document.getElementById('tag-list').innerHTML = userKeywords.map(k =>
-      `<span class="tag">#${k}
-        <span onclick="removeKw('${k}')" style="cursor:pointer; margin-left:8px; color:#e74c3c;">×</span>
-      </span>`).join('');
-  }
-
-  async function addKw() {
-    const v = document.getElementById('new-kw').value.trim();
-    if (!v || userKeywords.length >= 5) return;
-    userKeywords.push(v);
-    await sc.from('user_settings').upsert({ id: currentUser.id, keywords: userKeywords, email: currentUser.email });
-    document.getElementById('new-kw').value = '';
-    await fetchUserKeywords();
-    await loadDates(); // 키워드 추가 후 탭 리프레시
-  }
-
-  async function removeKw(k) {
-    userKeywords = userKeywords.filter(x => x !== k);
-    await sc.from('user_settings').upsert({ id: currentUser.id, keywords: userKeywords });
-    await fetchUserKeywords();
-  }
-
-  // ── 날짜 로드 ─────────────────────────────────────────
-  async function loadDates() {
-    const { data } = await sc.from('reports').select('report_date')
-      .eq('user_id', currentUser.id).order('report_date', { ascending: false });
-    if (!data?.length) return;
-    const dates = [...new Set(data.map(d => d.report_date))];
-    document.getElementById('date-select').innerHTML = dates
-      .map(d => `<option value="${d}">${d}</option>`).join('');
-    await fetchDayData();
-  }
-
-  // ── 리포트 데이터 로드 ────────────────────────────────
-  async function fetchDayData() {
-    document.getElementById('briefing-content').innerHTML = '<span class="loading">리포트를 불러오는 중...</span>';
-    document.getElementById('news-list').innerHTML = '';
-
-    const d = document.getElementById('date-select').value;
-    const { data } = await sc.from('reports').select('*')
-      .eq('report_date', d).eq('user_id', currentUser.id).limit(1);
-
-    if (!data?.length) {
-      document.getElementById('briefing-content').innerHTML = '<span class="loading">해당 날짜 리포트가 없습니다.</span>';
+    if (!session) {
+      // 비로그인 시 로그인 페이지로 이동
+      location.href = 'index.html';
       return;
     }
 
-    currentReport   = data[0].content;
-    currentReportId = data[0].id;
+    // 이메일에서 @ 앞 부분 추출해 전역 저장
+    const email    = session.user.email;           // ex) positivecha@gmail.com
+    const userName = email.split('@')[0];           // ex) positivecha
+    window.CURRENT_USER = { email, userName };
 
-    // by_keyword 구조: { by_keyword: { "삼성": { ba_brief, articles, ... } } }
-    // 키워드 탭은 by_keyword 키 목록으로 생성
-    renderKwTabs();
-    renderDisplay();
+  } catch (err) {
+    // 세션 조회 실패 시 폴백 (로컬 개발 등)
+    console.warn('세션 조회 실패, 폴백 적용:', err);
+    window.CURRENT_USER = { email: '', userName: '사용자' };
   }
 
-  // ── 키워드 탭 렌더 ────────────────────────────────────
-  function renderKwTabs() {
-    const bk = currentReport?.by_keyword || {};
-    const keys = Object.keys(bk);
-    if (!keys.length) { document.getElementById('kw-tab-bar').innerHTML = ''; return; }
+  // 렌더
+  [0,1,2].forEach(i => { updateCard(i, 'BA'); renderDeep(i); });
+  renderEnvelopes();
+  renderSecretSubs();
+}
 
-    // 현재 선택된 키워드가 없거나 새 리포트에 없으면 첫 번째로 초기화
-    if (!currentKw || !bk[currentKw]) currentKw = keys[0];
-
-    document.getElementById('kw-tab-bar').innerHTML = keys.map(k =>
-      `<button class="kw-tab ${k === currentKw ? 'active' : ''}"
-        onclick="changeKw('${k}')">#${k}</button>`).join('');
-  }
-
-  // ── 키워드 탭 전환 ────────────────────────────────────
-  function changeKw(k) {
-    currentKw = k;
-    document.querySelectorAll('.kw-tab').forEach(btn =>
-      btn.classList.toggle('active', btn.textContent === '#' + k));
-    resetFeedbackUI();
-    renderDisplay();
-  }
-
-  // ── 에이전트 탭 전환 ──────────────────────────────────
-  function changeAgent(a) {
-    currentAgent = a;
-    ['BA','Stock','PM'].forEach(x =>
-      document.getElementById('agent-' + x).classList.toggle('active', x === a));
-    resetFeedbackUI();
-    renderDisplay();
-  }
-
-  // ── 메인 렌더 (핵심 수정) ─────────────────────────────
-  function renderDisplay() {
-    if (!currentReport) return;
-
-    const bk = currentReport.by_keyword || {};
-    const kwData = bk[currentKw] || {};                         // 선택 키워드 데이터
-    const agentKey = AGENT_KEY[currentAgent];                   // ex) 'ba_brief'
-    const rawTxt = kwData[agentKey] || '(이 키워드의 분석 데이터가 없습니다.)';
-
-    // [PROPOSAL] / [REASON] 내부 태그 제거
-    const cleanTxt = rawTxt.replace(/\[PROPOSAL\].*|\[REASON\].*/gs, '').trim();
-
-    // 브리핑 타이틀 업데이트
-    document.getElementById('briefing-title').textContent =
-      `${AGENT_LABEL[currentAgent]} — #${currentKw}`;
-
-    document.getElementById('briefing-content').innerHTML = marked.parse(cleanTxt);
-
-    // 뉴스 카드: 해당 키워드의 articles만 표시
-    const articles = kwData.articles || [];
-    document.getElementById('news-list').innerHTML = articles.length
-      ? articles.map(a => `
-          <div class="news-card">
-            <small class="tag">#${a.keyword || currentKw}</small>
-            <h3 style="margin:10px 0 8px;">${a.title}</h3>
-            <div style="color:#555; font-size:0.95em;">${marked.parse(a.pm_summary || a.impact || '')}</div>
-            <a href="${a.url}" target="_blank"
-              style="font-size:0.82em; color:var(--primary); text-decoration:none; font-weight:bold;">원문 보기 ↗</a>
-          </div>`).join('')
-      : '<p style="color:#aaa; font-size:0.9em;">이 키워드의 뉴스 원문이 없습니다.</p>';
-  }
-
-  // ── 피드백 UI ─────────────────────────────────────────
-  function resetFeedbackUI() {
-    feedbackValue = null;
-    document.getElementById('btn-up').className   = 'eval-btn';
-    document.getElementById('btn-down').className  = 'eval-btn';
-    document.getElementById('voc-area').style.display   = 'none';
-    document.getElementById('success-msg').style.display = 'none';
-    document.getElementById('voc-text').value = '';
-  }
-
-  function handleThumb(isPositive) {
-    feedbackValue = isPositive;
-    document.getElementById('btn-up').className   = isPositive  ? 'eval-btn active-up'   : 'eval-btn';
-    document.getElementById('btn-down').className  = !isPositive ? 'eval-btn active-down' : 'eval-btn';
-    document.getElementById('voc-area').style.display = 'block';
-  }
-
-  async function submitFeedback() {
-    const text = document.getElementById('voc-text').value;
-    await sc.from('report_feedback').insert([{
-      user_id: currentUser.id,
-      report_id: currentReportId,
-      is_positive: feedbackValue,
-      feedback_text: text || '만족',
-      target_agent: currentAgent   // 에이전트 기준으로 저장
-    }]);
-    document.getElementById('voc-area').style.display    = 'none';
-    document.getElementById('success-msg').style.display = 'block';
-  }
-
-  init();
+init();
 </script>
 </body>
 </html>
