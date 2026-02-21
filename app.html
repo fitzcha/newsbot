@@ -56,7 +56,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .top-bar.collapsed .collapsed-bar { display:flex; }
 .top-bar.collapsed .collapsed-bar.hidden { display:none; }
 
-/* 로딩 / 에러 */
 .feed-state { padding:60px 20px; text-align:center; color:#94a3b8; font-size:14px; }
 .skeleton { background:#f1f5f9; border-radius:14px; height:180px; margin-bottom:28px; animation:pulse 1.5s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
@@ -85,14 +84,26 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .brief-dot[data-a="PM"]    { background:#7c3aed; }
 .brief-text { font-size:13px; color:#475569; line-height:1.7; }
 
-/* 봉투 버튼 */
-.secret-btn { margin:0 14px 14px; border:1.5px solid #e2e8f0; width:calc(100% - 28px); background:#fff; border-radius:10px; padding:10px 14px; cursor:pointer; display:flex; align-items:center; gap:10px; transition:background .15s; }
+/* 봉투 버튼 — 고정 크기 */
+.secret-btn {
+  margin: 0 14px 14px;
+  border: 1.5px solid #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background .15s;
+  max-width: 280px;
+}
 .secret-btn:active { background:#f8fafc; }
 .envelope-wrap { position:relative; width:32px; height:24px; flex-shrink:0; }
 .envelope-wrap svg { width:32px; height:24px; }
 .env-lid { transform-origin:50% 0%; transition:transform .35s ease; }
 .secret-btn.open .env-lid { transform:rotateX(160deg); }
-.secret-text-wrap { display:flex; flex-direction:column; align-items:flex-start; gap:1px; flex:1; }
+.secret-text-wrap { display:flex; flex-direction:column; align-items:flex-start; gap:1px; }
 .secret-title { font-size:12px; font-weight:700; color:#334155; }
 .secret-sub { font-size:10px; color:#94a3b8; }
 .secret-chevron { font-size:10px; color:#cbd5e1; transition:transform .3s; }
@@ -107,7 +118,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .secret-agent-badge[data-a="STOCK"] { background:#ecfeff; color:#0891b2; }
 .secret-agent-badge[data-a="PM"]    { background:#f5f3ff; color:#7c3aed; }
 .secret-agent-sub { font-size:11px; color:#94a3b8; font-weight:600; }
-.s-headline { font-size:13px; font-weight:700; color:#1e293b; line-height:1.55; margin-bottom:6px; }
 .s-point { display:flex; gap:8px; align-items:flex-start; margin-bottom:6px; }
 .s-point-dot { width:4px; height:4px; border-radius:50%; flex-shrink:0; margin-top:8px; background:#94a3b8; }
 .s-text { font-size:13px; color:#475569; line-height:1.75; }
@@ -233,72 +243,72 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 </div>
 
 <script>
-/* ── Supabase ── */
 const sc = supabase.createClient(
   'https://zrlpwmpbrvohautldcon.supabase.co',
   'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G'
 );
 
-/* ── 전역 상태 ── */
-window.CURRENT_USER = { email:'', userName:'' };
+window.CURRENT_USER = { email:'', userName:'', id:'' };
 let curAgent   = 'BA';
 let curDate    = '';
-let allDates   = [];   // ['2026-02-21', '2026-02-20', ...]
-let reportData = null; // 현재 날짜의 content.by_keyword
-let kwNames    = [];   // 현재 리포트 키워드 목록
-let userKeywords = []; // user_settings.keywords
+let allDates   = [];
+let reportData = null;
+let kwNames    = [];
+let userKeywords = [];
 
 const AGENT_KEY  = { BA:'ba_brief', STOCK:'securities_brief', PM:'pm_brief' };
 const AGENT_NAME = { BA:'비즈니스 분석', STOCK:'주식 브리핑', PM:'기획 브리핑' };
 const AGENT_ICON = { BA:'📊', STOCK:'📈', PM:'🎯' };
 
-/* ────────────────────────────────
-   마크다운 → 텍스트 파싱 유틸
-──────────────────────────────── */
+/* ── 마크다운 파싱 유틸 ── */
 function stripMd(str) {
   return (str || '')
-    .replace(/#{1,6}\s*/g, '')   // ## 헤더
-    .replace(/\*\*(.+?)\*\*/g, '$1') // **bold**
-    .replace(/\*(.+?)\*/g, '$1')     // *italic*
-    .replace(/`(.+?)`/g, '$1')       // `code`
-    .replace(/^\s*[-*]\s+/gm, '')    // 리스트 기호
-    .replace(/\[.*?\]\(.*?\)/g, '')  // 링크
+    .replace(/#{1,6}\s*/g, '')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/`(.+?)`/g, '$1')
+    .replace(/^\s*[-*]\s+/gm, '')
+    .replace(/\[.*?\]\(.*?\)/g, '')
     .trim();
 }
 
-// 마크다운 텍스트 → 의미있는 문장 배열 (빈줄·기호줄 제거)
 function parseToLines(md) {
   return md.split('\n')
     .map(l => stripMd(l))
-    .filter(l => l.length > 8) // 너무 짧은 줄 제거
-    .filter(l => !/^[\-_=]{3,}$/.test(l)) // 구분선 제거
-    .slice(0, 6); // 최대 6줄
+    .filter(l => l.length > 15)
+    .filter(l => !/^\d+\.\s*[\w가-힣\s]{1,20}:$/.test(l))
+    .filter(l => !/^[\-_=]{3,}$/.test(l))
+    .slice(0, 6);
 }
 
-// 첫 번째 의미있는 문장을 summary로
 function parseSummary(md) {
-  const lines = parseToLines(md);
+  const lines = md.split('\n').map(l => stripMd(l)).filter(l => l.length > 20);
+  const summaryLine = lines.find(l => l.includes('핵심 요약') || l.includes('요약') || l.includes('분석'));
+  if (summaryLine) {
+    return summaryLine.replace(/^.*?요약[:\s]*/, '').replace(/^.*?분석[:\s]*/, '').trim() || summaryLine;
+  }
   return lines[0] || '분석 중...';
 }
 
-// 나머지 문장들을 points로
 function parsePoints(md) {
-  const lines = parseToLines(md);
-  return lines.slice(1, 5); // 최대 4개 포인트
+  return md.split('\n')
+    .map(l => stripMd(l))
+    .filter(l => l.length > 20)
+    .filter(l => !/^\d+\.\s*[\w가-힣\s]{1,20}:$/.test(l))
+    .filter(l => !l.includes('핵심 요약') && !l.includes('핵심요약'))
+    .slice(1, 5);
 }
 
-// 심층 분석용: 더 많은 문장 추출
 function parseDeepLines(md) {
   return md.split('\n')
     .map(l => stripMd(l))
-    .filter(l => l.length > 12)
-    .filter(l => !/^[\-_=]{3,}$/.test(l))
-    .slice(2, 10); // summary/points 이후 내용
+    .filter(l => l.length > 20)
+    .filter(l => !/^\d+\.\s*[\w가-힣\s]{1,20}:$/.test(l))
+    .filter(l => !l.includes('핵심 요약') && !l.includes('핵심요약'))
+    .slice(4, 12);
 }
 
-/* ────────────────────────────────
-   봉투 SVG
-──────────────────────────────── */
+/* ── 봉투 SVG ── */
 function makeSVG(a) {
   const c = { BA:'#2563eb', STOCK:'#0891b2', PM:'#7c3aed' }[a] || '#64748b';
   return `<svg viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -311,9 +321,7 @@ function makeSVG(a) {
   </svg>`;
 }
 
-/* ────────────────────────────────
-   피드 렌더링
-──────────────────────────────── */
+/* ── 피드 렌더링 ── */
 function renderFeed() {
   if (!reportData || kwNames.length === 0) {
     document.getElementById('feed-wrap').innerHTML =
@@ -321,19 +329,16 @@ function renderFeed() {
     return;
   }
 
-  // 키워드 네비 갱신
   const nav = document.getElementById('kw-nav');
   nav.innerHTML = kwNames.map((kw, i) =>
     `<div class="kw-chip${i===0?' active':''}" id="nav-kw-${i}" onclick="scrollToKw('kw-${i}',this)"># ${kw}</div>`
   ).join('') + `<button class="kw-edit-btn" onclick="openModal('kw-modal')">✏️ 수정하기</button>`;
 
-  // 키워드 DD 갱신
   document.getElementById('dd-kw').innerHTML = kwNames.map((kw, i) =>
     `<div class="c-dd-item${i===0?' active':''}" onclick="jumpKwDD(${i},event)"># ${kw}</div>`
   ).join('');
   document.getElementById('chip-kw-txt').textContent = `# ${kwNames[0]}`;
 
-  // 섹션 렌더
   const feed = document.createElement('div');
   feed.className = 'feed';
 
@@ -408,22 +413,18 @@ function renderFeed() {
 
   document.getElementById('feed-wrap').innerHTML = '';
   document.getElementById('feed-wrap').appendChild(feed);
-
-  // 스크롤 감지 재등록
   bindScroll();
 }
 
-/* ────────────────────────────────
-   에이전트 전환 (카드만 업데이트)
-──────────────────────────────── */
+/* ── 에이전트 전환 ── */
 function switchAgent() {
   if (!reportData) return;
   kwNames.forEach((kw, i) => {
     const kwData = reportData[kw];
     if (!kwData) return;
-    const brief   = kwData[AGENT_KEY[curAgent]] || '';
-    const summary = parseSummary(brief);
-    const points  = parsePoints(brief);
+    const brief     = kwData[AGENT_KEY[curAgent]] || '';
+    const summary   = parseSummary(brief);
+    const points    = parsePoints(brief);
     const deepLines = parseDeepLines(brief);
 
     const card = document.getElementById(`card-${i}`);
@@ -437,11 +438,7 @@ function switchAgent() {
         <div class="brief-dot" data-a="${curAgent}"></div>
         <div class="brief-text">${p}</div>
       </div>`).join('');
-
-    // 봉투 SVG 색상 교체
     card.querySelector('.envelope-wrap').innerHTML = makeSVG(curAgent);
-
-    // 심층 분석 내용 교체
     const inner = card.querySelector('.secret-inner');
     inner.innerHTML = `
       <div class="secret-agent-header">
@@ -452,14 +449,11 @@ function switchAgent() {
         ? deepLines.map(l => `<div class="s-point"><div class="s-point-dot"></div><div class="s-text">${l}</div></div>`).join('')
         : `<div class="s-text" style="color:#94a3b8">추가 분석 내용이 없습니다.</div>`
       }`;
-
     card.style.animation = 'none'; card.offsetHeight; card.style.animation = 'fadeUp .2s ease';
   });
 }
 
-/* ────────────────────────────────
-   날짜 로드 & 전환
-──────────────────────────────── */
+/* ── 날짜 ── */
 async function loadDates(userId) {
   const { data } = await sc.from('reports').select('report_date')
     .eq('user_id', userId).order('report_date', { ascending: false });
@@ -470,18 +464,14 @@ async function loadDates(userId) {
 }
 
 function renderDateUI() {
-  // 펼쳐진 날짜 칩
   document.getElementById('date-row').innerHTML = allDates.map((d, i) => {
     const label = i === 0 ? `${fmtDate(d)} 오늘` : fmtDate(d);
     return `<div class="date-chip${d===curDate?' active':''}" onclick="selectDate('${d}',this)">${label}</div>`;
   }).join('');
-
-  // 드롭다운
   document.getElementById('dd-date').innerHTML = allDates.map((d, i) => {
     const label = i === 0 ? `${fmtDate(d)} 오늘` : fmtDate(d);
     return `<div class="c-dd-item${d===curDate?' active':''}" onclick="selectDateDD('${d}',event)">${label}</div>`;
   }).join('');
-
   const i0label = allDates.indexOf(curDate) === 0 ? `${fmtDate(curDate)} 오늘` : fmtDate(curDate);
   document.getElementById('chip-date-txt').textContent = i0label;
 }
@@ -494,16 +484,13 @@ function fmtDate(iso) {
 async function fetchReport(userId, date) {
   document.getElementById('feed-wrap').innerHTML =
     '<div class="feed-state"><div class="skeleton"></div><div class="skeleton" style="height:140px;opacity:.6"></div></div>';
-
   const { data } = await sc.from('reports').select('content')
     .eq('user_id', userId).eq('report_date', date).limit(1);
-
   if (!data || !data.length || !data[0].content?.by_keyword) {
     document.getElementById('feed-wrap').innerHTML =
       `<div class="feed-state">📭 ${date} 브리핑 데이터가 없습니다.</div>`;
     return;
   }
-
   reportData = data[0].content.by_keyword;
   kwNames    = Object.keys(reportData);
   renderFeed();
@@ -530,9 +517,7 @@ async function selectDateDD(date, e) {
   else { curDate = date; await fetchReport(window.CURRENT_USER.id, date); }
 }
 
-/* ────────────────────────────────
-   에이전트
-──────────────────────────────── */
+/* ── 에이전트 ── */
 function selectAgent(key, label, el) {
   curAgent = key;
   document.querySelectorAll('.agent-chip').forEach(c => c.classList.remove('active'));
@@ -551,9 +536,7 @@ function selectAgentDD(key, label, e) {
   selectAgent(key, label, document.querySelector(`.agent-chip[data-a="${key}"]`));
 }
 
-/* ────────────────────────────────
-   키워드 DD
-──────────────────────────────── */
+/* ── 키워드 DD ── */
 function jumpKwDD(i, e) {
   e.stopPropagation(); closeAllDD();
   document.getElementById('chip-kw-txt').textContent = `# ${kwNames[i]}`;
@@ -562,9 +545,7 @@ function jumpKwDD(i, e) {
   if (navChip) scrollToKw(`kw-${i}`, navChip);
 }
 
-/* ────────────────────────────────
-   키워드 관리
-──────────────────────────────── */
+/* ── 키워드 관리 ── */
 function renderKwManage() {
   document.getElementById('kw-manage-list').innerHTML = userKeywords.map(kw => `
     <div class="kw-manage-item">
@@ -588,9 +569,7 @@ async function removeKeyword(kw) {
   renderKwManage();
 }
 
-/* ────────────────────────────────
-   드롭다운 / 접기 / 스크롤
-──────────────────────────────── */
+/* ── DD / 접기 / 스크롤 ── */
 function toggleDD(id, e) {
   e.stopPropagation();
   const el = document.getElementById(id);
@@ -641,9 +620,7 @@ function toggleSecret(i) {
   document.getElementById(`sbtn-${i}`).classList.toggle('open');
 }
 
-/* ────────────────────────────────
-   모달
-──────────────────────────────── */
+/* ── 모달 ── */
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id, e) {
   if (!e || e.target.classList.contains('modal-overlay'))
@@ -654,9 +631,7 @@ function selectRating(el) {
   el.classList.add('selected');
 }
 
-/* ────────────────────────────────
-   초기화
-──────────────────────────────── */
+/* ── 초기화 ── */
 async function init() {
   try {
     const { data: { session } } = await sc.auth.getSession();
@@ -667,22 +642,18 @@ async function init() {
     const userId   = session.user.id;
     window.CURRENT_USER = { email, userName, id: userId };
 
-    // 유저 키워드 로드
     const { data: uSettings } = await sc.from('user_settings').select('keywords')
       .eq('id', userId).maybeSingle();
     userKeywords = uSettings?.keywords || [];
 
-    // 날짜 목록 로드
     await loadDates(userId);
 
-    // 최신 날짜 리포트 로드
     if (allDates.length > 0) {
       await fetchReport(userId, allDates[0]);
     } else {
       document.getElementById('feed-wrap').innerHTML =
         '<div class="feed-state">아직 발송된 브리핑이 없습니다.<br>내일 오전 9시에 첫 브리핑이 도착합니다.</div>';
     }
-
   } catch (err) {
     console.error('초기화 오류:', err);
     window.CURRENT_USER = { email:'', userName:'사용자', id:'' };
