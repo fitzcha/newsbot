@@ -26,6 +26,28 @@ GMAIL_PASS = os.environ.get("GMAIL_APP_PASSWORD")
 supabase: Client = create_client(SB_URL, SB_KEY)
 google_genai     = genai.Client(api_key=GEMINI_KEY)
 
+# ──────────────────────────────────────────────
+# [시작 시점] 필수 환경변수 체크
+# ──────────────────────────────────────────────
+def _check_env():
+    missing = []
+    for key, val in [
+        ("GEMINI_API_KEY",    GEMINI_KEY),
+        ("SUPABASE_URL",      SB_URL),
+        ("SUPABASE_KEY",      SB_KEY),
+        ("GMAIL_APP_PASSWORD", GMAIL_PASS),
+        ("YOUTUBE_API_KEY",   YOUTUBE_KEY),
+    ]:
+        if not val:
+            missing.append(key)
+    if missing:
+        print(f"🚨 [ENV] 필수 환경변수 누락: {', '.join(missing)}")
+        print("🚨 [ENV] 이메일 발송 및 일부 기능이 작동하지 않을 수 있습니다.")
+    else:
+        print("✅ [ENV] 환경변수 전체 확인 완료")
+
+_check_env()
+
 DASHBOARD_URL = "https://fitzcha.github.io/newsbot/app.html"
 
 # YouTube API 엔드포인트
@@ -704,8 +726,8 @@ def run_autonomous_engine():
             keywords   = user.get('keywords', [])[:5]
             if not keywords: continue
 
-            chk = supabase.table("reports").select("id").eq("user_id", user_id).eq("report_date", TODAY).execute()
-            if chk.data:
+            chk = supabase.table("reports").select("id, email_sent").eq("user_id", user_id).eq("report_date", TODAY).execute()
+            if chk.data and chk.data[0].get("email_sent"):
                 print(f"⏭️  [Skip] {user_email} — 이미 발송 완료")
                 continue
 
@@ -801,6 +823,14 @@ def run_autonomous_engine():
                 report_id = res.data[0]['id']
                 run_agent_self_reflection(report_id)
                 send_email_report(user_email, final_report, all_yt)
+
+                # 이메일 발송 성공 여부를 reports 테이블에 기록
+                try:
+                    supabase.table("reports").update({"email_sent": True})\
+                        .eq("id", report_id).execute()
+                except Exception as e:
+                    print(f"  ⚠️ [Email] email_sent 업데이트 실패: {e}")
+
                 print(f"✅ [{user_email}] 리포트 저장 및 이메일 발송 완료 (YouTube {len(all_yt)}개 포함)")
 
         except Exception as e:
