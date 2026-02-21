@@ -10,13 +10,11 @@
 html { -webkit-text-size-adjust:100%; }
 body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; overflow-x:hidden; }
 
-/* ── 상단바 ── */
 .top-bar { position:sticky; top:0; z-index:200; background:#fff; border-bottom:1px solid #e2e8f0; }
 .header-row { display:flex; justify-content:space-between; align-items:center; padding:14px 20px 10px; }
 .brand { font-size:14px; font-weight:800; color:#1e293b; }
 .collapse-btn { background:none; border:none; cursor:pointer; padding:8px 12px; border-radius:8px; color:#94a3b8; font-size:12px; font-weight:600; min-height:36px; }
 
-/* ── 마스터 전용 헤더 버튼 ── */
 .master-nav { display:flex; align-items:center; gap:6px; }
 .master-nav-btn { font-size:11px; font-weight:700; padding:5px 10px; border-radius:8px; cursor:pointer; min-height:30px; }
 .master-nav-btn.home { background:#f1f5f9; border:1px solid #e2e8f0; color:#475569; }
@@ -65,12 +63,10 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .top-bar.collapsed .collapsed-bar { display:flex; }
 .top-bar.collapsed .collapsed-bar.hidden { display:none; }
 
-/* ── 로딩 ── */
 .feed-state { padding:60px 20px; text-align:center; color:#94a3b8; font-size:14px; }
 .skeleton { background:#f1f5f9; border-radius:14px; height:180px; margin-bottom:28px; animation:pulse 1.5s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
-/* ── 피드 ── */
 .feed { padding:16px; display:flex; flex-direction:column; gap:24px; padding-bottom:100px; }
 .kw-section { display:flex; flex-direction:column; gap:12px; }
 .kw-section-header { display:flex; align-items:center; justify-content:space-between; padding:0 4px; }
@@ -122,7 +118,7 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .secret-btn.open .secret-chevron { transform:rotate(180deg); }
 
 .secret-panel { max-height:0; overflow:hidden; transition:max-height .4s ease; background:#f8fafc; border-top:1px solid #e2e8f0; }
-.secret-panel.open { max-height:700px; }
+.secret-panel.open { max-height:1200px; }
 .secret-inner { padding:18px; display:flex; flex-direction:column; gap:12px; }
 .secret-agent-header { display:flex; align-items:center; gap:8px; padding-bottom:12px; border-bottom:1px solid #e2e8f0; }
 .secret-agent-badge { font-size:10px; font-weight:700; letter-spacing:.8px; padding:4px 10px; border-radius:20px; }
@@ -133,6 +129,70 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .s-point { display:flex; gap:10px; align-items:flex-start; }
 .s-point-dot { width:4px; height:4px; border-radius:50%; flex-shrink:0; margin-top:9px; background:#94a3b8; }
 .s-text { font-size:14px; color:#475569; line-height:1.75; }
+
+/* ── 산업군 인사이트 블록 ── */
+.industry-block {
+  margin-top:4px;
+  border-top:1px solid #e2e8f0;
+  padding-top:14px;
+}
+.industry-block-title {
+  font-size:10px; font-weight:700; letter-spacing:1.2px;
+  color:#64748b; text-transform:uppercase; margin-bottom:10px;
+  display:flex; align-items:center; gap:6px;
+}
+.industry-item {
+  background:#fff; border:1px solid #e2e8f0; border-radius:10px;
+  padding:12px 14px; margin-bottom:8px;
+}
+.industry-item-header {
+  display:flex; align-items:center; gap:6px; margin-bottom:6px;
+}
+.industry-badge {
+  font-size:10px; font-weight:700; padding:2px 8px;
+  border-radius:10px; background:#f1f5f9; color:#475569;
+}
+.industry-category {
+  font-size:10px; color:#94a3b8; font-weight:600;
+}
+.industry-summary {
+  font-size:13px; color:#475569; line-height:1.65;
+}
+
+/* ── 키워드 추천 블록 ── */
+.kw-recommend-block {
+  margin-top:4px;
+  border-top:1px solid #e2e8f0;
+  padding-top:14px;
+}
+.kw-recommend-title {
+  font-size:10px; font-weight:700; letter-spacing:1.2px;
+  color:#64748b; text-transform:uppercase; margin-bottom:10px;
+  display:flex; align-items:center; gap:6px;
+}
+.kw-recommend-row { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+.kw-add-chip {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:6px 12px; border-radius:20px; font-size:12px; font-weight:700;
+  background:#f0fdf4; border:1.5px solid #86efac; color:#16a34a;
+  cursor:pointer; transition:all .15s;
+}
+.kw-add-chip:active { background:#dcfce7; }
+.kw-remove-chip {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:6px 12px; border-radius:20px; font-size:12px; font-weight:700;
+  background:#fef2f2; border:1.5px dashed #fca5a5; color:#dc2626;
+  cursor:pointer; transition:all .15s;
+}
+.kw-remove-chip:active { background:#fee2e2; }
+.kw-recommend-reason {
+  font-size:12px; color:#94a3b8; line-height:1.65;
+  background:#f8fafc; border-radius:8px; padding:10px 12px;
+}
+.kw-applied-toast {
+  font-size:12px; font-weight:700; color:#16a34a;
+  padding:6px 0; display:none;
+}
 
 /* ── 뉴스/YouTube 탭 ── */
 .headlines-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; overflow:hidden; }
@@ -148,7 +208,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .hl-title { font-size:14px; font-weight:600; color:#334155; line-height:1.5; margin-bottom:3px; }
 .hl-summary { font-size:12px; color:#94a3b8; line-height:1.55; }
 
-/* YouTube 아이템 */
 .yt-item { padding:14px 18px; border-top:1px solid #f1f5f9; display:flex; gap:12px; align-items:flex-start; cursor:pointer; min-height:60px; }
 .yt-item:active { background:#f8fafc; }
 .yt-badge { font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px; flex-shrink:0; margin-top:3px; white-space:nowrap; }
@@ -158,11 +217,9 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .yt-meta  { font-size:12px; color:#94a3b8; line-height:1.55; }
 .yt-empty { padding:32px 18px; text-align:center; color:#94a3b8; font-size:13px; }
 
-/* ── FAB ── */
 .fab { position:fixed; bottom:32px; right:20px; background:#1e293b; color:#fff; border:none; border-radius:50px; padding:14px 20px; font-size:14px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 24px rgba(0,0,0,.18); z-index:100; min-height:50px; }
 .fab:active { transform:scale(.97); }
 
-/* ── 모달 ── */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:300; align-items:flex-end; }
 .modal-overlay.open { display:flex; }
 .modal { background:#fff; border-radius:24px 24px 0 0; padding:28px 20px 48px; width:100%; max-height:90vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
@@ -181,7 +238,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .submit-btn { width:100%; background:#2563eb; color:#fff; border:none; border-radius:14px; padding:16px; font-size:15px; font-weight:700; cursor:pointer; min-height:52px; transition:background .15s; }
 .submit-btn:active { background:#1d4ed8; }
 .submit-btn:disabled { background:#94a3b8; cursor:default; }
-
 .feedback-done { text-align:center; padding:32px 0 16px; }
 .feedback-done-icon { font-size:48px; margin-bottom:12px; }
 .feedback-done-title { font-size:17px; font-weight:700; color:#0f172a; margin-bottom:6px; }
@@ -189,7 +245,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .feedback-new-btn { width:100%; background:#f1f5f9; color:#475569; border:none; border-radius:14px; padding:16px; font-size:15px; font-weight:600; cursor:pointer; min-height:52px; }
 .feedback-new-btn:active { background:#e2e8f0; }
 
-/* ── 키워드 관리 ── */
 .kw-list { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
 .kw-manage-item { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; min-height:52px; }
 .kw-manage-name { font-size:15px; font-weight:600; color:#1e293b; }
@@ -329,10 +384,26 @@ let reportData   = null;
 let kwNames      = [];
 let userKeywords = [];
 let selectedRating = 0;
+let industryData = {};   // 오늘 산업군 데이터
+let kwRecommend  = null; // KW 에이전트 추천
 
 const AGENT_KEY  = { BA:'ba_brief', STOCK:'securities_brief', PM:'pm_brief' };
 const AGENT_NAME = { BA:'비즈니스 분석', STOCK:'주식 브리핑', PM:'기획 브리핑' };
 const AGENT_ICON = { BA:'📊', STOCK:'📈', PM:'🎯' };
+
+// 키워드 → 관련 산업군 매핑
+const KW_INDUSTRY_MAP = {
+  '반도체':'반도체', '삼성전자':'반도체', 'SK하이닉스':'반도체',
+  'AI':'AI/인공지능', '인공지능':'AI/인공지능', 'LLM':'AI/인공지능',
+  '바이오':'바이오/제약', '제약':'바이오/제약',
+  '이커머스':'이커머스', '쿠팡':'이커머스',
+  '금융':'금융/핀테크', '핀테크':'금융/핀테크', '증시':'금융/핀테크',
+  '자율주행':'모빌리티', '전기차':'모빌리티', '현대차':'모빌리티',
+  '태양광':'에너지', '원전':'에너지',
+  '부동산':'부동산', '아파트':'부동산',
+  '엔터테인먼트':'엔터/미디어', 'K콘텐츠':'엔터/미디어',
+  '게임':'게임', '뷔':'엔터/미디어', 'BTS':'엔터/미디어',
+};
 
 /* ── JSON 브리프 파싱 ── */
 function getSummary(brief) {
@@ -402,6 +473,123 @@ function switchTab(i, type) {
   }
 }
 
+/* ── 산업군 데이터 로드 ── */
+async function loadIndustryData(date) {
+  try {
+    const { data } = await sc.from('industry_monitor')
+      .select('industry, category, summary')
+      .eq('monitor_date', date);
+    industryData = {};
+    (data || []).forEach(d => { industryData[d.industry] = d; });
+  } catch(e) { industryData = {}; }
+}
+
+/* ── KW 추천 데이터 로드 ── */
+async function loadKwRecommend(date) {
+  try {
+    const { data } = await sc.from('pending_approvals')
+      .select('proposed_instruction, proposal_reason, created_at')
+      .eq('agent_role', 'KW')
+      .gte('created_at', `${date}T00:00:00`)
+      .order('created_at', { ascending: false })
+      .limit(1);
+    kwRecommend = data?.[0] || null;
+  } catch(e) { kwRecommend = null; }
+}
+
+/* ── 키워드에 연관된 산업군 찾기 ── */
+function getRelatedIndustries(kw) {
+  const matched = new Set();
+  // 직접 매핑
+  for (const [key, ind] of Object.entries(KW_INDUSTRY_MAP)) {
+    if (kw.includes(key) || key.includes(kw)) matched.add(ind);
+  }
+  // industry_data에서 키워드 포함 검색
+  for (const [ind, data] of Object.entries(industryData)) {
+    if (ind.includes(kw) || kw.includes(ind)) matched.add(ind);
+  }
+  return [...matched].filter(ind => industryData[ind]);
+}
+
+/* ── 산업군 인사이트 블록 HTML ── */
+function buildIndustryBlock(kw) {
+  const related = getRelatedIndustries(kw);
+  if (related.length === 0) return '';
+  const items = related.map(ind => {
+    const d = industryData[ind];
+    const summary = d.summary ? d.summary.slice(0, 120) + (d.summary.length > 120 ? '...' : '') : '데이터 수집 중';
+    return `<div class="industry-item">
+      <div class="industry-item-header">
+        <span class="industry-badge">🏭 ${ind}</span>
+        <span class="industry-category">${d.category}</span>
+      </div>
+      <div class="industry-summary">${summary}</div>
+    </div>`;
+  }).join('');
+  return `<div class="industry-block">
+    <div class="industry-block-title">🌐 관련 산업군 동향</div>
+    ${items}
+  </div>`;
+}
+
+/* ── KW 추천 블록 HTML (첫 번째 키워드에만 표시) ── */
+function buildKwRecommendBlock(idx) {
+  if (idx !== 0 || !kwRecommend) return '';
+  const text = kwRecommend.proposed_instruction || '';
+
+  // ADD/REMOVE 파싱
+  const addMatch    = text.match(/✅ 추가 추천:\s*([^\n]+)/);
+  const removeMatch = text.match(/❌ 제거 추천:\s*([^\n]+)/);
+  const reasonMatch = text.match(/\[근거\]\s*([\s\S]+)/);
+
+  const addKws    = addMatch    ? addMatch[1].split(',').map(k=>k.trim()).filter(k=>k&&k!=='없음') : [];
+  const removeKws = removeMatch ? removeMatch[1].split(',').map(k=>k.trim()).filter(k=>k&&k!=='없음') : [];
+  const reason    = reasonMatch ? reasonMatch[1].trim().slice(0,200) : '';
+
+  if (!addKws.length && !removeKws.length) return '';
+
+  const addChips = addKws.map(k =>
+    `<span class="kw-add-chip" onclick="applyKwAdd('${k}',this)">＋ ${k}</span>`
+  ).join('');
+  const removeChips = removeKws.map(k =>
+    `<span class="kw-remove-chip" onclick="applyKwRemove('${k}',this)">− ${k}</span>`
+  ).join('');
+
+  return `<div class="kw-recommend-block">
+    <div class="kw-recommend-title">🤖 KW 에이전트 키워드 제안</div>
+    ${addKws.length ? `<div style="font-size:11px;color:#16a34a;font-weight:700;margin-bottom:6px;">추가 추천</div><div class="kw-recommend-row">${addChips}</div>` : ''}
+    ${removeKws.length ? `<div style="font-size:11px;color:#dc2626;font-weight:700;margin-bottom:6px;margin-top:4px;">제거 추천</div><div class="kw-recommend-row">${removeChips}</div>` : ''}
+    ${reason ? `<div class="kw-recommend-reason">${reason}</div>` : ''}
+    <div class="kw-applied-toast" id="kw-toast">✅ 키워드가 적용되었습니다. 내일 브리핑부터 반영됩니다.</div>
+  </div>`;
+}
+
+/* ── 키워드 즉시 적용 ── */
+async function applyKwAdd(kw, el) {
+  if (userKeywords.length >= 5) { alert('키워드는 최대 5개까지 등록 가능합니다.'); return; }
+  if (userKeywords.includes(kw)) { el.style.opacity='.4'; el.style.pointerEvents='none'; return; }
+  userKeywords.push(kw);
+  await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
+  el.style.background = '#dcfce7';
+  el.textContent = '✓ ' + kw;
+  el.style.pointerEvents = 'none';
+  const toast = document.getElementById('kw-toast');
+  if (toast) { toast.style.display='block'; setTimeout(()=>toast.style.display='none', 3000); }
+  renderKwManage();
+}
+
+async function applyKwRemove(kw, el) {
+  if (!userKeywords.includes(kw)) { el.style.opacity='.4'; el.style.pointerEvents='none'; return; }
+  userKeywords = userKeywords.filter(k => k !== kw);
+  await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
+  el.style.background = '#fee2e2';
+  el.textContent = '✓ 제거됨';
+  el.style.pointerEvents = 'none';
+  const toast = document.getElementById('kw-toast');
+  if (toast) { toast.style.display='block'; setTimeout(()=>toast.style.display='none', 3000); }
+  renderKwManage();
+}
+
 /* ── 피드 렌더링 ── */
 function renderFeed() {
   if (!reportData || kwNames.length === 0) {
@@ -433,6 +621,10 @@ function renderFeed() {
     const points    = getPoints(brief);
     const deepLines = getDeepLines(brief);
     const userName  = window.CURRENT_USER.userName || '사용자';
+
+    // 산업군 블록 + KW 추천 블록
+    const industryBlock   = buildIndustryBlock(kw);
+    const kwRecommendBlock = buildKwRecommendBlock(i);
 
     const section = document.createElement('div');
     section.className = 'kw-section';
@@ -476,6 +668,8 @@ function renderFeed() {
                   </div>`).join('')
               : `<div class="s-text" style="color:#94a3b8">추가 분석 내용이 없습니다.</div>`
             }
+            ${industryBlock}
+            ${kwRecommendBlock}
           </div>
         </div>
       </div>
@@ -531,6 +725,9 @@ function switchAgent() {
         <div class="brief-text">${p}</div>
       </div>`).join('');
     card.querySelector('.envelope-wrap').innerHTML = makeSVG(curAgent);
+
+    const industryBlock    = buildIndustryBlock(kw);
+    const kwRecommendBlock = buildKwRecommendBlock(i);
     const inner = card.querySelector('.secret-inner');
     inner.innerHTML = `
       <div class="secret-agent-header">
@@ -540,7 +737,9 @@ function switchAgent() {
       ${deepLines.length > 0
         ? deepLines.map(l => `<div class="s-point"><div class="s-point-dot"></div><div class="s-text">${l}</div></div>`).join('')
         : `<div class="s-text" style="color:#94a3b8">추가 분석 내용이 없습니다.</div>`
-      }`;
+      }
+      ${industryBlock}
+      ${kwRecommendBlock}`;
     card.style.animation = 'none'; card.offsetHeight; card.style.animation = 'fadeUp .2s ease';
   });
 }
@@ -576,6 +775,13 @@ function fmtDate(iso) {
 async function fetchReport(userId, date) {
   document.getElementById('feed-wrap').innerHTML =
     '<div class="feed-state"><div class="skeleton"></div><div class="skeleton" style="height:140px;opacity:.6"></div></div>';
+
+  // 산업군 + KW 추천 병렬 로드
+  await Promise.all([
+    loadIndustryData(date),
+    loadKwRecommend(date),
+  ]);
+
   const { data } = await sc.from('reports').select('content')
     .eq('user_id', userId).eq('report_date', date).limit(1);
   if (!data || !data.length || !data[0].content?.by_keyword) {
@@ -781,9 +987,7 @@ async function init() {
     window.CURRENT_USER = { email, userName, id: userId };
 
     const isMaster = email === MASTER_EMAIL;
-    if (isMaster) {
-      document.getElementById('master-nav').style.display = 'flex';
-    }
+    if (isMaster) document.getElementById('master-nav').style.display = 'flex';
     document.getElementById('logout-btn').style.display = 'block';
 
     const { data: uSettings } = await sc.from('user_settings').select('keywords')
