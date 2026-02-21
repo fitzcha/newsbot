@@ -867,10 +867,89 @@ def _collect_all_by_keyword(users: list) -> dict:
 
 
 # ──────────────────────────────────────────────
-# [6] 에이전트 자율 발의 엔진
+# [6] 산업군 자동 모니터링
 # ──────────────────────────────────────────────
+def run_industry_monitor():
+    """매일 브리핑 전 핵심 산업군 뉴스를 수집·요약해서 DB에 저장"""
+    print("🏭 [Industry] 산업군 모니터링 시작...")
+    agents = get_agents()
+
+    try:
+        industries = supabase.table("industry_list")\
+            .select("*").eq("is_active", True).execute()
+        if not industries.data:
+            print("  ⚠️ [Industry] 등록된 산업군 없음")
+            return
+    except Exception as e:
+        print(f"  ❌ [Industry] 산업군 목록 로드 실패: {e}")
+        return
+
+    for ind in industries.data:
+        industry = ind["industry"]
+        category = ind["category"]
+        keywords = ind["keywords"]
+
+        # 오늘 이미 수집했으면 스킵
+        try:
+            chk = supabase.table("industry_monitor")\
+                .select("id").eq("industry", industry)\
+                .eq("monitor_date", TODAY).execute()
+            if chk.data:
+                print(f"  ⏭️ [Industry] '{industry}' 오늘 이미 수집됨 — 스킵")
+                continue
+        except: pass
+
+        # 키워드별 뉴스 수집
+        all_articles = []
+        for kw in keywords[:2]:  # API 절약을 위해 키워드당 2개만
+            try:
+                gn = GNews(language='ko', max_results=5)
+                news = gn.get_news(kw)
+                for n in (news or []):
+                    all_articles.append({
+                        "keyword": kw,
+                        "title":   n.get("title", ""),
+                        "url":     n.get("url", n.get("link", "")),
+                    })
+            except Exception as e:
+                print(f"  ⚠️ [Industry] '{kw}' 뉴스 수집 실패: {e}")
+
+        if not all_articles:
+            print(f"  ⚠️ [Industry] '{industry}' 뉴스 없음 — 스킵")
+            continue
+
+        # BA 에이전트로 산업군 요약 생성
+        ctx = "\n".join([f"- {a['title']}" for a in all_articles[:10]])
+        try:
+            summary = call_agent(
+                f"산업군: {industry} ({category})\n오늘 주요 뉴스:\n{ctx}\n\n"
+                f"위 뉴스를 바탕으로 {industry} 산업의 오늘 핵심 동향을 3줄로 요약하라.",
+                agents.get("BA", agents.get("BRIEF")),
+                force_one_line=False
+            )
+        except:
+            summary = "요약 생성 실패"
+
+        # DB 저장
+        try:
+            supabase.table("industry_monitor").upsert({
+                "industry":     industry,
+                "category":     category,
+                "articles":     all_articles,
+                "summary":      summary,
+                "monitor_date": TODAY,
+            }, on_conflict="industry,monitor_date").execute()
+            print(f"  ✅ [Industry] '{industry}' 동향 저장 완료 ({len(all_articles)}건)")
+        except Exception as e:
+            print(f"  ❌ [Industry] '{industry}' 저장 실패: {e}")
+
+    print("🏭 [Industry] 산업군 모니터링 완료")
+
+
+
 def run_agent_initiative(by_keyword_all: dict):
     """브리핑 완료 후 각 에이전트가 스스로 개선 의견을 pending_approvals에 올림"""
+    run_industry_monitor()
     print("🧠 [Initiative] 에이전트 자율 발의 시작...")
     agents = get_agents()
 
@@ -892,10 +971,22 @@ def run_agent_initiative(by_keyword_all: dict):
     except:
         perf_ctx = "성과 데이터 없음"
 
+    # 산업군 동향 컨텍스트 추가
+    try:
+        ind_res = supabase.table("industry_monitor")\
+            .select("industry, summary").eq("monitor_date", TODAY).execute()
+        industry_ctx = "\n".join([
+            f"[{r['industry']}] {r['summary'][:100]}"
+            for r in (ind_res.data or []) if r.get("summary")
+        ]) or "산업군 데이터 없음"
+    except:
+        industry_ctx = "산업군 데이터 없음"
+
     # 각 에이전트별 자율 발의 프롬프트 정의
     initiative_prompts = {
         "KW": (
             f"오늘 키워드 성과:\n{perf_ctx}\n\n오늘 뉴스 컨텍스트:\n{today_ctx}\n\n"
+            f"산업군 동향:\n{industry_ctx}\n\n"
             "위 데이터를 기반으로 유저에게 새롭게 추천할 키워드와 그 이유를 제안하라. "
             "현재 키워드 instruction을 개선하는 형태로 작성하라. "
             "반드시 구체적인 키워드 추천 로직을 포함할 것."
