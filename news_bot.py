@@ -1,4 +1,7 @@
-import os, json, time, resend, re, subprocess, shutil, urllib.request, urllib.parse
+import os, json, time, re, subprocess, shutil, urllib.request, urllib.parse
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from google import genai
 from gnews import GNews
 from supabase import create_client, Client
@@ -11,11 +14,14 @@ KST   = timezone(timedelta(hours=9))
 NOW   = datetime.now(KST)
 TODAY = NOW.strftime("%Y-%m-%d")
 
-GEMINI_KEY     = os.environ.get("GEMINI_API_KEY")
-SB_URL         = os.environ.get("SUPABASE_URL")
-SB_KEY         = os.environ.get("SUPABASE_KEY")
-YOUTUBE_KEY    = os.environ.get("YOUTUBE_API_KEY")
-resend.api_key = os.environ.get("RESEND_API_KEY")
+GEMINI_KEY  = os.environ.get("GEMINI_API_KEY")
+SB_URL      = os.environ.get("SUPABASE_URL")
+SB_KEY      = os.environ.get("SUPABASE_KEY")
+YOUTUBE_KEY = os.environ.get("YOUTUBE_API_KEY")
+
+# Gmail SMTP 설정
+GMAIL_USER = "fitzintelligence@gmail.com"
+GMAIL_PASS = os.environ.get("GMAIL_APP_PASSWORD")
 
 supabase: Client = create_client(SB_URL, SB_KEY)
 google_genai     = genai.Client(api_key=GEMINI_KEY)
@@ -29,6 +35,20 @@ YT_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
 
 # 구독자 10만+ → 전문가/인플루언서 태깅
 EXPERT_SUBSCRIBER_THRESHOLD = 100_000
+
+# ──────────────────────────────────────────────
+# [공통] Gmail SMTP 발송 헬퍼
+# ──────────────────────────────────────────────
+def _send_gmail(to, subject: str, html: str):
+    recipients = [to] if isinstance(to, str) else to
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"]    = f"Fitz Intelligence <{GMAIL_USER}>"
+    msg["To"]      = ", ".join(recipients)
+    msg.attach(MIMEText(html, "html", "utf-8"))
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
+        s.login(GMAIL_USER, GMAIL_PASS)
+        s.sendmail(GMAIL_USER, recipients, msg.as_string())
 
 # ──────────────────────────────────────────────
 # [보조] 로그 / 성과 기록
@@ -82,7 +102,7 @@ def call_agent(prompt, agent_info, persona_override=None, force_one_line=False):
     return "분석 지연 중"
 
 # ──────────────────────────────────────────────
-# [보조] Gemini 호출 — JSON 전용 (BA/STOCK/PM 브리핑용)
+# [보조] Gemini 호출 — JSON 전용
 # ──────────────────────────────────────────────
 def call_agent_json(prompt, agent_info, persona_override=None):
     if not agent_info: return {"summary": "분석 데이터 없음", "points": [], "deep": []}
@@ -127,7 +147,6 @@ def call_agent_json(prompt, agent_info, persona_override=None):
 # [YouTube] API 헬퍼 / 수집 / 컨텍스트 빌더
 # ──────────────────────────────────────────────
 def _yt_get(url: str, params: dict) -> dict:
-    """YouTube API GET — urllib 사용 (외부 라이브러리 불필요)"""
     query = "&".join(f"{k}={urllib.parse.quote(str(v))}" for k, v in params.items())
     try:
         with urllib.request.urlopen(f"{url}?{query}", timeout=10) as r:
@@ -138,13 +157,6 @@ def _yt_get(url: str, params: dict) -> dict:
 
 
 def collect_youtube(keyword: str, max_recent: int = 2, max_popular: int = 2) -> list:
-    """
-    키워드로 YouTube 영상 수집.
-    - 최신순 max_recent개 + 인기순(조회수) max_popular개
-    - 채널 구독자 수 조회 → 전문가/인플루언서 태깅 (10만+ 기준)
-    반환: [{ title, channel, video_id, url, published,
-             view_count, subscriber_count, is_expert, order_type, keyword }, ...]
-    """
     if not YOUTUBE_KEY:
         print("  ⚠️ [YT] YOUTUBE_API_KEY 없음 — YouTube 수집 건너뜀")
         return []
@@ -171,7 +183,6 @@ def collect_youtube(keyword: str, max_recent: int = 2, max_popular: int = 2) -> 
         video_ids   = [it["id"]["videoId"] for it in items if it["id"].get("videoId")]
         channel_ids = list({it["snippet"]["channelId"] for it in items})
 
-        # 조회수 일괄 조회
         stats_raw = _yt_get(YT_VIDEO_URL, {
             "key":  YOUTUBE_KEY,
             "id":   ",".join(video_ids),
@@ -182,7 +193,6 @@ def collect_youtube(keyword: str, max_recent: int = 2, max_popular: int = 2) -> 
             for s in stats_raw.get("items", [])
         }
 
-        # 채널 구독자 수 일괄 조회
         ch_raw = _yt_get(YT_CHANNEL_URL, {
             "key":  YOUTUBE_KEY,
             "id":   ",".join(channel_ids),
@@ -221,7 +231,6 @@ def collect_youtube(keyword: str, max_recent: int = 2, max_popular: int = 2) -> 
 
 
 def build_youtube_context(yt_videos: list) -> str:
-    """YouTube 수집 결과를 Gemini 컨텍스트 문자열로 변환"""
     if not yt_videos:
         return ""
     lines = ["[YouTube 콘텐츠 인사이트]"]
@@ -236,7 +245,6 @@ def build_youtube_context(yt_videos: list) -> str:
 
 
 def build_youtube_email_block(yt_videos: list) -> str:
-    """이메일 HTML — YouTube 섹션 블록"""
     if not yt_videos:
         return ""
 
@@ -272,7 +280,6 @@ def build_youtube_email_block(yt_videos: list) -> str:
               </tr>"""
 
     return f"""
-        <!-- YouTube 섹션 -->
         <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px; margin-bottom:24px;">
           <tr>
             <td style="border-left:3px solid #e8472a; padding-left:12px; padding-bottom:12px;">
@@ -314,20 +321,19 @@ def run_self_evolution():
     def _notify(subject, body, is_fail=False):
         icon = "🚨" if is_fail else "✅"
         try:
-            resend.Emails.send({
-                "from":    "Fitz Intelligence <onboarding@resend.dev>",
-                "to":      ["positivecha@gmail.com"],
-                "subject": f"{icon} [DEV] {subject}",
-                "html":    f"<pre style='font-family:monospace'>{body}</pre>"
-            })
+            _send_gmail(
+                to      = "positivecha@gmail.com",
+                subject = f"{icon} [DEV] {subject}",
+                html    = f"<pre style='font-family:monospace'>{body}</pre>",
+            )
         except Exception as mail_err:
             print(f"  ⚠️ [DEV] 알림 이메일 발송 실패: {mail_err}")
             try:
                 supabase.table("action_logs").insert({
-                    "action_type": "DEV_NOTIFY_FAIL",
-                    "target_word": subject,
+                    "action_type":      "DEV_NOTIFY_FAIL",
+                    "target_word":      subject,
                     "execution_method": "Auto",
-                    "details": str(mail_err)[:200]
+                    "details":          str(mail_err)[:200]
                 }).execute()
             except: pass
 
@@ -393,10 +399,10 @@ def run_self_evolution():
             _notify(f"문법 오류 감지 — '{task['title']}' 롤백 완료", err_detail, is_fail=True)
             try:
                 supabase.table("action_logs").insert({
-                    "action_type": "DEV_SYNTAX_ROLLBACK",
-                    "target_word": task['title'],
+                    "action_type":      "DEV_SYNTAX_ROLLBACK",
+                    "target_word":      task['title'],
                     "execution_method": "Auto",
-                    "details": f"SyntaxError line {syn_err.lineno}: {syn_err.msg}"[:200]
+                    "details":          f"SyntaxError line {syn_err.lineno}: {syn_err.msg}"[:200]
                 }).execute()
             except: pass
             supabase.table("dev_backlog").update({"status": "SYNTAX_ERROR"})\
@@ -416,7 +422,7 @@ def run_self_evolution():
             subprocess.run(cmd, shell=True)
 
         supabase.table("dev_backlog").update({
-            "status": "COMPLETED",
+            "status":       "COMPLETED",
             "completed_at": NOW.isoformat()
         }).eq("id", task['id']).execute()
         print(f"✨ [DEV] 배포 완료: {task['title']}")
@@ -515,8 +521,8 @@ def manage_deadline_approvals():
 # [4] 이메일 발송 — 뉴스레터 템플릿 v17.3
 # ──────────────────────────────────────────────
 def _build_email_html(report, yt_videos=None):
-    bk         = report.get("by_keyword", {})
-    yt_videos  = yt_videos or []
+    bk        = report.get("by_keyword", {})
+    yt_videos = yt_videos or []
 
     keyword_sections = ""
     kw_list = list(bk.items())
@@ -525,7 +531,6 @@ def _build_email_html(report, yt_videos=None):
         articles = kd.get("articles", [])
         ba_brief = kd.get("ba_brief", {})
 
-        # 헤드라인 rows
         article_rows = ""
         for a in articles[:3]:
             title      = a.get("title", "")
@@ -540,7 +545,6 @@ def _build_email_html(report, yt_videos=None):
                 </td>
               </tr>"""
 
-        # BA 브리프
         if isinstance(ba_brief, dict):
             ba_items = []
             if ba_brief.get("summary"):
@@ -596,7 +600,6 @@ def _build_email_html(report, yt_videos=None):
         </table>
         {divider}"""
 
-    # YouTube 섹션 (키워드 전체 합산)
     yt_block = build_youtube_email_block(yt_videos)
 
     return f"""<!DOCTYPE html>
@@ -607,8 +610,6 @@ def _build_email_html(report, yt_videos=None):
     <tr>
       <td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
-
-          <!-- 헤더 -->
           <tr>
             <td style="background:#0f172a; border-radius:12px 12px 0 0; padding:28px 32px;">
               <table width="100%" cellpadding="0" cellspacing="0">
@@ -624,16 +625,12 @@ def _build_email_html(report, yt_videos=None):
               </table>
             </td>
           </tr>
-
-          <!-- 본문 -->
           <tr>
             <td style="background:#fff; padding:32px;">
               {keyword_sections}
               {yt_block}
             </td>
           </tr>
-
-          <!-- 푸터 -->
           <tr>
             <td style="background:#f8faff; border-radius:0 0 12px 12px; padding:20px 32px; text-align:center;">
               <p style="margin:0; font-size:11px; color:#94a3b8; line-height:1.6;">
@@ -642,7 +639,6 @@ def _build_email_html(report, yt_videos=None):
               </p>
             </td>
           </tr>
-
         </table>
       </td>
     </tr>
@@ -654,18 +650,17 @@ def _build_email_html(report, yt_videos=None):
 def send_email_report(user_email, report, yt_videos=None):
     try:
         html = _build_email_html(report, yt_videos or [])
-        resend.Emails.send({
-            "from":    "Fitz Intelligence <onboarding@resend.dev>",
-            "to":      [user_email],
-            "subject": f"[{TODAY}] Fitz 비즈니스 인사이트 리포트",
-            "html":    html,
-        })
+        _send_gmail(
+            to      = user_email,
+            subject = f"[{TODAY}] Fitz 비즈니스 인사이트 리포트",
+            html    = html,
+        )
         print(f"  📧 [Email] {user_email} 발송 완료")
     except Exception as e:
         print(f"  🚨 [Email] 발송 실패: {e}")
 
 # ──────────────────────────────────────────────
-# [5] 자율 분석 엔진 — by_keyword 구조 (JSON 브리핑 + YouTube)
+# [5] 자율 분석 엔진
 # ──────────────────────────────────────────────
 def run_autonomous_engine():
     agents = get_agents()
@@ -721,13 +716,11 @@ def run_autonomous_engine():
                     kw_ctx.append(n['title'])
                     all_articles.append(f"[{word}] {n['title']}")
 
-                # ── YouTube 수집 ──────────────────────────
                 print(f"  🎬 [{word}] YouTube 수집 중...")
                 yt_videos = collect_youtube(word)
                 all_yt.extend(yt_videos)
                 yt_ctx = build_youtube_context(yt_videos)
 
-                # 뉴스 + YouTube 컨텍스트 합산
                 ctx = "\n".join(kw_ctx)
                 if yt_ctx:
                     ctx += f"\n\n{yt_ctx}"
@@ -747,7 +740,7 @@ def run_autonomous_engine():
                         agents['PM']
                     ),
                     "articles":       articles,
-                    "youtube_videos": yt_videos,  # 키워드별 YouTube 결과 DB 저장
+                    "youtube_videos": yt_videos,
                 }
                 log_to_db(user_id, word, "키워드분석")
 
