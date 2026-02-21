@@ -144,7 +144,7 @@ def call_agent_json(prompt, agent_info, persona_override=None):
     return {"summary": "분석 지연 중", "points": [], "deep": []}
 
 # ──────────────────────────────────────────────
-# [YouTube] API 헬퍼 / 수집 / 컨텍스트 빌더
+# [YouTube] API 헬퍼 / 수집 / 캐시 / 컨텍스트 빌더
 # ──────────────────────────────────────────────
 def _yt_get(url: str, params: dict) -> dict:
     query = "&".join(f"{k}={urllib.parse.quote(str(v))}" for k, v in params.items())
@@ -228,6 +228,36 @@ def collect_youtube(keyword: str, max_recent: int = 2, max_popular: int = 2) -> 
     expert_cnt = sum(1 for v in results if v["is_expert"])
     print(f"  🎬 [YT] '{keyword}' → {len(results)}개 수집 (전문가/인플루언서 채널 {expert_cnt}개)")
     return results
+
+
+def get_youtube_with_cache(keyword: str) -> list:
+    """오늘 캐시가 있으면 재사용, 없으면 API 호출 후 저장"""
+    try:
+        cache = supabase.table("youtube_cache")\
+            .select("videos")\
+            .eq("keyword", keyword)\
+            .eq("cache_date", TODAY)\
+            .execute()
+        if cache.data:
+            print(f"  🎬 [YT Cache] '{keyword}' → 캐시 데이터 재사용")
+            return cache.data[0]["videos"]
+    except Exception as e:
+        print(f"  ⚠️ [YT Cache] 캐시 조회 실패: {e}")
+
+    # 캐시 없음 → 실제 API 호출
+    videos = collect_youtube(keyword)
+
+    try:
+        supabase.table("youtube_cache").upsert({
+            "keyword":    keyword,
+            "cache_date": TODAY,
+            "videos":     videos,
+        }, on_conflict="keyword,cache_date").execute()
+        print(f"  💾 [YT Cache] '{keyword}' → 캐시 저장 완료")
+    except Exception as e:
+        print(f"  ⚠️ [YT Cache] 캐시 저장 실패: {e}")
+
+    return videos
 
 
 def build_youtube_context(yt_videos: list) -> str:
@@ -664,7 +694,7 @@ def send_email_report(user_email, report, yt_videos=None):
 # ──────────────────────────────────────────────
 def run_autonomous_engine():
     agents = get_agents()
-    print(f"🚀 {TODAY} Sovereign Engine v17.3 가동")
+    print(f"🚀 {TODAY} Sovereign Engine v17.4 가동")
 
     user_res = supabase.table("user_settings").select("*").execute()
     for user in (user_res.data or []):
@@ -716,8 +746,9 @@ def run_autonomous_engine():
                     kw_ctx.append(n['title'])
                     all_articles.append(f"[{word}] {n['title']}")
 
+                # ── YouTube: 캐시 우선 조회 ──
                 print(f"  🎬 [{word}] YouTube 수집 중...")
-                yt_videos = collect_youtube(word)
+                yt_videos = get_youtube_with_cache(word)
                 all_yt.extend(yt_videos)
                 yt_ctx = build_youtube_context(yt_videos)
 
