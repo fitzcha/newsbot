@@ -165,6 +165,101 @@ def call_agent_json(prompt, agent_info, persona_override=None):
                 return {"summary": "분석 지연 중", "points": [], "deep": []}
     return {"summary": "분석 지연 중", "points": [], "deep": []}
 
+
+# ══════════════════════════════════════════════
+# [전략 1] 기사 배치 처리 — BRIEF + STOCK 1회 통합 호출
+# ══════════════════════════════════════════════
+def call_agent_brief_batch(news_list: list, agents: dict) -> list:
+    """
+    뉴스 N건을 1회 Gemini 호출로 summary + impact 동시 추출.
+    반환: [{"idx":1, "summary":"...", "impact":"..."}, ...]
+    실패 시 빈 리스트 → 호출부에서 개별 fallback 처리.
+    """
+    if not news_list:
+        return []
+
+    titles_block = "\n".join([f"{i+1}. {n['title']}" for i, n in enumerate(news_list)])
+    batch_prompt = f"""아래 뉴스 {len(news_list)}건을 분석하라.
+각 뉴스에 대해 반드시 아래 JSON 배열로만 응답하라. 마크다운·코드블록·설명 텍스트 일절 금지.
+[
+  {{"idx": 1, "summary": "1줄 핵심 요약 (사실 중심, 40자 이내)", "impact": "투자 관점 1줄 전망 (40자 이내)"}},
+  ...
+]
+---
+{titles_block}"""
+
+    brief_agent = agents.get('BRIEF')
+    if not brief_agent:
+        return []
+
+    for attempt in range(3):
+        try:
+            res = google_genai.models.generate_content(
+                model='gemini-2.0-flash',
+                contents=(
+                    f"당신은 {brief_agent.get('agent_role','BRIEF')}입니다.\n"
+                    f"지침: {brief_agent['instruction']}\n\n"
+                    f"입력: {batch_prompt}"
+                )
+            )
+            raw = res.text.strip()
+            raw = re.sub(r"^```json\s*", "", raw)
+            raw = re.sub(r"\s*```$", "", raw)
+            parsed = json.loads(raw)
+            if isinstance(parsed, list) and len(parsed) == len(news_list):
+                return parsed
+            # 개수 불일치 → 인덱스로 재매핑 시도
+            result_map = {item.get("idx", i+1): item for i, item in enumerate(parsed)}
+            return [result_map.get(i+1, {"idx": i+1, "summary": "", "impact": ""})
+                    for i in range(len(news_list))]
+        except json.JSONDecodeError:
+            print(f"  ⚠️ [Batch] JSON 파싱 실패 (attempt {attempt+1}) — fallback 예정")
+            return []
+        except Exception as e:
+            err = str(e)
+            if '429' in err and attempt < 2:
+                wait = 5 * (attempt + 1)
+                print(f"  ⏳ [Gemini 429] {wait}초 후 재시도 ({attempt+1}/3)...")
+                time.sleep(wait)
+            else:
+                print(f"  ❌ [Batch] Gemini 오류: {err[:80]}")
+                return []
+    return []
+
+
+# ══════════════════════════════════════════════
+# [전략 3] 키워드 분석 결과 캐시 (Supabase)
+# ══════════════════════════════════════════════
+def get_keyword_analysis_cache(word: str) -> dict | None:
+    """오늘 날짜 기준 키워드 분석 캐시 조회. 없으면 None."""
+    try:
+        cache_key = f"{word}_{TODAY}"
+        res = supabase.table("keyword_analysis_cache") \
+            .select("result") \
+            .eq("cache_key", cache_key) \
+            .execute()
+        if res.data:
+            print(f"  ♻️  [{word}] 키워드 캐시 히트 — Gemini 호출 건너뜀")
+            return res.data[0]["result"]
+    except Exception as e:
+        print(f"  ⚠️ [KW Cache] 조회 실패: {e}")
+    return None
+
+def set_keyword_analysis_cache(word: str, result: dict):
+    """키워드 분석 결과를 오늘 날짜 키로 저장."""
+    try:
+        cache_key = f"{word}_{TODAY}"
+        supabase.table("keyword_analysis_cache").upsert({
+            "cache_key":  cache_key,
+            "keyword":    word,
+            "cache_date": TODAY,
+            "result":     result,
+        }, on_conflict="cache_key").execute()
+        print(f"  💾 [KW Cache] '{word}' 분석 결과 캐시 저장 완료")
+    except Exception as e:
+        print(f"  ⚠️ [KW Cache] 저장 실패: {e}")
+
+
 # ──────────────────────────────────────────────
 # [YouTube] API 헬퍼 / 수집 / 캐시 / 컨텍스트 빌더
 # ──────────────────────────────────────────────
@@ -255,10 +350,10 @@ def collect_youtube(keyword: str, max_recent: int = 2, max_popular: int = 2) -> 
 def get_youtube_with_cache(keyword: str) -> list:
     """오늘 캐시가 있으면 재사용, 없으면 API 호출 후 저장"""
     try:
-        cache = supabase.table("youtube_cache")\
-            .select("videos")\
-            .eq("keyword", keyword)\
-            .eq("cache_date", TODAY)\
+        cache = supabase.table("youtube_cache") \
+            .select("videos") \
+            .eq("keyword", keyword) \
+            .eq("cache_date", TODAY) \
             .execute()
         if cache.data:
             print(f"  🎬 [YT Cache] '{keyword}' → 캐시 데이터 재사용")
@@ -266,7 +361,6 @@ def get_youtube_with_cache(keyword: str) -> list:
     except Exception as e:
         print(f"  ⚠️ [YT Cache] 캐시 조회 실패: {e}")
 
-    # 캐시 없음 → 실제 API 호출
     videos = collect_youtube(keyword)
 
     try:
@@ -299,48 +393,35 @@ def build_youtube_context(yt_videos: list) -> str:
 def build_youtube_email_block(yt_videos: list) -> str:
     if not yt_videos:
         return ""
-
     cards = ""
-    for v in yt_videos:
-        badge_color = "#e8472a" if v["is_expert"] else "#888"
-        badge_text  = "⭐ 전문가/인플루언서" if v["is_expert"] else "일반 채널"
-        subs_str    = f"{v['subscriber_count'] // 10000}만" if v["subscriber_count"] >= 10000 else f"{v['subscriber_count']:,}"
-        view_str    = f"{v['view_count'] // 10000}만" if v["view_count"] >= 10000 else f"{v['view_count']:,}"
+    for v in yt_videos[:4]:
+        tag_html = (
+            '<span style="background:#fef3c7;color:#92400e;font-size:11px;'
+            'font-weight:700;padding:2px 8px;border-radius:20px;">⭐ 전문가/인플루언서</span>'
+            if v["is_expert"] else ""
+        )
         cards += f"""
-              <tr>
-                <td style="padding:12px 0; border-bottom:1px solid #f0f0f0;">
-                  <table width="100%" cellpadding="0" cellspacing="0">
-                    <tr>
-                      <td style="padding-bottom:6px;">
-                        <span style="font-size:10px; background:{badge_color}; color:#fff; border-radius:12px; padding:2px 8px; font-weight:700;">{badge_text}</span>
-                        <span style="font-size:10px; color:#999; margin-left:8px;">{v['order_type']} · 구독 {subs_str} · 조회 {view_str}</span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <a href="{v['url']}" style="font-size:14px; font-weight:600; color:#1a1a1a; text-decoration:none; line-height:1.4;">{v['title']}</a>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="padding-top:4px;">
-                        <span style="font-size:12px; color:#666;">{v['channel']} · {v['published']}</span>
-                        <a href="{v['url']}" style="margin-left:10px; font-size:12px; color:#e8472a; font-weight:700; text-decoration:none;">▶ 영상 보기 →</a>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>"""
+          <tr>
+            <td style="padding:12px 0; border-bottom:1px solid #f0f0f0;">
+              <p style="margin:0 0 4px 0; font-size:14px; font-weight:600; color:#1a1a1a; line-height:1.4;">{v['title']}</p>
+              <p style="margin:0 0 6px 0; font-size:12px; color:#666;">
+                {v['channel']} · 조회 {v['view_count']:,} · {v['published']}
+              </p>
+              {tag_html}
+              <a href="{v['url']}" style="display:inline-block;margin-top:6px;font-size:12px;color:#2563eb;font-weight:700;text-decoration:none;">▶ 영상 보기 →</a>
+            </td>
+          </tr>"""
 
     return f"""
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px; margin-bottom:24px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
           <tr>
-            <td style="border-left:3px solid #e8472a; padding-left:12px; padding-bottom:12px;">
-              <span style="font-size:11px; font-weight:700; color:#e8472a; letter-spacing:1.5px; text-transform:uppercase;">YOUTUBE INSIGHTS</span>
-              <h2 style="margin:2px 0 0 0; font-size:18px; font-weight:700; color:#111;">🎬 유튜브 인사이트</h2>
+            <td>
+              <h2 style="margin:0 0 16px 0; font-size:18px; font-weight:700; color:#111;">🎬 유튜브 인사이트</h2>
             </td>
           </tr>
           {cards}
         </table>"""
+
 
 # ──────────────────────────────────────────────
 # [보조] GitHub 동기화
@@ -362,6 +443,7 @@ def sync_data_to_github():
         print("🚀 [Sync] GitHub data.json 갱신 완료")
     except Exception as e:
         print(f"🚨 [Sync] 동기화 실패: {e}")
+
 
 # ──────────────────────────────────────────────
 # [1] DEV 엔진: 마스터 CONFIRMED 작업 집행
@@ -390,7 +472,7 @@ def run_self_evolution():
             except: pass
 
     try:
-        task_res = supabase.table("dev_backlog").select("*")\
+        task_res = supabase.table("dev_backlog").select("*") \
             .eq("status", "CONFIRMED").order("priority").limit(1).execute()
         if not task_res.data:
             return print("💤 [DEV] 마스터의 '실행 확정' 대기 작업 없음.")
@@ -415,7 +497,7 @@ def run_self_evolution():
             msg = f"백업 저장 실패로 작업 중단.\n오류: {bk_err}"
             print(f"  🚨 [DEV] {msg}")
             _notify(f"백업 실패 — '{task['title']}' 중단", msg, is_fail=True)
-            supabase.table("dev_backlog").update({"status": "BACKUP_FAILED"})\
+            supabase.table("dev_backlog").update({"status": "BACKUP_FAILED"}) \
                 .eq("id", task['id']).execute()
             return
 
@@ -457,7 +539,7 @@ def run_self_evolution():
                     "details":          f"SyntaxError line {syn_err.lineno}: {syn_err.msg}"[:200]
                 }).execute()
             except: pass
-            supabase.table("dev_backlog").update({"status": "SYNTAX_ERROR"})\
+            supabase.table("dev_backlog").update({"status": "SYNTAX_ERROR"}) \
                 .eq("id", task['id']).execute()
             return
 
@@ -499,6 +581,7 @@ def run_self_evolution():
                 is_fail=True
             )
 
+
 # ──────────────────────────────────────────────
 # [2] 에이전트 자아 성찰
 # ──────────────────────────────────────────────
@@ -532,6 +615,7 @@ def run_agent_self_reflection(report_id):
                 }).execute()
     except: pass
 
+
 # ──────────────────────────────────────────────
 # [3] 데드라인 자동 승인 + dev_backlog 자동 등록
 # ──────────────────────────────────────────────
@@ -549,9 +633,9 @@ def manage_deadline_approvals():
                 }).eq("id", item['id']).execute()
 
                 if item.get('needs_dev'):
-                    dup = supabase.table("dev_backlog")\
-                        .select("id")\
-                        .eq("source_approval_id", item['id'])\
+                    dup = supabase.table("dev_backlog") \
+                        .select("id") \
+                        .eq("source_approval_id", item['id']) \
                         .execute()
                     if dup.data:
                         print(f"  ⏭️ [DEV Backlog] 이미 등록된 안건 스킵: {item['id']}")
@@ -568,6 +652,7 @@ def manage_deadline_approvals():
 
         except Exception as e:
             print(f"🚨 [Approvals] 처리 실패: {e}")
+
 
 # ──────────────────────────────────────────────
 # [4] 이메일 발송 — 뉴스레터 템플릿 v17.3
@@ -618,35 +703,14 @@ def _build_email_html(report, yt_videos=None):
               </table>"""
 
         keyword_sections += f"""
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
           <tr>
             <td>
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
-                <tr>
-                  <td style="border-left:3px solid #2563eb; padding-left:12px;">
-                    <span style="font-size:11px; font-weight:700; color:#2563eb; letter-spacing:1.5px; text-transform:uppercase;">KEYWORD</span>
-                    <h2 style="margin:2px 0 0 0; font-size:20px; font-weight:700; color:#111;"># {kw}</h2>
-                  </td>
-                </tr>
-              </table>
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:14px;">
-                <tr>
-                  <td style="padding-bottom:8px;">
-                    <span style="font-size:11px; font-weight:700; color:#888; letter-spacing:1px; text-transform:uppercase;">TODAY'S HEADLINES</span>
-                  </td>
-                </tr>
+              <h2 style="margin:0 0 16px 0; font-size:18px; font-weight:700; color:#111;">#{kw}</h2>
+              <table width="100%" cellpadding="0" cellspacing="0">
                 {article_rows}
               </table>
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8faff; border-radius:8px;">
-                <tr>
-                  <td style="padding:16px 20px;">
-                    <span style="font-size:11px; font-weight:700; color:#2563eb; letter-spacing:1px; text-transform:uppercase;">BUSINESS ANALYSIS</span>
-                    <ul style="margin:10px 0 0 0; padding-left:18px;">
-                      {ba_html}
-                    </ul>
-                  </td>
-                </tr>
-              </table>
+              <ul style="margin:16px 0 0 0; padding-left:20px;">{ba_html}</ul>
             </td>
           </tr>
         </table>
@@ -655,10 +719,10 @@ def _build_email_html(report, yt_videos=None):
     yt_block = build_youtube_email_block(yt_videos)
 
     dashboard_block = f"""
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:32px; margin-bottom:8px;">
+        <table width="100%" cellpadding="0" cellspacing="0"
+               style="background:linear-gradient(135deg,#1e3a5f,#2563eb);border-radius:12px;margin-top:32px;">
           <tr>
-            <td align="center" style="background:linear-gradient(135deg,#0f172a,#1e293b); border-radius:12px; padding:28px 32px;">
-              <p style="margin:0 0 6px 0; font-size:11px; font-weight:700; color:#64748b; letter-spacing:2px; text-transform:uppercase;">FITZ INTELLIGENCE</p>
+            <td style="padding:28px; text-align:center;">
               <p style="margin:0 0 16px 0; font-size:18px; font-weight:700; color:#fff;">오늘의 전체 인사이트 확인하기</p>
               <a href="{DASHBOARD_URL}" style="display:inline-block; background:#e8472a; color:#fff; font-size:14px; font-weight:700; padding:14px 32px; border-radius:10px; text-decoration:none; letter-spacing:.5px;">📊 대시보드 바로가기 →</a>
             </td>
@@ -723,16 +787,13 @@ def send_email_report(user_email, report, yt_videos=None):
     except Exception as e:
         print(f"  🚨 [Email] 발송 실패: {e}")
 
+
 # ──────────────────────────────────────────────
 # [5] 자율 분석 엔진
 # ──────────────────────────────────────────────
 def run_autonomous_engine():
-    # 09:00 ~ 12:00 KST 사이에만 실행 허용 (의도치 않은 이메일 발송 방지)
-    if not (9 <= NOW.hour < 12):
-        print(f"⏰ [BRIEFING] 현재 시각 {NOW.hour}시 — 브리핑 허용 시간(09~12시)이 아님, 스킵")
-        return
     agents = get_agents()
-    print(f"🚀 {TODAY} Sovereign Engine v17.4 가동")
+    print(f"🚀 {TODAY} Sovereign Engine v17.5 가동 (배치+캐시 최적화)")
 
     user_res = supabase.table("user_settings").select("*").execute()
     for user in (user_res.data or []):
@@ -742,7 +803,8 @@ def run_autonomous_engine():
             keywords   = user.get('keywords', [])[:5]
             if not keywords: continue
 
-            chk = supabase.table("reports").select("id, email_sent").eq("user_id", user_id).eq("report_date", TODAY).execute()
+            chk = supabase.table("reports").select("id, email_sent") \
+                .eq("user_id", user_id).eq("report_date", TODAY).execute()
             if chk.data and chk.data[0].get("email_sent"):
                 print(f"⏭️  [Skip] {user_email} — 이미 발송 완료")
                 continue
@@ -754,6 +816,17 @@ def run_autonomous_engine():
             all_yt       = []
 
             for word in keywords:
+                # ── [전략 3] 키워드 캐시 확인 ──
+                cached = get_keyword_analysis_cache(word)
+                if cached:
+                    by_keyword[word] = cached
+                    # all_articles 집계용 타이틀 복원
+                    for a in cached.get("articles", []):
+                        all_articles.append(f"[{word}] {a.get('title','')}")
+                    all_yt.extend(cached.get("youtube_videos", []))
+                    log_to_db(user_id, word, "키워드분석(캐시)")
+                    continue
+
                 print(f"  📰 [{word}] 뉴스 수집 중...")
                 is_korean = any(ord(c) > 0x1100 for c in word)
                 gn        = GNews(language='ko' if is_korean else 'en', max_results=10)
@@ -763,26 +836,45 @@ def run_autonomous_engine():
 
                 if not news_list:
                     print(f"  ⚠️  [{word}] 뉴스 없음 — 스킵")
-                    by_keyword[word] = {
+                    empty = {
                         "ba_brief":         {"summary": "해당 키워드의 뉴스를 찾을 수 없습니다.", "points": [], "deep": []},
                         "securities_brief": {"summary": "해당 키워드의 뉴스를 찾을 수 없습니다.", "points": [], "deep": []},
                         "pm_brief":         {"summary": "해당 키워드의 뉴스를 찾을 수 없습니다.", "points": [], "deep": []},
-                        "articles":         []
+                        "articles":         [],
+                        "youtube_videos":   [],
                     }
+                    by_keyword[word] = empty
                     continue
+
+                # ── [전략 1] 기사 배치 처리 ──
+                print(f"  🗞️  [{word}] 기사 배치 분석 중 (1회 호출)...")
+                batch_results = call_agent_brief_batch(news_list, agents)
 
                 articles = []
                 kw_ctx   = []
-                for n in news_list:
-                    pm_summary = call_agent(f"뉴스: {n['title']}", agents['BRIEF'], force_one_line=True)
-                    impact     = call_agent(
-                        f"뉴스: {n['title']}\n전망 1줄.",
-                        agents.get('STOCK', agents['BRIEF']),
-                        force_one_line=True
-                    )
-                    articles.append({**n, "keyword": word, "pm_summary": pm_summary, "impact": impact})
-                    kw_ctx.append(n['title'])
-                    all_articles.append(f"[{word}] {n['title']}")
+
+                if batch_results and len(batch_results) == len(news_list):
+                    # 배치 성공
+                    for i, n in enumerate(news_list):
+                        br = batch_results[i]
+                        pm_summary = br.get("summary") or "요약 없음"
+                        impact     = br.get("impact") or "전망 없음"
+                        articles.append({**n, "keyword": word, "pm_summary": pm_summary, "impact": impact})
+                        kw_ctx.append(n['title'])
+                        all_articles.append(f"[{word}] {n['title']}")
+                else:
+                    # 배치 실패 → 개별 fallback (기존 방식)
+                    print(f"  ⚠️  [{word}] 배치 실패 — 개별 호출 fallback")
+                    for n in news_list:
+                        pm_summary = call_agent(f"뉴스: {n['title']}", agents['BRIEF'], force_one_line=True)
+                        impact     = call_agent(
+                            f"뉴스: {n['title']}\n전망 1줄.",
+                            agents.get('STOCK', agents['BRIEF']),
+                            force_one_line=True
+                        )
+                        articles.append({**n, "keyword": word, "pm_summary": pm_summary, "impact": impact})
+                        kw_ctx.append(n['title'])
+                        all_articles.append(f"[{word}] {n['title']}")
 
                 # ── YouTube: 캐시 우선 조회 ──
                 print(f"  🎬 [{word}] YouTube 수집 중...")
@@ -795,7 +887,7 @@ def run_autonomous_engine():
                     ctx += f"\n\n{yt_ctx}"
 
                 print(f"  🤖 [{word}] 에이전트 분석 중...")
-                by_keyword[word] = {
+                kw_result = {
                     "ba_brief": call_agent_json(
                         f"키워드 '{word}' 뉴스 및 유튜브 기반 비즈니스 수익 구조 및 경쟁 분석:\n{ctx}",
                         agents['BA']
@@ -811,7 +903,11 @@ def run_autonomous_engine():
                     "articles":       articles,
                     "youtube_videos": yt_videos,
                 }
+                by_keyword[word] = kw_result
                 log_to_db(user_id, word, "키워드분석")
+
+                # ── [전략 3] 캐시 저장 ──
+                set_keyword_analysis_cache(word, kw_result)
 
             if not by_keyword:
                 print(f"⚠️  [{user_email}] 분석 결과 없음 — 스킵")
@@ -840,9 +936,8 @@ def run_autonomous_engine():
                 run_agent_self_reflection(report_id)
                 send_email_report(user_email, final_report, all_yt)
 
-                # 이메일 발송 성공 여부를 reports 테이블에 기록
                 try:
-                    supabase.table("reports").update({"email_sent": True})\
+                    supabase.table("reports").update({"email_sent": True}) \
                         .eq("id", report_id).execute()
                 except Exception as e:
                     print(f"  ⚠️ [Email] email_sent 업데이트 실패: {e}")
@@ -879,7 +974,7 @@ def run_industry_monitor():
     agents = get_agents()
 
     try:
-        industries = supabase.table("industry_list")\
+        industries = supabase.table("industry_list") \
             .select("*").eq("is_active", True).execute()
         if not industries.data:
             print("  ⚠️ [Industry] 등록된 산업군 없음")
@@ -893,21 +988,19 @@ def run_industry_monitor():
         category = ind["category"]
         keywords = ind["keywords"]
 
-        # 오늘 이미 수집했으면 스킵
         try:
-            chk = supabase.table("industry_monitor")\
-                .select("id").eq("industry", industry)\
+            chk = supabase.table("industry_monitor") \
+                .select("id").eq("industry", industry) \
                 .eq("monitor_date", TODAY).execute()
             if chk.data:
                 print(f"  ⏭️ [Industry] '{industry}' 오늘 이미 수집됨 — 스킵")
                 continue
         except: pass
 
-        # 키워드별 뉴스 수집
         all_articles = []
-        for kw in keywords[:2]:  # API 절약을 위해 키워드당 2개만
+        for kw in keywords[:2]:
             try:
-                gn = GNews(language='ko', max_results=5)
+                gn   = GNews(language='ko', max_results=5)
                 news = gn.get_news(kw)
                 for n in (news or []):
                     all_articles.append({
@@ -922,7 +1015,6 @@ def run_industry_monitor():
             print(f"  ⚠️ [Industry] '{industry}' 뉴스 없음 — 스킵")
             continue
 
-        # BA 에이전트로 산업군 요약 생성
         ctx = "\n".join([f"- {a['title']}" for a in all_articles[:10]])
         try:
             summary = call_agent(
@@ -934,7 +1026,6 @@ def run_industry_monitor():
         except:
             summary = "요약 생성 실패"
 
-        # DB 저장
         try:
             supabase.table("industry_monitor").upsert({
                 "industry":     industry,
@@ -950,14 +1041,15 @@ def run_industry_monitor():
     print("🏭 [Industry] 산업군 모니터링 완료")
 
 
-
+# ──────────────────────────────────────────────
+# [7] 에이전트 자율 발의
+# ──────────────────────────────────────────────
 def run_agent_initiative(by_keyword_all: dict):
     """브리핑 완료 후 각 에이전트가 스스로 개선 의견을 pending_approvals에 올림"""
     run_industry_monitor()
     print("🧠 [Initiative] 에이전트 자율 발의 시작...")
     agents = get_agents()
 
-    # 오늘 전체 키워드/뉴스 요약 컨텍스트
     ctx_lines = []
     for kw, kd in by_keyword_all.items():
         articles = kd.get("articles", [])
@@ -965,19 +1057,17 @@ def run_agent_initiative(by_keyword_all: dict):
         ctx_lines.append(f"[{kw}] " + " / ".join(titles))
     today_ctx = "\n".join(ctx_lines) if ctx_lines else "오늘 수집된 데이터 없음"
 
-    # 키워드 성과 데이터
     try:
-        perf = supabase.table("keyword_performance")\
-            .select("keyword, hit_count")\
+        perf = supabase.table("keyword_performance") \
+            .select("keyword, hit_count") \
             .eq("report_date", TODAY).execute()
         perf_lines = [f"{p['keyword']}: {p['hit_count']}건" for p in (perf.data or [])]
         perf_ctx = "\n".join(perf_lines) if perf_lines else "성과 데이터 없음"
     except:
         perf_ctx = "성과 데이터 없음"
 
-    # 산업군 동향 컨텍스트 추가
     try:
-        ind_res = supabase.table("industry_monitor")\
+        ind_res = supabase.table("industry_monitor") \
             .select("industry, summary").eq("monitor_date", TODAY).execute()
         industry_ctx = "\n".join([
             f"[{r['industry']}] {r['summary'][:100]}"
@@ -986,7 +1076,6 @@ def run_agent_initiative(by_keyword_all: dict):
     except:
         industry_ctx = "산업군 데이터 없음"
 
-    # 각 에이전트별 자율 발의 프롬프트 정의
     initiative_prompts = {
         "KW": (
             f"오늘 키워드 성과 (hit_count가 낮을수록 뉴스가 적게 수집됨):\n{perf_ctx}\n\n"
@@ -1036,7 +1125,6 @@ def run_agent_initiative(by_keyword_all: dict):
                 print(f"  ⚠️ [{role}] 발의 내용 없음 — 스킵")
                 continue
 
-            # KW 에이전트는 ADD/REMOVE 파싱 후 pending_approvals에 구조화해서 등록
             if role == "KW":
                 add_m    = re.search(r"\[ADD\](.*?)(?=\[REMOVE\]|\[REASON\]|$)", proposal, re.DOTALL)
                 remove_m = re.search(r"\[REMOVE\](.*?)(?=\[ADD\]|\[REASON\]|$)", proposal, re.DOTALL)
@@ -1048,7 +1136,6 @@ def run_agent_initiative(by_keyword_all: dict):
 
                 if not add_kws and not remove_kws:
                     print(f"  ⚠️ [KW] 파싱 실패 — 원문 등록")
-                    # 파싱 실패 시 원문 그대로 등록
                     supabase.table("pending_approvals").insert({
                         "agent_role":           "KW",
                         "proposed_instruction": proposal,
@@ -1073,6 +1160,7 @@ def run_agent_initiative(by_keyword_all: dict):
                 }).execute()
                 print(f"  ✅ [KW] 키워드 제안 등록 완료 — 추가 {len(add_kws)}개 / 제거 {len(remove_kws)}개")
                 continue
+
             if role == "MASTER":
                 t = re.search(r"\[TITLE\](.*?)(?=\[DETAIL\]|$)", proposal, re.DOTALL)
                 d = re.search(r"\[DETAIL\](.*?)$", proposal, re.DOTALL)
@@ -1089,7 +1177,6 @@ def run_agent_initiative(by_keyword_all: dict):
                     print(f"  📋 [MASTER] dev_backlog 자동 등록: {title}")
                 continue
 
-            # 나머지 에이전트는 pending_approvals에 등록
             supabase.table("pending_approvals").insert({
                 "agent_role":           role,
                 "proposed_instruction": proposal,
@@ -1114,9 +1201,6 @@ if __name__ == "__main__":
     if cron_type == "GOVERNANCE":
         print("🌙 [GOVERNANCE] 23:30 마감 작업 모드")
         manage_deadline_approvals()
-    elif cron_type == "INDUSTRY":
-        print("🌅 [INDUSTRY] 06:00 산업군 모니터링 모드")
-        run_industry_monitor()
     else:
         print("☀️ [BRIEFING] 09:00 정기 브리핑 모드")
         manage_deadline_approvals()
