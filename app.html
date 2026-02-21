@@ -249,63 +249,35 @@ const sc = supabase.createClient(
 );
 
 window.CURRENT_USER = { email:'', userName:'', id:'' };
-let curAgent   = 'BA';
-let curDate    = '';
-let allDates   = [];
-let reportData = null;
-let kwNames    = [];
+let curAgent     = 'BA';
+let curDate      = '';
+let allDates     = [];
+let reportData   = null;
+let kwNames      = [];
 let userKeywords = [];
 
 const AGENT_KEY  = { BA:'ba_brief', STOCK:'securities_brief', PM:'pm_brief' };
 const AGENT_NAME = { BA:'비즈니스 분석', STOCK:'주식 브리핑', PM:'기획 브리핑' };
 const AGENT_ICON = { BA:'📊', STOCK:'📈', PM:'🎯' };
 
-/* ── 마크다운 파싱 유틸 ── */
-function stripMd(str) {
-  return (str || '')
-    .replace(/#{1,6}\s*/g, '')
-    .replace(/\*\*(.+?)\*\*/g, '$1')
-    .replace(/\*(.+?)\*/g, '$1')
-    .replace(/`(.+?)`/g, '$1')
-    .replace(/^\s*[-*]\s+/gm, '')
-    .replace(/\[.*?\]\(.*?\)/g, '')
-    .trim();
+/* ── JSON 브리프 파싱 (구버전 텍스트 폴백 포함) ── */
+function getSummary(brief) {
+  if (!brief) return '분석 중...';
+  if (typeof brief === 'object') return brief.summary || '분석 중...';
+  // 폴백: 구버전 텍스트
+  return brief.split('\n').find(l => l.trim().length > 20)?.trim() || '분석 중...';
 }
 
-function parseToLines(md) {
-  return md.split('\n')
-    .map(l => stripMd(l))
-    .filter(l => l.length > 15)
-    .filter(l => !/^\d+\.\s*[\w가-힣\s]{1,20}:$/.test(l))
-    .filter(l => !/^[\-_=]{3,}$/.test(l))
-    .slice(0, 6);
+function getPoints(brief) {
+  if (!brief) return [];
+  if (typeof brief === 'object') return brief.points || [];
+  return [];
 }
 
-function parseSummary(md) {
-  const lines = md.split('\n').map(l => stripMd(l)).filter(l => l.length > 20);
-  const summaryLine = lines.find(l => l.includes('핵심 요약') || l.includes('요약') || l.includes('분석'));
-  if (summaryLine) {
-    return summaryLine.replace(/^.*?요약[:\s]*/, '').replace(/^.*?분석[:\s]*/, '').trim() || summaryLine;
-  }
-  return lines[0] || '분석 중...';
-}
-
-function parsePoints(md) {
-  return md.split('\n')
-    .map(l => stripMd(l))
-    .filter(l => l.length > 20)
-    .filter(l => !/^\d+\.\s*[\w가-힣\s]{1,20}:$/.test(l))
-    .filter(l => !l.includes('핵심 요약') && !l.includes('핵심요약'))
-    .slice(1, 5);
-}
-
-function parseDeepLines(md) {
-  return md.split('\n')
-    .map(l => stripMd(l))
-    .filter(l => l.length > 20)
-    .filter(l => !/^\d+\.\s*[\w가-힣\s]{1,20}:$/.test(l))
-    .filter(l => !l.includes('핵심 요약') && !l.includes('핵심요약'))
-    .slice(4, 12);
+function getDeepLines(brief) {
+  if (!brief) return [];
+  if (typeof brief === 'object') return brief.deep || [];
+  return [];
 }
 
 /* ── 봉투 SVG ── */
@@ -343,14 +315,14 @@ function renderFeed() {
   feed.className = 'feed';
 
   kwNames.forEach((kw, i) => {
-    const kwData  = reportData[kw];
+    const kwData    = reportData[kw];
     if (!kwData) return;
-    const brief   = kwData[AGENT_KEY[curAgent]] || '';
-    const arts    = kwData.articles || [];
-    const summary = parseSummary(brief);
-    const points  = parsePoints(brief);
-    const deepLines = parseDeepLines(brief);
-    const userName = window.CURRENT_USER.userName || '사용자';
+    const brief     = kwData[AGENT_KEY[curAgent]];
+    const arts      = kwData.articles || [];
+    const summary   = getSummary(brief);
+    const points    = getPoints(brief);
+    const deepLines = getDeepLines(brief);
+    const userName  = window.CURRENT_USER.userName || '사용자';
 
     const section = document.createElement('div');
     section.className = 'kw-section';
@@ -420,12 +392,12 @@ function renderFeed() {
 function switchAgent() {
   if (!reportData) return;
   kwNames.forEach((kw, i) => {
-    const kwData = reportData[kw];
+    const kwData    = reportData[kw];
     if (!kwData) return;
-    const brief     = kwData[AGENT_KEY[curAgent]] || '';
-    const summary   = parseSummary(brief);
-    const points    = parsePoints(brief);
-    const deepLines = parseDeepLines(brief);
+    const brief     = kwData[AGENT_KEY[curAgent]];
+    const summary   = getSummary(brief);
+    const points    = getPoints(brief);
+    const deepLines = getDeepLines(brief);
 
     const card = document.getElementById(`card-${i}`);
     if (!card) return;
@@ -581,8 +553,8 @@ function closeAllDD() { document.querySelectorAll('.c-dropdown').forEach(d => d.
 document.addEventListener('click', closeAllDD);
 
 function toggleTopBar() {
-  const bar = document.getElementById('topBar');
-  const btn = document.getElementById('collapseBtn');
+  const bar  = document.getElementById('topBar');
+  const btn  = document.getElementById('collapseBtn');
   const cBar = document.getElementById('collapsedBar');
   bar.classList.toggle('collapsed');
   const c = bar.classList.contains('collapsed');
@@ -621,7 +593,7 @@ function toggleSecret(i) {
 }
 
 /* ── 모달 ── */
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id, e) {
   if (!e || e.target.classList.contains('modal-overlay'))
     document.getElementById(id).classList.remove('open');
