@@ -134,14 +134,29 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .s-point-dot { width:4px; height:4px; border-radius:50%; flex-shrink:0; margin-top:9px; background:#94a3b8; }
 .s-text { font-size:14px; color:#475569; line-height:1.75; }
 
-/* ── 헤드라인 ── */
+/* ── 뉴스/YouTube 탭 ── */
 .headlines-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; overflow:hidden; }
+.content-tabs { display:flex; border-bottom:2px solid #f1f5f9; }
+.tab-btn { flex:1; padding:12px 8px; font-size:13px; font-weight:700; color:#94a3b8; background:none; border:none; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all .15s; min-height:44px; }
+.tab-btn.active { color:#1e293b; border-bottom-color:#1e293b; }
+.tab-btn.yt-tab.active { color:#e8472a; border-bottom-color:#e8472a; }
+
 .hl-label { padding:14px 18px 8px; font-size:10px; font-weight:700; color:#94a3b8; letter-spacing:1.5px; text-transform:uppercase; }
 .hl-item { padding:14px 18px; border-top:1px solid #f1f5f9; display:flex; gap:12px; align-items:flex-start; cursor:pointer; min-height:60px; }
 .hl-item:active { background:#f8fafc; }
 .hl-num { font-size:11px; font-weight:700; color:#cbd5e1; flex-shrink:0; padding-top:2px; }
 .hl-title { font-size:14px; font-weight:600; color:#334155; line-height:1.5; margin-bottom:3px; }
 .hl-summary { font-size:12px; color:#94a3b8; line-height:1.55; }
+
+/* YouTube 아이템 */
+.yt-item { padding:14px 18px; border-top:1px solid #f1f5f9; display:flex; gap:12px; align-items:flex-start; cursor:pointer; min-height:60px; }
+.yt-item:active { background:#f8fafc; }
+.yt-badge { font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px; flex-shrink:0; margin-top:3px; white-space:nowrap; }
+.yt-badge.expert { background:#fff0ee; color:#e8472a; }
+.yt-badge.normal { background:#f1f5f9; color:#94a3b8; }
+.yt-title { font-size:14px; font-weight:600; color:#334155; line-height:1.5; margin-bottom:3px; }
+.yt-meta  { font-size:12px; color:#94a3b8; line-height:1.55; }
+.yt-empty { padding:32px 18px; text-align:center; color:#94a3b8; font-size:13px; }
 
 /* ── FAB ── */
 .fab { position:fixed; bottom:32px; right:20px; background:#1e293b; color:#fff; border:none; border-radius:50px; padding:14px 20px; font-size:14px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 24px rgba(0,0,0,.18); z-index:100; min-height:50px; }
@@ -194,7 +209,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
   <div class="header-row">
     <span class="brand">Fitz Intelligence</span>
     <div style="display:flex; align-items:center; gap:8px;">
-      <!-- 마스터 전용 버튼 — JS에서 isMaster일 때만 렌더링 -->
       <div class="master-nav" id="master-nav" style="display:none;">
         <button class="master-nav-btn home" onclick="location.href='index.html'">🌐 홈</button>
         <button class="master-nav-btn hq"   onclick="location.href='master.html'">⚙️ HQ</button>
@@ -350,6 +364,44 @@ function makeSVG(a) {
   </svg>`;
 }
 
+/* ── YouTube 헬퍼 ── */
+function fmtNum(n) {
+  if (!n) return '0';
+  return n >= 10000 ? `${Math.floor(n/10000)}만` : n.toLocaleString();
+}
+
+function buildYtItems(ytVideos) {
+  if (!ytVideos || ytVideos.length === 0)
+    return `<div class="yt-empty">수집된 YouTube 영상이 없습니다.</div>`;
+  return ytVideos.map(v => `
+    <div class="yt-item" onclick="window.open('${v.url}','_blank')">
+      <span class="yt-badge ${v.is_expert?'expert':'normal'}">${v.is_expert?'⭐전문가':'일반'}</span>
+      <div>
+        <div class="yt-title">${v.title}</div>
+        <div class="yt-meta">${v.channel} · 구독 ${fmtNum(v.subscriber_count)} · 조회 ${fmtNum(v.view_count)} · ${v.order_type||''}</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ── 탭 전환 ── */
+function switchTab(i, type) {
+  const newsPanel = document.getElementById(`panel-news-${i}`);
+  const ytPanel   = document.getElementById(`panel-yt-${i}`);
+  const newsTab   = document.getElementById(`tab-news-${i}`);
+  const ytTab     = document.getElementById(`tab-yt-${i}`);
+  if (type === 'news') {
+    newsPanel.style.display = '';
+    ytPanel.style.display   = 'none';
+    newsTab.classList.add('active');
+    ytTab.classList.remove('active');
+  } else {
+    newsPanel.style.display = 'none';
+    ytPanel.style.display   = '';
+    newsTab.classList.remove('active');
+    ytTab.classList.add('active');
+  }
+}
+
 /* ── 피드 렌더링 ── */
 function renderFeed() {
   if (!reportData || kwNames.length === 0) {
@@ -376,6 +428,7 @@ function renderFeed() {
     if (!kwData) return;
     const brief     = kwData[AGENT_KEY[curAgent]];
     const arts      = kwData.articles || [];
+    const ytVideos  = kwData.youtube_videos || [];
     const summary   = getSummary(brief);
     const points    = getPoints(brief);
     const deepLines = getDeepLines(brief);
@@ -387,7 +440,7 @@ function renderFeed() {
     section.innerHTML = `
       <div class="kw-section-header">
         <span class="kw-title"># ${kw}</span>
-        <span class="kw-meta">기사 ${arts.length}건</span>
+        <span class="kw-meta">기사 ${arts.length}건 · YouTube ${ytVideos.length}개</span>
       </div>
       <div class="brief-card" id="card-${i}" data-a="${curAgent}">
         <div class="brief-header">
@@ -427,15 +480,25 @@ function renderFeed() {
         </div>
       </div>
       <div class="headlines-card">
-        <div class="hl-label">오늘의 헤드라인</div>
-        ${arts.map((a, n) => `
-          <div class="hl-item" onclick="window.open('${a.url}','_blank')">
-            <span class="hl-num">0${n+1}</span>
-            <div>
-              <div class="hl-title">${a.title}</div>
-              <div class="hl-summary">${a.pm_summary || a.description || ''}</div>
-            </div>
-          </div>`).join('')}
+        <div class="content-tabs">
+          <button class="tab-btn active" id="tab-news-${i}" onclick="switchTab(${i},'news')">📰 뉴스 ${arts.length}건</button>
+          <button class="tab-btn yt-tab"  id="tab-yt-${i}"   onclick="switchTab(${i},'yt')">🎬 YouTube ${ytVideos.length}개</button>
+        </div>
+        <div id="panel-news-${i}">
+          <div class="hl-label">오늘의 헤드라인</div>
+          ${arts.map((a, n) => `
+            <div class="hl-item" onclick="window.open('${a.url}','_blank')">
+              <span class="hl-num">0${n+1}</span>
+              <div>
+                <div class="hl-title">${a.title}</div>
+                <div class="hl-summary">${a.pm_summary || a.description || ''}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+        <div id="panel-yt-${i}" style="display:none;">
+          <div class="hl-label">YouTube 인사이트</div>
+          ${buildYtItems(ytVideos)}
+        </div>
       </div>`;
     feed.appendChild(section);
   });
@@ -717,7 +780,6 @@ async function init() {
     const userId   = session.user.id;
     window.CURRENT_USER = { email, userName, id: userId };
 
-    // 마스터 전용 버튼 노출
     const isMaster = email === MASTER_EMAIL;
     if (isMaster) {
       document.getElementById('master-nav').style.display = 'flex';
