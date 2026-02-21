@@ -838,6 +838,124 @@ def run_autonomous_engine():
             continue
 
     sync_data_to_github()
+    run_agent_initiative(by_keyword_all=_collect_all_by_keyword(user_res.data or []))
+
+
+def _collect_all_by_keyword(users: list) -> dict:
+    """오늘 저장된 모든 유저 리포트의 by_keyword 합산"""
+    merged = {}
+    try:
+        res = supabase.table("reports").select("content").eq("report_date", TODAY).execute()
+        for r in (res.data or []):
+            for kw, kd in (r.get("content", {}).get("by_keyword", {}) or {}).items():
+                if kw not in merged:
+                    merged[kw] = kd
+    except: pass
+    return merged
+
+
+# ──────────────────────────────────────────────
+# [6] 에이전트 자율 발의 엔진
+# ──────────────────────────────────────────────
+def run_agent_initiative(by_keyword_all: dict):
+    """브리핑 완료 후 각 에이전트가 스스로 개선 의견을 pending_approvals에 올림"""
+    print("🧠 [Initiative] 에이전트 자율 발의 시작...")
+    agents = get_agents()
+
+    # 오늘 전체 키워드/뉴스 요약 컨텍스트
+    ctx_lines = []
+    for kw, kd in by_keyword_all.items():
+        articles = kd.get("articles", [])
+        titles   = [a.get("title", "") for a in articles[:3]]
+        ctx_lines.append(f"[{kw}] " + " / ".join(titles))
+    today_ctx = "\n".join(ctx_lines) if ctx_lines else "오늘 수집된 데이터 없음"
+
+    # 키워드 성과 데이터
+    try:
+        perf = supabase.table("keyword_performance")\
+            .select("keyword, hit_count")\
+            .eq("report_date", TODAY).execute()
+        perf_lines = [f"{p['keyword']}: {p['hit_count']}건" for p in (perf.data or [])]
+        perf_ctx = "\n".join(perf_lines) if perf_lines else "성과 데이터 없음"
+    except:
+        perf_ctx = "성과 데이터 없음"
+
+    # 각 에이전트별 자율 발의 프롬프트 정의
+    initiative_prompts = {
+        "KW": (
+            f"오늘 키워드 성과:\n{perf_ctx}\n\n오늘 뉴스 컨텍스트:\n{today_ctx}\n\n"
+            "위 데이터를 기반으로 유저에게 새롭게 추천할 키워드와 그 이유를 제안하라. "
+            "현재 키워드 instruction을 개선하는 형태로 작성하라. "
+            "반드시 구체적인 키워드 추천 로직을 포함할 것."
+        ),
+        "QA": (
+            f"오늘 브리핑 데이터:\n{today_ctx}\n\n"
+            "오늘 리포트의 품질을 100점 만점으로 평가하고, "
+            "개선이 필요한 점을 instruction 업데이트 형태로 제안하라. "
+            "점수와 근거를 반드시 포함할 것."
+        ),
+        "DATA": (
+            f"오늘 뉴스 수집 성과:\n{perf_ctx}\n\n"
+            "뉴스 수집량이 적은 키워드나 품질 이슈를 분석하고 "
+            "데이터 수집 전략 개선안을 instruction 업데이트 형태로 제안하라."
+        ),
+        "BA": (
+            f"오늘 분석 컨텍스트:\n{today_ctx}\n\n"
+            "오늘 비즈니스 분석에서 부족했던 점을 파악하고 "
+            "더 날카로운 인사이트를 제공하기 위한 instruction 개선안을 제안하라."
+        ),
+        "MASTER": (
+            f"오늘 전체 시스템 성과:\n키워드 성과:\n{perf_ctx}\n\n뉴스 컨텍스트:\n{today_ctx}\n\n"
+            "전체 에이전트 시스템의 오늘 성과를 종합 평가하고, "
+            "가장 시급한 개발 또는 개선 안건 1가지를 dev_backlog 등록 형태로 제안하라. "
+            "제안 형식: [TITLE]안건제목 [DETAIL]상세요구사항"
+        ),
+    }
+
+    for role, prompt in initiative_prompts.items():
+        agent_info = agents.get(role)
+        if not agent_info:
+            continue
+        try:
+            print(f"  🤖 [{role}] 자율 발의 생성 중...")
+            proposal = call_agent(prompt, agent_info, force_one_line=False)
+
+            if not proposal or proposal in ["분석 지연 중", "분석 데이터 없음"]:
+                print(f"  ⚠️ [{role}] 발의 내용 없음 — 스킵")
+                continue
+
+            # MASTER 에이전트는 dev_backlog에 직접 등록
+            if role == "MASTER":
+                t = re.search(r"\[TITLE\](.*?)(?=\[DETAIL\]|$)", proposal, re.DOTALL)
+                d = re.search(r"\[DETAIL\](.*?)$", proposal, re.DOTALL)
+                if t and d:
+                    title  = t.group(1).strip()
+                    detail = d.group(1).strip()
+                    supabase.table("dev_backlog").insert({
+                        "title":         f"[AI발의] {title}",
+                        "task_detail":   detail,
+                        "affected_file": "news_bot.py",
+                        "priority":      5,
+                        "status":        "PENDING",
+                    }).execute()
+                    print(f"  📋 [MASTER] dev_backlog 자동 등록: {title}")
+                continue
+
+            # 나머지 에이전트는 pending_approvals에 등록
+            supabase.table("pending_approvals").insert({
+                "agent_role":           role,
+                "proposed_instruction": proposal,
+                "proposal_reason":      f"{TODAY} 브리핑 데이터 기반 자율 발의",
+                "needs_dev":            False,
+                "status":               "PENDING",
+            }).execute()
+            print(f"  ✅ [{role}] 자율 발의 등록 완료 → HQ 결재 대기")
+
+        except Exception as e:
+            print(f"  ❌ [{role}] 자율 발의 실패: {e}")
+
+    print("🧠 [Initiative] 자율 발의 완료 — HQ에서 확인하세요")
+
 
 # ──────────────────────────────────────────────
 # 엔트리포인트
