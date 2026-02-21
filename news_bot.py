@@ -890,7 +890,6 @@ def run_autonomous_engine():
                         "articles": articles, "youtube_videos": yt_videos,
                     }
                     by_keyword[word] = kw_result
-                    log_to_db(user_id, word, "키워드분석")
                     set_keyword_analysis_cache(word, kw_result)
                     stats["keyword_ok"].append(word)
 
