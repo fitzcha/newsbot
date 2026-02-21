@@ -16,6 +16,13 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .brand { font-size:14px; font-weight:800; color:#1e293b; }
 .collapse-btn { background:none; border:none; cursor:pointer; padding:8px 12px; border-radius:8px; color:#94a3b8; font-size:12px; font-weight:600; min-height:36px; }
 
+/* ── 마스터 전용 헤더 버튼 ── */
+.master-nav { display:flex; align-items:center; gap:6px; }
+.master-nav-btn { font-size:11px; font-weight:700; padding:5px 10px; border-radius:8px; cursor:pointer; min-height:30px; }
+.master-nav-btn.home { background:#f1f5f9; border:1px solid #e2e8f0; color:#475569; }
+.master-nav-btn.hq   { background:none; border:1px solid #ef4444; color:#ef4444; }
+.logout-btn { font-size:11px; font-weight:700; padding:5px 10px; border-radius:8px; cursor:pointer; min-height:30px; background:#f1f5f9; border:1px solid #e2e8f0; color:#475569; }
+
 .collapsed-bar { display:none; padding:6px 20px 10px; align-items:center; gap:0; }
 .collapsed-bar.hidden { display:none; }
 .c-chip { position:relative; display:inline-flex; align-items:center; gap:4px; flex-shrink:0; font-size:11px; font-weight:600; padding:6px 12px; border-radius:8px; cursor:pointer; white-space:nowrap; border:1px solid #e2e8f0; background:#f8fafc; color:#475569; user-select:none; min-height:34px; }
@@ -160,7 +167,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .submit-btn:active { background:#1d4ed8; }
 .submit-btn:disabled { background:#94a3b8; cursor:default; }
 
-/* 피드백 접수 완료 상태 */
 .feedback-done { text-align:center; padding:32px 0 16px; }
 .feedback-done-icon { font-size:48px; margin-bottom:12px; }
 .feedback-done-title { font-size:17px; font-weight:700; color:#0f172a; margin-bottom:6px; }
@@ -187,7 +193,15 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 <div class="top-bar" id="topBar">
   <div class="header-row">
     <span class="brand">Fitz Intelligence</span>
-    <button class="collapse-btn" onclick="toggleTopBar()" id="collapseBtn">접기 ▲</button>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <!-- 마스터 전용 버튼 — JS에서 isMaster일 때만 렌더링 -->
+      <div class="master-nav" id="master-nav" style="display:none;">
+        <button class="master-nav-btn home" onclick="location.href='index.html'">🌐 홈</button>
+        <button class="master-nav-btn hq"   onclick="location.href='master.html'">⚙️ HQ</button>
+      </div>
+      <button class="logout-btn" id="logout-btn" style="display:none;" onclick="logout()">로그아웃</button>
+      <button class="collapse-btn" onclick="toggleTopBar()" id="collapseBtn">접기 ▲</button>
+    </div>
   </div>
 
   <div class="collapsed-bar hidden" id="collapsedBar">
@@ -290,6 +304,8 @@ const sc = supabase.createClient(
   'https://zrlpwmpbrvohautldcon.supabase.co',
   'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G'
 );
+
+const MASTER_EMAIL = 'positivecha@gmail.com';
 
 window.CURRENT_USER = { email:'', userName:'', id:'' };
 let curAgent     = 'BA';
@@ -590,14 +606,11 @@ function selectRating(el, score) {
 }
 
 async function submitFeedback() {
-  const text   = document.getElementById('feedback-text').value.trim();
-  const btn    = document.getElementById('feedback-submit-btn');
-
+  const text = document.getElementById('feedback-text').value.trim();
+  const btn  = document.getElementById('feedback-submit-btn');
   if (!selectedRating && !text) return;
-
   btn.disabled = true;
   btn.textContent = '제출 중...';
-
   try {
     await sc.from('feedback').insert({
       user_id:       window.CURRENT_USER.id,
@@ -607,11 +620,7 @@ async function submitFeedback() {
       report_date:   curDate,
       created_at:    new Date().toISOString()
     });
-  } catch(e) {
-    console.error('피드백 저장 오류:', e);
-  }
-
-  // 접수 완료 화면 전환
+  } catch(e) { console.error('피드백 저장 오류:', e); }
   document.getElementById('feedback-form-view').style.display = 'none';
   document.getElementById('feedback-done-view').style.display = 'block';
 }
@@ -625,6 +634,12 @@ function resetFeedback() {
   btn.textContent = '제출하기';
   document.getElementById('feedback-done-view').style.display = 'none';
   document.getElementById('feedback-form-view').style.display = 'block';
+}
+
+/* ── 로그아웃 ── */
+async function logout() {
+  await sc.auth.signOut();
+  location.href = 'index.html';
 }
 
 /* ── DD / 접기 / 스크롤 ── */
@@ -681,7 +696,6 @@ function toggleSecret(i) {
 /* ── 모달 ── */
 function openModal(id) {
   document.getElementById(id).classList.add('open');
-  // 피드백 모달 열 때 항상 폼 상태로
   if (id === 'feedback-modal') {
     document.getElementById('feedback-form-view').style.display = 'block';
     document.getElementById('feedback-done-view').style.display = 'none';
@@ -702,6 +716,13 @@ async function init() {
     const userName = email.split('@')[0];
     const userId   = session.user.id;
     window.CURRENT_USER = { email, userName, id: userId };
+
+    // 마스터 전용 버튼 노출
+    const isMaster = email === MASTER_EMAIL;
+    if (isMaster) {
+      document.getElementById('master-nav').style.display = 'flex';
+    }
+    document.getElementById('logout-btn').style.display = 'block';
 
     const { data: uSettings } = await sc.from('user_settings').select('keywords')
       .eq('id', userId).maybeSingle();
