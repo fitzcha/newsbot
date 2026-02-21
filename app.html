@@ -2,21 +2,23 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Fitz Intelligence</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+html { -webkit-text-size-adjust:100%; }
+body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; overflow-x:hidden; }
 
+/* ── 상단바 ── */
 .top-bar { position:sticky; top:0; z-index:200; background:#fff; border-bottom:1px solid #e2e8f0; }
 .header-row { display:flex; justify-content:space-between; align-items:center; padding:14px 20px 10px; }
 .brand { font-size:14px; font-weight:800; color:#1e293b; }
-.collapse-btn { background:none; border:none; cursor:pointer; padding:6px 10px; border-radius:8px; color:#94a3b8; font-size:12px; font-weight:600; }
+.collapse-btn { background:none; border:none; cursor:pointer; padding:8px 12px; border-radius:8px; color:#94a3b8; font-size:12px; font-weight:600; min-height:36px; }
 
 .collapsed-bar { display:none; padding:6px 20px 10px; align-items:center; gap:0; }
 .collapsed-bar.hidden { display:none; }
-.c-chip { position:relative; display:inline-flex; align-items:center; gap:4px; flex-shrink:0; font-size:11px; font-weight:600; padding:5px 10px; border-radius:8px; cursor:pointer; white-space:nowrap; border:1px solid #e2e8f0; background:#f8fafc; color:#475569; user-select:none; }
+.c-chip { position:relative; display:inline-flex; align-items:center; gap:4px; flex-shrink:0; font-size:11px; font-weight:600; padding:6px 12px; border-radius:8px; cursor:pointer; white-space:nowrap; border:1px solid #e2e8f0; background:#f8fafc; color:#475569; user-select:none; min-height:34px; }
 .c-chip .arrow { font-size:8px; color:#94a3b8; margin-left:2px; }
 .c-chip.date-c  { background:#f1f5f9; border-color:#e2e8f0; color:#475569; }
 .c-chip.agent-c { background:#eff6ff; border-color:#bfdbfe; color:#2563eb; }
@@ -27,132 +29,155 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 
 .c-dropdown { display:none; position:absolute; top:calc(100% + 6px); left:0; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.1); z-index:400; min-width:140px; overflow:hidden; }
 .c-dropdown.open { display:block; }
-.c-dd-item { padding:10px 14px; font-size:12px; font-weight:600; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px; }
-.c-dd-item:hover { background:#f8fafc; }
+.c-dd-item { padding:12px 16px; font-size:13px; font-weight:600; color:#334155; cursor:pointer; display:flex; align-items:center; gap:8px; min-height:44px; }
+.c-dd-item:hover, .c-dd-item:active { background:#f8fafc; }
 .c-dd-item.active { color:#2563eb; background:#eff6ff; }
 .c-dd-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 
-.date-row { padding:0 20px 10px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; }
+.date-row { padding:0 20px 10px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .date-row::-webkit-scrollbar { display:none; }
-.date-chip { flex-shrink:0; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:600; border:1px solid #e2e8f0; color:#64748b; background:#fff; cursor:pointer; }
+.date-chip { flex-shrink:0; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; border:1px solid #e2e8f0; color:#64748b; background:#fff; cursor:pointer; min-height:34px; display:flex; align-items:center; }
 .date-chip.active { background:#1e293b; color:#fff; border-color:#1e293b; }
 
-.agent-row { padding:0 20px 10px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; }
+.agent-row { padding:0 20px 10px; display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
 .agent-row::-webkit-scrollbar { display:none; }
-.agent-chip { flex-shrink:0; display:flex; align-items:center; gap:5px; padding:7px 14px; border-radius:20px; font-size:12px; font-weight:600; border:1.5px solid #e2e8f0; color:#64748b; background:#fff; cursor:pointer; transition:all .15s; }
+.agent-chip { flex-shrink:0; display:flex; align-items:center; gap:6px; padding:8px 16px; border-radius:20px; font-size:13px; font-weight:600; border:1.5px solid #e2e8f0; color:#64748b; background:#fff; cursor:pointer; transition:all .15s; min-height:38px; }
 .agent-chip[data-a="BA"].active    { background:#2563eb; border-color:#2563eb; color:#fff; }
 .agent-chip[data-a="STOCK"].active { background:#0891b2; border-color:#0891b2; color:#fff; }
 .agent-chip[data-a="PM"].active    { background:#7c3aed; border-color:#7c3aed; color:#fff; }
 .agent-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
 
-.kw-nav { padding:0 20px 12px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid #f1f5f9; align-items:center; }
+.kw-nav { padding:0 20px 12px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid #f1f5f9; align-items:center; -webkit-overflow-scrolling:touch; }
 .kw-nav::-webkit-scrollbar { display:none; }
-.kw-chip { flex-shrink:0; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600; border:1.5px solid #e2e8f0; color:#94a3b8; background:#fff; cursor:pointer; transition:all .2s; }
+.kw-chip { flex-shrink:0; padding:6px 14px; border-radius:20px; font-size:13px; font-weight:600; border:1.5px solid #e2e8f0; color:#94a3b8; background:#fff; cursor:pointer; transition:all .2s; min-height:36px; display:flex; align-items:center; }
 .kw-chip.active { background:#f1f5f9; color:#1e293b; border-color:#cbd5e1; }
-.kw-edit-btn { flex-shrink:0; margin-left:4px; padding:5px 10px; border-radius:20px; font-size:11px; font-weight:600; border:1.5px dashed #94a3b8; color:#94a3b8; background:transparent; cursor:pointer; display:flex; align-items:center; gap:4px; }
+.kw-edit-btn { flex-shrink:0; margin-left:4px; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600; border:1.5px dashed #94a3b8; color:#94a3b8; background:transparent; cursor:pointer; display:flex; align-items:center; gap:4px; min-height:36px; }
 
-.collapsible { }
+.collapsible {}
 .top-bar.collapsed .collapsible { display:none; }
 .top-bar.collapsed .collapsed-bar { display:flex; }
 .top-bar.collapsed .collapsed-bar.hidden { display:none; }
 
+/* ── 로딩 ── */
 .feed-state { padding:60px 20px; text-align:center; color:#94a3b8; font-size:14px; }
 .skeleton { background:#f1f5f9; border-radius:14px; height:180px; margin-bottom:28px; animation:pulse 1.5s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
-.feed { padding:20px; display:flex; flex-direction:column; gap:28px; padding-bottom:80px; }
+/* ── 피드 ── */
+.feed { padding:16px; display:flex; flex-direction:column; gap:24px; padding-bottom:100px; }
 .kw-section { display:flex; flex-direction:column; gap:12px; }
-.kw-section-header { display:flex; align-items:center; justify-content:space-between; }
-.kw-title { font-size:18px; font-weight:800; color:#0f172a; }
+.kw-section-header { display:flex; align-items:center; justify-content:space-between; padding:0 4px; }
+.kw-title { font-size:20px; font-weight:800; color:#0f172a; }
 .kw-meta { font-size:11px; color:#94a3b8; }
 
-.brief-card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; }
+.brief-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; overflow:hidden; }
 .brief-card[data-a="BA"]    { border-top:3px solid #2563eb; }
 .brief-card[data-a="STOCK"] { border-top:3px solid #0891b2; }
 .brief-card[data-a="PM"]    { border-top:3px solid #7c3aed; }
-.brief-header { padding:16px 18px 12px; }
-.brief-agent-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; }
+.brief-header { padding:18px 18px 12px; }
+.brief-agent-label { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:8px; }
 .brief-agent-label[data-a="BA"]    { color:#2563eb; }
 .brief-agent-label[data-a="STOCK"] { color:#0891b2; }
 .brief-agent-label[data-a="PM"]    { color:#7c3aed; }
-.brief-summary { font-size:15px; font-weight:700; color:#0f172a; line-height:1.5; }
-.brief-points { padding:4px 18px 14px; display:flex; flex-direction:column; gap:8px; }
-.brief-point { display:flex; gap:8px; align-items:flex-start; }
-.brief-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; margin-top:7px; }
+.brief-summary { font-size:16px; font-weight:700; color:#0f172a; line-height:1.55; }
+.brief-points { padding:4px 18px 16px; display:flex; flex-direction:column; gap:10px; }
+.brief-point { display:flex; gap:10px; align-items:flex-start; }
+.brief-dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; margin-top:8px; }
 .brief-dot[data-a="BA"]    { background:#2563eb; }
 .brief-dot[data-a="STOCK"] { background:#0891b2; }
 .brief-dot[data-a="PM"]    { background:#7c3aed; }
-.brief-text { font-size:13px; color:#475569; line-height:1.7; }
+.brief-text { font-size:14px; color:#475569; line-height:1.75; }
 
-/* 봉투 버튼 — 고정 크기 */
+/* ── 봉투 버튼 ── */
 .secret-btn {
-  margin: 0 14px 14px;
+  margin: 0 14px 16px;
   border: 1.5px solid #e2e8f0;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   background: #fff;
-  border-radius: 10px;
-  padding: 10px 14px;
+  border-radius: 12px;
+  padding: 12px 16px;
   cursor: pointer;
   transition: background .15s;
   max-width: 280px;
+  min-height: 52px;
 }
 .secret-btn:active { background:#f8fafc; }
 .envelope-wrap { position:relative; width:32px; height:24px; flex-shrink:0; }
 .envelope-wrap svg { width:32px; height:24px; }
 .env-lid { transform-origin:50% 0%; transition:transform .35s ease; }
 .secret-btn.open .env-lid { transform:rotateX(160deg); }
-.secret-text-wrap { display:flex; flex-direction:column; align-items:flex-start; gap:1px; }
-.secret-title { font-size:12px; font-weight:700; color:#334155; }
-.secret-sub { font-size:10px; color:#94a3b8; }
+.secret-text-wrap { display:flex; flex-direction:column; align-items:flex-start; gap:2px; }
+.secret-title { font-size:13px; font-weight:700; color:#334155; }
+.secret-sub { font-size:11px; color:#94a3b8; }
 .secret-chevron { font-size:10px; color:#cbd5e1; transition:transform .3s; }
 .secret-btn.open .secret-chevron { transform:rotate(180deg); }
 
 .secret-panel { max-height:0; overflow:hidden; transition:max-height .4s ease; background:#f8fafc; border-top:1px solid #e2e8f0; }
 .secret-panel.open { max-height:700px; }
-.secret-inner { padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
-.secret-agent-header { display:flex; align-items:center; gap:8px; padding-bottom:10px; border-bottom:1px solid #e2e8f0; }
-.secret-agent-badge { font-size:10px; font-weight:700; letter-spacing:.8px; padding:3px 10px; border-radius:20px; }
+.secret-inner { padding:18px; display:flex; flex-direction:column; gap:12px; }
+.secret-agent-header { display:flex; align-items:center; gap:8px; padding-bottom:12px; border-bottom:1px solid #e2e8f0; }
+.secret-agent-badge { font-size:10px; font-weight:700; letter-spacing:.8px; padding:4px 10px; border-radius:20px; }
 .secret-agent-badge[data-a="BA"]    { background:#eff6ff; color:#2563eb; }
 .secret-agent-badge[data-a="STOCK"] { background:#ecfeff; color:#0891b2; }
 .secret-agent-badge[data-a="PM"]    { background:#f5f3ff; color:#7c3aed; }
 .secret-agent-sub { font-size:11px; color:#94a3b8; font-weight:600; }
-.s-point { display:flex; gap:8px; align-items:flex-start; margin-bottom:6px; }
-.s-point-dot { width:4px; height:4px; border-radius:50%; flex-shrink:0; margin-top:8px; background:#94a3b8; }
-.s-text { font-size:13px; color:#475569; line-height:1.75; }
+.s-point { display:flex; gap:10px; align-items:flex-start; }
+.s-point-dot { width:4px; height:4px; border-radius:50%; flex-shrink:0; margin-top:9px; background:#94a3b8; }
+.s-text { font-size:14px; color:#475569; line-height:1.75; }
 
-.headlines-card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; }
-.hl-label { padding:12px 18px 8px; font-size:10px; font-weight:700; color:#94a3b8; letter-spacing:1.5px; text-transform:uppercase; }
-.hl-item { padding:11px 18px; border-top:1px solid #f1f5f9; display:flex; gap:10px; align-items:flex-start; cursor:pointer; }
+/* ── 헤드라인 ── */
+.headlines-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; overflow:hidden; }
+.hl-label { padding:14px 18px 8px; font-size:10px; font-weight:700; color:#94a3b8; letter-spacing:1.5px; text-transform:uppercase; }
+.hl-item { padding:14px 18px; border-top:1px solid #f1f5f9; display:flex; gap:12px; align-items:flex-start; cursor:pointer; min-height:60px; }
 .hl-item:active { background:#f8fafc; }
 .hl-num { font-size:11px; font-weight:700; color:#cbd5e1; flex-shrink:0; padding-top:2px; }
-.hl-title { font-size:13px; font-weight:600; color:#334155; line-height:1.5; margin-bottom:2px; }
-.hl-summary { font-size:11px; color:#94a3b8; line-height:1.5; }
+.hl-title { font-size:14px; font-weight:600; color:#334155; line-height:1.5; margin-bottom:3px; }
+.hl-summary { font-size:12px; color:#94a3b8; line-height:1.55; }
 
-.fab { position:fixed; bottom:28px; right:20px; background:#1e293b; color:#fff; border:none; border-radius:50px; padding:12px 18px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 20px rgba(0,0,0,.15); z-index:100; }
+/* ── FAB ── */
+.fab { position:fixed; bottom:32px; right:20px; background:#1e293b; color:#fff; border:none; border-radius:50px; padding:14px 20px; font-size:14px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 24px rgba(0,0,0,.18); z-index:100; min-height:50px; }
+.fab:active { transform:scale(.97); }
 
-.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:300; align-items:flex-end; }
+/* ── 모달 ── */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:300; align-items:flex-end; }
 .modal-overlay.open { display:flex; }
-.modal { background:#fff; border-radius:20px 20px 0 0; padding:24px 20px 40px; width:100%; max-height:85vh; overflow-y:auto; }
-.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
-.modal-title { font-size:16px; font-weight:700; color:#0f172a; }
-.modal-close { font-size:20px; color:#94a3b8; border:none; background:none; cursor:pointer; }
-.modal-notice { font-size:11px; color:#f59e0b; background:#fffbeb; border:1px solid #fde68a; border-radius:8px; padding:8px 12px; margin-bottom:16px; display:flex; align-items:center; gap:6px; }
-.form-label { font-size:12px; font-weight:600; color:#64748b; margin-bottom:6px; display:block; }
-.form-textarea { width:100%; border:1.5px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:14px; color:#1e293b; margin-bottom:14px; outline:none; font-family:inherit; resize:none; height:100px; }
-.rating-row { display:flex; gap:8px; margin-bottom:14px; }
-.rating-btn { flex:1; padding:10px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:20px; background:#fff; cursor:pointer; }
+.modal { background:#fff; border-radius:24px 24px 0 0; padding:28px 20px 48px; width:100%; max-height:90vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.modal-handle { width:36px; height:4px; background:#e2e8f0; border-radius:2px; margin:0 auto 20px; }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
+.modal-title { font-size:17px; font-weight:700; color:#0f172a; }
+.modal-close { font-size:20px; color:#94a3b8; border:none; background:none; cursor:pointer; padding:8px; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center; }
+.modal-notice { font-size:12px; color:#f59e0b; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:10px 14px; margin-bottom:18px; display:flex; align-items:center; gap:6px; line-height:1.5; }
+.form-label { font-size:13px; font-weight:600; color:#64748b; margin-bottom:8px; display:block; }
+.form-textarea { width:100%; border:1.5px solid #e2e8f0; border-radius:12px; padding:12px 16px; font-size:15px; color:#1e293b; margin-bottom:16px; outline:none; font-family:inherit; resize:none; height:110px; -webkit-appearance:none; }
+.form-textarea:focus { border-color:#2563eb; }
+.rating-row { display:flex; gap:8px; margin-bottom:18px; }
+.rating-btn { flex:1; padding:12px 6px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:22px; background:#fff; cursor:pointer; min-height:52px; }
 .rating-btn.selected { border-color:#2563eb; background:#eff6ff; }
-.submit-btn { width:100%; background:#2563eb; color:#fff; border:none; border-radius:12px; padding:14px; font-size:14px; font-weight:700; cursor:pointer; }
-.kw-list { display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
-.kw-manage-item { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; }
-.kw-manage-name { font-size:14px; font-weight:600; color:#1e293b; }
-.kw-del-btn { background:none; border:none; color:#94a3b8; font-size:16px; cursor:pointer; padding:4px; }
+.rating-btn:active { transform:scale(.94); }
+.submit-btn { width:100%; background:#2563eb; color:#fff; border:none; border-radius:14px; padding:16px; font-size:15px; font-weight:700; cursor:pointer; min-height:52px; transition:background .15s; }
+.submit-btn:active { background:#1d4ed8; }
+.submit-btn:disabled { background:#94a3b8; cursor:default; }
+
+/* 피드백 접수 완료 상태 */
+.feedback-done { text-align:center; padding:32px 0 16px; }
+.feedback-done-icon { font-size:48px; margin-bottom:12px; }
+.feedback-done-title { font-size:17px; font-weight:700; color:#0f172a; margin-bottom:6px; }
+.feedback-done-sub { font-size:13px; color:#94a3b8; margin-bottom:28px; line-height:1.6; }
+.feedback-new-btn { width:100%; background:#f1f5f9; color:#475569; border:none; border-radius:14px; padding:16px; font-size:15px; font-weight:600; cursor:pointer; min-height:52px; }
+.feedback-new-btn:active { background:#e2e8f0; }
+
+/* ── 키워드 관리 ── */
+.kw-list { display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+.kw-manage-item { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; min-height:52px; }
+.kw-manage-name { font-size:15px; font-weight:600; color:#1e293b; }
+.kw-del-btn { background:none; border:none; color:#94a3b8; font-size:18px; cursor:pointer; padding:8px; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center; }
 .kw-add-row { display:flex; gap:8px; }
-.kw-add-input { flex:1; border:1.5px solid #e2e8f0; border-radius:10px; padding:10px 14px; font-size:14px; outline:none; font-family:inherit; }
+.kw-add-input { flex:1; border:1.5px solid #e2e8f0; border-radius:12px; padding:12px 16px; font-size:15px; outline:none; font-family:inherit; min-height:50px; -webkit-appearance:none; }
 .kw-add-input:focus { border-color:#2563eb; }
-.kw-add-btn { background:#2563eb; color:#fff; border:none; border-radius:10px; padding:10px 16px; font-size:13px; font-weight:700; cursor:pointer; }
+.kw-add-btn { background:#2563eb; color:#fff; border:none; border-radius:12px; padding:12px 18px; font-size:14px; font-weight:700; cursor:pointer; min-height:50px; white-space:nowrap; }
+.kw-add-btn:active { background:#1d4ed8; }
 
 @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 </style>
@@ -212,7 +237,11 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 <!-- 키워드 관리 모달 -->
 <div class="modal-overlay" id="kw-modal" onclick="closeModal('kw-modal',event)">
   <div class="modal">
-    <div class="modal-header"><span class="modal-title">키워드 관리</span><button class="modal-close" onclick="closeModal('kw-modal')">✕</button></div>
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">키워드 관리</span>
+      <button class="modal-close" onclick="closeModal('kw-modal')">✕</button>
+    </div>
     <div class="modal-notice">⏰ 변경 사항은 내일 오전 9시 브리핑부터 적용됩니다.</div>
     <label class="form-label">등록된 키워드 (최대 5개)</label>
     <div class="kw-list" id="kw-manage-list"></div>
@@ -226,19 +255,33 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 
 <!-- 피드백 모달 -->
 <div class="modal-overlay" id="feedback-modal" onclick="closeModal('feedback-modal',event)">
-  <div class="modal">
-    <div class="modal-header"><span class="modal-title">만족도 & 건의사항</span><button class="modal-close" onclick="closeModal('feedback-modal')">✕</button></div>
-    <label class="form-label">오늘 브리핑은 어떠셨나요?</label>
-    <div class="rating-row">
-      <button class="rating-btn" onclick="selectRating(this)">😞</button>
-      <button class="rating-btn" onclick="selectRating(this)">😐</button>
-      <button class="rating-btn" onclick="selectRating(this)">🙂</button>
-      <button class="rating-btn" onclick="selectRating(this)">😊</button>
-      <button class="rating-btn" onclick="selectRating(this)">🤩</button>
+  <div class="modal" id="feedback-modal-inner">
+    <div class="modal-handle"></div>
+    <div id="feedback-form-view">
+      <div class="modal-header">
+        <span class="modal-title">만족도 & 건의사항</span>
+        <button class="modal-close" onclick="closeModal('feedback-modal')">✕</button>
+      </div>
+      <label class="form-label">오늘 브리핑은 어떠셨나요?</label>
+      <div class="rating-row" id="rating-row">
+        <button class="rating-btn" onclick="selectRating(this,1)">😞</button>
+        <button class="rating-btn" onclick="selectRating(this,2)">😐</button>
+        <button class="rating-btn" onclick="selectRating(this,3)">🙂</button>
+        <button class="rating-btn" onclick="selectRating(this,4)">😊</button>
+        <button class="rating-btn" onclick="selectRating(this,5)">🤩</button>
+      </div>
+      <label class="form-label">건의사항 또는 개선 요청</label>
+      <textarea class="form-textarea" id="feedback-text" placeholder="자유롭게 남겨주세요. 에이전트 개선에 반영됩니다."></textarea>
+      <button class="submit-btn" id="feedback-submit-btn" onclick="submitFeedback()">제출하기</button>
     </div>
-    <label class="form-label">건의사항 또는 개선 요청</label>
-    <textarea class="form-textarea" placeholder="자유롭게 남겨주세요. 에이전트 개선에 반영됩니다."></textarea>
-    <button class="submit-btn">제출하기</button>
+    <div id="feedback-done-view" style="display:none;">
+      <div class="feedback-done">
+        <div class="feedback-done-icon">✅</div>
+        <div class="feedback-done-title">접수되었습니다!</div>
+        <div class="feedback-done-sub">소중한 의견 감사해요.<br>에이전트 개선에 반영하겠습니다.</div>
+        <button class="feedback-new-btn" onclick="resetFeedback()">+ 새 의견 남기기</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -255,25 +298,23 @@ let allDates     = [];
 let reportData   = null;
 let kwNames      = [];
 let userKeywords = [];
+let selectedRating = 0;
 
 const AGENT_KEY  = { BA:'ba_brief', STOCK:'securities_brief', PM:'pm_brief' };
 const AGENT_NAME = { BA:'비즈니스 분석', STOCK:'주식 브리핑', PM:'기획 브리핑' };
 const AGENT_ICON = { BA:'📊', STOCK:'📈', PM:'🎯' };
 
-/* ── JSON 브리프 파싱 (구버전 텍스트 폴백 포함) ── */
+/* ── JSON 브리프 파싱 ── */
 function getSummary(brief) {
   if (!brief) return '분석 중...';
   if (typeof brief === 'object') return brief.summary || '분석 중...';
-  // 폴백: 구버전 텍스트
   return brief.split('\n').find(l => l.trim().length > 20)?.trim() || '분석 중...';
 }
-
 function getPoints(brief) {
   if (!brief) return [];
   if (typeof brief === 'object') return brief.points || [];
   return [];
 }
-
 function getDeepLines(brief) {
   if (!brief) return [];
   if (typeof brief === 'object') return brief.deep || [];
@@ -541,6 +582,51 @@ async function removeKeyword(kw) {
   renderKwManage();
 }
 
+/* ── 피드백 ── */
+function selectRating(el, score) {
+  selectedRating = score;
+  document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function submitFeedback() {
+  const text   = document.getElementById('feedback-text').value.trim();
+  const btn    = document.getElementById('feedback-submit-btn');
+
+  if (!selectedRating && !text) return;
+
+  btn.disabled = true;
+  btn.textContent = '제출 중...';
+
+  try {
+    await sc.from('feedback').insert({
+      user_id:       window.CURRENT_USER.id,
+      user_email:    window.CURRENT_USER.email,
+      rating:        selectedRating || null,
+      feedback_text: text || null,
+      report_date:   curDate,
+      created_at:    new Date().toISOString()
+    });
+  } catch(e) {
+    console.error('피드백 저장 오류:', e);
+  }
+
+  // 접수 완료 화면 전환
+  document.getElementById('feedback-form-view').style.display = 'none';
+  document.getElementById('feedback-done-view').style.display = 'block';
+}
+
+function resetFeedback() {
+  selectedRating = 0;
+  document.getElementById('feedback-text').value = '';
+  document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+  const btn = document.getElementById('feedback-submit-btn');
+  btn.disabled = false;
+  btn.textContent = '제출하기';
+  document.getElementById('feedback-done-view').style.display = 'none';
+  document.getElementById('feedback-form-view').style.display = 'block';
+}
+
 /* ── DD / 접기 / 스크롤 ── */
 function toggleDD(id, e) {
   e.stopPropagation();
@@ -593,14 +679,17 @@ function toggleSecret(i) {
 }
 
 /* ── 모달 ── */
-function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  // 피드백 모달 열 때 항상 폼 상태로
+  if (id === 'feedback-modal') {
+    document.getElementById('feedback-form-view').style.display = 'block';
+    document.getElementById('feedback-done-view').style.display = 'none';
+  }
+}
 function closeModal(id, e) {
   if (!e || e.target.classList.contains('modal-overlay'))
     document.getElementById(id).classList.remove('open');
-}
-function selectRating(el) {
-  document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
 }
 
 /* ── 초기화 ── */
