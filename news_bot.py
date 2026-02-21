@@ -727,6 +727,10 @@ def send_email_report(user_email, report, yt_videos=None):
 # [5] 자율 분석 엔진
 # ──────────────────────────────────────────────
 def run_autonomous_engine():
+    # 09:00 ~ 12:00 KST 사이에만 실행 허용 (의도치 않은 이메일 발송 방지)
+    if not (9 <= NOW.hour < 12):
+        print(f"⏰ [BRIEFING] 현재 시각 {NOW.hour}시 — 브리핑 허용 시간(09~12시)이 아님, 스킵")
+        return
     agents = get_agents()
     print(f"🚀 {TODAY} Sovereign Engine v17.4 가동")
 
@@ -1110,6 +1114,9 @@ if __name__ == "__main__":
     if cron_type == "GOVERNANCE":
         print("🌙 [GOVERNANCE] 23:30 마감 작업 모드")
         manage_deadline_approvals()
+    elif cron_type == "INDUSTRY":
+        print("🌅 [INDUSTRY] 06:00 산업군 모니터링 모드")
+        run_industry_monitor()
     else:
         print("☀️ [BRIEFING] 09:00 정기 브리핑 모드")
         manage_deadline_approvals()
