@@ -351,26 +351,31 @@ def _build_email_html(report):
     bk = report.get("by_keyword", {})
 
     keyword_sections = ""
-    for kw, kd in bk.items():
+    kw_list = list(bk.items())
+
+    for idx, (kw, kd) in enumerate(kw_list):
         articles = kd.get("articles", [])
         ba_brief = kd.get("ba_brief", {})
 
-        # 헤드라인 + AI 요약
+        # 헤드라인 rows
         article_rows = ""
         for a in articles[:3]:
             title      = a.get("title", "")
             pm_summary = a.get("pm_summary", "")
             article_rows += f"""
-            <tr>
-              <td style="padding:10px 0; border-bottom:1px solid #f0f0f0;">
-                <p style="margin:0 0 4px 0; font-size:14px; font-weight:600; color:#1a1a1a; line-height:1.4;">{title}</p>
-                <p style="margin:0; font-size:13px; color:#666; line-height:1.5;">{pm_summary}</p>
-              </td>
-            </tr>"""
+              <tr>
+                <td style="padding:10px 0; border-bottom:1px solid #f0f0f0;">
+                  <p style="margin:0 0 4px 0; font-size:14px; font-weight:600; color:#1a1a1a; line-height:1.4;">{title}</p>
+                  <p style="margin:0; font-size:13px; color:#666; line-height:1.5;">{pm_summary}</p>
+                </td>
+              </tr>"""
 
-        # BA 브리프 — JSON 구조에서 points 사용, 폴백으로 텍스트도 처리
+        # BA 브리프 — JSON 구조 + 폴백
         if isinstance(ba_brief, dict):
-            ba_items = [ba_brief.get("summary", "")] + ba_brief.get("points", [])
+            ba_items = []
+            if ba_brief.get("summary"):
+                ba_items.append(ba_brief["summary"])
+            ba_items += ba_brief.get("points", [])
         else:
             ba_items = [l.strip() for l in str(ba_brief).split('\n') if l.strip()][:5]
 
@@ -379,10 +384,19 @@ def _build_email_html(report):
             for l in ba_items if l
         )
 
+        # 키워드 사이 구분선 (마지막 키워드 제외)
+        divider = ""
+        if idx < len(kw_list) - 1:
+            divider = """
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:40px;">
+                <tr><td style="border-top:1px solid #f0f0f0;"></td></tr>
+              </table>"""
+
         keyword_sections += f"""
-        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:40px;">
           <tr>
             <td>
+              <!-- 키워드 헤더 -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
                 <tr>
                   <td style="border-left:3px solid #2563eb; padding-left:12px;">
@@ -391,6 +405,7 @@ def _build_email_html(report):
                   </td>
                 </tr>
               </table>
+              <!-- 헤드라인 -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
                 <tr>
                   <td style="padding-bottom:8px;">
@@ -399,7 +414,8 @@ def _build_email_html(report):
                 </tr>
                 {article_rows}
               </table>
-              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8faff; border-radius:8px;">
+              <!-- BA 브리프 -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8faff; border-radius:8px; margin-bottom:16px;">
                 <tr>
                   <td style="padding:16px 20px;">
                     <span style="font-size:11px; font-weight:700; color:#2563eb; letter-spacing:1px; text-transform:uppercase;">BUSINESS ANALYSIS</span>
@@ -409,9 +425,18 @@ def _build_email_html(report):
                   </td>
                 </tr>
               </table>
+              <!-- 섹션 CTA -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="right">
+                    <a href="{DASHBOARD_URL}" style="display:inline-block; background:#fff; color:#2563eb; font-size:12px; font-weight:600; text-decoration:none; padding:8px 16px; border-radius:6px; border:1.5px solid #2563eb; letter-spacing:0.2px;">더 자세히 알아보기 →</a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
-        </table>"""
+        </table>
+        {divider}"""
 
     return f"""<!DOCTYPE html>
 <html>
@@ -443,13 +468,6 @@ def _build_email_html(report):
           <tr>
             <td style="background:#fff; padding:32px;">
               {keyword_sections}
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">
-                <tr>
-                  <td align="center" style="padding:24px 0 8px;">
-                    <a href="{DASHBOARD_URL}" style="display:inline-block; background:#2563eb; color:#fff; font-size:14px; font-weight:600; text-decoration:none; padding:14px 36px; border-radius:8px; letter-spacing:0.3px;">전체 분석 대시보드 보기 →</a>
-                  </td>
-                </tr>
-              </table>
             </td>
           </tr>
 
@@ -469,36 +487,6 @@ def _build_email_html(report):
   </table>
 </body>
 </html>"""
-
-def send_email_report(user_email, report):
-    try:
-        html_body = _build_email_html(report)
-        resend.Emails.send({
-            "from":    "Fitz Intelligence <onboarding@resend.dev>",
-            "to":      [user_email],
-            "subject": f"[{TODAY}] Fitz Daily Briefing — 키워드 인사이트",
-            "html":    html_body
-        })
-        print(f"  📧 [{user_email}] 이메일 발송 성공")
-        try:
-            supabase.table("action_logs").insert({
-                "action_type":      "EMAIL_SUCCESS",
-                "target_word":      user_email,
-                "execution_method": "Auto",
-                "details":          f"[{TODAY}] 키워드 리포트 발송 완료"
-            }).execute()
-        except: pass
-
-    except Exception as e:
-        print(f"  ❌ [{user_email}] 이메일 발송 실패: {e}")
-        try:
-            supabase.table("action_logs").insert({
-                "action_type":      "EMAIL_FAIL",
-                "target_word":      user_email,
-                "execution_method": "Auto",
-                "details":          str(e)[:200]
-            }).execute()
-        except: pass
 
 # ──────────────────────────────────────────────
 # [5] 자율 분석 엔진 — by_keyword 구조 (JSON 브리핑)
