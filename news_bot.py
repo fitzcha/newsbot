@@ -97,9 +97,9 @@ def sync_data_to_github():
 def run_self_evolution():
     """
     DEV 안전장치 v1
-    ① 백업 → Supabase DB 영구 저장 (Actions 환경 소멸 대비)
-    ② 문법 검사 실패 시 명시적 롤백 + git push 차단
-    ③ 성공/실패 모두 이메일 알림
+    ① 백업 → Supabase DB 영구 저장
+    ② 문법 검사 실패 시 롤백 + push 차단
+    ③ 성공/실패 이메일 알림
     """
     task     = None
     cur_code = None
@@ -170,7 +170,7 @@ def run_self_evolution():
         m        = re.search(r"```python\s+(.*?)\s+```", raw, re.DOTALL)
         new_code = m.group(1).strip() if m else raw.strip()
 
-        # ② 문법 검사 → 실패 시 롤백 + 알림, git push 완전 차단
+        # ② 문법 검사 → 실패 시 롤백 + push 차단
         try:
             compile(new_code, file_path, 'exec')
             print(f"  ✅ [DEV] 문법 검사 통과")
@@ -178,7 +178,6 @@ def run_self_evolution():
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(cur_code)
             print(f"  🚨 [DEV] 문법 오류 감지 → 롤백 완료, push 차단")
-
             err_detail = (
                 f"작업: {task['title']}\n"
                 f"오류 유형: SyntaxError\n"
@@ -188,7 +187,6 @@ def run_self_evolution():
                 f"백업 ID는 Supabase code_backups 테이블에서 확인하세요."
             )
             _notify(f"문법 오류 감지 — '{task['title']}' 롤백 완료", err_detail, is_fail=True)
-
             try:
                 supabase.table("action_logs").insert({
                     "action_type": "DEV_SYNTAX_ROLLBACK",
@@ -197,7 +195,6 @@ def run_self_evolution():
                     "details": f"SyntaxError line {syn_err.lineno}: {syn_err.msg}"[:200]
                 }).execute()
             except: pass
-
             supabase.table("dev_backlog").update({"status": "SYNTAX_ERROR"})\
                 .eq("id", task['id']).execute()
             return
@@ -210,7 +207,7 @@ def run_self_evolution():
             'git config --global user.name "Fitz-Dev"',
             'git config --global user.email "positivecha@gmail.com"',
             'git add .',
-            f'git commit -m "🤖 [v17.0] {task["title"]}"',
+            f'git commit -m "🤖 [v17.1] {task["title"]}"',
             'git push'
         ]:
             subprocess.run(cmd, shell=True)
@@ -281,27 +278,23 @@ def run_agent_self_reflection(report_id):
 def manage_deadline_approvals():
     """
     23:30 자동 승인 후 개발 필요 안건을 dev_backlog에 자동 등록.
-    - pending_approvals.needs_dev = True 인 안건만 백로그 등록
+    - needs_dev = True 안건만 백로그 등록
     - source_approval_id로 매핑 (직접 요청은 NULL)
-    - 백로그 초기 상태는 PENDING_MASTER (대표님 최종 승인 대기)
+    - 초기 상태: PENDING_MASTER (대표님 최종 승인 대기)
     """
     if NOW.hour == 23 and NOW.minute >= 30:
         try:
             pending = supabase.table("pending_approvals").select("*").eq("status", "PENDING").execute()
             for item in (pending.data or []):
-                # 에이전트 지침 업데이트
                 supabase.table("agents").update({
                     "instruction": item['proposed_instruction']
                 }).eq("agent_role", item['agent_role']).execute()
 
-                # 안건 APPROVED 처리
                 supabase.table("pending_approvals").update({
                     "status": "APPROVED"
                 }).eq("id", item['id']).execute()
 
-                # 개발 필요 안건 → dev_backlog 자동 등록
                 if item.get('needs_dev'):
-                    # 중복 등록 방지
                     dup = supabase.table("dev_backlog")\
                         .select("id")\
                         .eq("source_approval_id", item['id'])\
@@ -324,30 +317,140 @@ def manage_deadline_approvals():
             print(f"🚨 [Approvals] 처리 실패: {e}")
 
 # ──────────────────────────────────────────────
-# [4] 이메일 발송 — by_keyword 구조 대응
+# [4] 이메일 발송 — 뉴스레터 템플릿 v2
 # ──────────────────────────────────────────────
-def send_email_report(user_email, report):
-    """by_keyword 구조에서 키워드별 ba_brief를 모아 이메일 발송."""
-    try:
-        bk       = report.get("by_keyword", {})
-        sections = []
-        for kw, kd in bk.items():
-            ba = kd.get("ba_brief", "").replace('\n', '<br>')
-            sections.append(f"<h3>#{kw}</h3><p>{ba}</p><hr>")
+DASHBOARD_URL = "https://fitzcha.github.io/newsbot/app.html"
 
-        html_body = f"""
-        <h2>📊 [{TODAY}] Fitz Intelligence 리포트</h2>
-        {''.join(sections)}
-        <p style='color:#999; font-size:0.85em;'>app.html에서 전체 분석을 확인하세요.</p>
-        """
+def _build_email_html(report):
+    """키워드별 헤드라인 + AI요약 + BA브리프 뉴스레터 템플릿"""
+    bk = report.get("by_keyword", {})
+
+    keyword_sections = ""
+    for kw, kd in bk.items():
+        articles = kd.get("articles", [])
+        ba_brief = kd.get("ba_brief", "")
+
+        # 헤드라인 + AI 요약
+        article_rows = ""
+        for a in articles[:3]:
+            title      = a.get("title", "")
+            pm_summary = a.get("pm_summary", "")
+            article_rows += f"""
+            <tr>
+              <td style="padding:10px 0; border-bottom:1px solid #f0f0f0;">
+                <p style="margin:0 0 4px 0; font-size:14px; font-weight:600; color:#1a1a1a; line-height:1.4;">{title}</p>
+                <p style="margin:0; font-size:13px; color:#666; line-height:1.5;">{pm_summary}</p>
+              </td>
+            </tr>"""
+
+        # BA 브리프 — 5줄 요약
+        ba_lines = [l.strip() for l in ba_brief.split('\n') if l.strip()][:5]
+        ba_html  = "".join(
+            f'<li style="margin-bottom:6px; color:#444; font-size:13px; line-height:1.6;">{l}</li>'
+            for l in ba_lines
+        )
+
+        keyword_sections += f"""
+        <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:32px;">
+          <tr>
+            <td>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+                <tr>
+                  <td style="border-left:3px solid #2563eb; padding-left:12px;">
+                    <span style="font-size:11px; font-weight:700; color:#2563eb; letter-spacing:1.5px; text-transform:uppercase;">KEYWORD</span>
+                    <h2 style="margin:2px 0 0 0; font-size:20px; font-weight:700; color:#111;"># {kw}</h2>
+                  </td>
+                </tr>
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+                <tr>
+                  <td style="padding-bottom:8px;">
+                    <span style="font-size:11px; font-weight:700; color:#888; letter-spacing:1px; text-transform:uppercase;">TODAY'S HEADLINES</span>
+                  </td>
+                </tr>
+                {article_rows}
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8faff; border-radius:8px;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <span style="font-size:11px; font-weight:700; color:#2563eb; letter-spacing:1px; text-transform:uppercase;">BUSINESS ANALYSIS</span>
+                    <ul style="margin:10px 0 0 0; padding-left:18px;">
+                      {ba_html}
+                    </ul>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>"""
+
+    return f"""<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0; padding:0; background:#f4f4f5; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5; padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
+
+          <!-- 헤더 -->
+          <tr>
+            <td style="background:#0f172a; border-radius:12px 12px 0 0; padding:28px 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <span style="font-size:11px; font-weight:700; color:#64748b; letter-spacing:2px; text-transform:uppercase;">FITZ INTELLIGENCE</span>
+                    <h1 style="margin:6px 0 0 0; font-size:22px; font-weight:700; color:#fff;">Daily Briefing</h1>
+                  </td>
+                  <td align="right" style="vertical-align:top;">
+                    <span style="font-size:12px; color:#64748b;">{TODAY}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- 본문 -->
+          <tr>
+            <td style="background:#fff; padding:32px;">
+              {keyword_sections}
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">
+                <tr>
+                  <td align="center" style="padding:24px 0 8px;">
+                    <a href="{DASHBOARD_URL}" style="display:inline-block; background:#2563eb; color:#fff; font-size:14px; font-weight:600; text-decoration:none; padding:14px 36px; border-radius:8px; letter-spacing:0.3px;">전체 분석 대시보드 보기 →</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- 푸터 -->
+          <tr>
+            <td style="background:#f8faff; border-radius:0 0 12px 12px; padding:20px 32px; text-align:center;">
+              <p style="margin:0; font-size:11px; color:#94a3b8; line-height:1.6;">
+                Fitz Intelligence · 매일 오전 9시 자동 발송<br>
+                © 2026 Fitz. All rights reserved.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+def send_email_report(user_email, report):
+    try:
+        html_body = _build_email_html(report)
         resend.Emails.send({
             "from":    "Fitz Intelligence <onboarding@resend.dev>",
             "to":      [user_email],
-            "subject": f"[{TODAY}] Fitz 키워드별 인사이트 리포트",
+            "subject": f"[{TODAY}] Fitz Daily Briefing — 키워드 인사이트",
             "html":    html_body
         })
         print(f"  📧 [{user_email}] 이메일 발송 성공")
-        # ⑤ 성공 결과 action_logs 기록
         try:
             supabase.table("action_logs").insert({
                 "action_type":      "EMAIL_SUCCESS",
@@ -373,7 +476,7 @@ def send_email_report(user_email, report):
 # ──────────────────────────────────────────────
 def run_autonomous_engine():
     agents = get_agents()
-    print(f"🚀 {TODAY} Sovereign Engine v17.0 가동")
+    print(f"🚀 {TODAY} Sovereign Engine v17.1 가동")
 
     user_res = supabase.table("user_settings").select("*").execute()
     for user in (user_res.data or []):
@@ -383,7 +486,6 @@ def run_autonomous_engine():
             keywords   = user.get('keywords', [])[:5]
             if not keywords: continue
 
-            # 중복 실행 방지
             chk = supabase.table("reports").select("id").eq("user_id", user_id).eq("report_date", TODAY).execute()
             if chk.data:
                 print(f"⏭️  [Skip] {user_email} — 이미 발송 완료")
@@ -487,11 +589,9 @@ if __name__ == "__main__":
     cron_type = os.environ.get("CRON_TYPE", "BRIEFING")
 
     if cron_type == "GOVERNANCE":
-        # 23:30 KST — 승인/마감 처리만, 분석 엔진 스킵
         print("🌙 [GOVERNANCE] 23:30 마감 작업 모드")
         manage_deadline_approvals()
     else:
-        # 09:00 KST / 수동 실행 — 전체 실행
         print("☀️ [BRIEFING] 09:00 정기 브리핑 모드")
         manage_deadline_approvals()
         run_self_evolution()
