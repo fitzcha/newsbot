@@ -55,17 +55,22 @@ YT_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
 
 EXPERT_SUBSCRIBER_THRESHOLD = 100_000
 
+# ──────────────────────────────────────────────
+# [과금] Gemini 단가 + 누적 카운터
+# ──────────────────────────────────────────────
+_GEMINI_PRICE = {
+    "gemini-2.0-flash": {"input": 0.000075, "output": 0.0003},
+}
+_AVG_INPUT_TOKENS  = 800
+_AVG_OUTPUT_TOKENS = 300
+_gemini_call_count = 0
+_gemini_cost_usd   = 0.0
+
 
 # ══════════════════════════════════════════════
-# [공통] 재시도 래퍼 — 1순위 핵심
+# [공통] 재시도 래퍼
 # ══════════════════════════════════════════════
 def _retry(fn, label="", max_attempts=3, base_wait=5, retryable_codes=("429","500","503","502")):
-    """
-    fn() 을 최대 max_attempts 회 시도.
-    retryable_codes 포함 오류 → exponential backoff 후 재시도.
-    그 외 오류 → 즉시 raise.
-    성공 시 결과 반환.
-    """
     last_err = None
     for attempt in range(max_attempts):
         try:
@@ -75,7 +80,7 @@ def _retry(fn, label="", max_attempts=3, base_wait=5, retryable_codes=("429","50
             last_err = e
             is_retryable = any(code in err for code in retryable_codes)
             if is_retryable and attempt < max_attempts - 1:
-                wait = base_wait * (2 ** attempt)   # 5s → 10s → 20s
+                wait = base_wait * (2 ** attempt)
                 print(f"  ⏳ [{label}] 재시도 대기 {wait}s ({attempt+1}/{max_attempts}) — {err[:60]}")
                 time.sleep(wait)
             else:
@@ -84,13 +89,12 @@ def _retry(fn, label="", max_attempts=3, base_wait=5, retryable_codes=("429","50
 
 
 def _sb_write(fn, label=""):
-    """Supabase 쓰기 전용 retry — 실패 시 raise (silent pass 금지)."""
     return _retry(fn, label=f"SB:{label}", max_attempts=3, base_wait=3,
                   retryable_codes=("500","503","502","timeout","connection"))
 
 
 # ──────────────────────────────────────────────
-# [공통] Gmail SMTP 발송 헬퍼
+# [공통] Gmail SMTP
 # ──────────────────────────────────────────────
 def _send_gmail(to, subject: str, html: str):
     recipients = [to] if isinstance(to, str) else to
@@ -105,20 +109,17 @@ def _send_gmail(to, subject: str, html: str):
 
 
 def _send_gmail_retry(to, subject: str, html: str, max_attempts=3):
-    """Gmail 발송 — 실패 시 최대 3회 retry."""
     def _try(): _send_gmail(to, subject, html)
     _retry(_try, label=f"Gmail:{subject[:30]}", max_attempts=max_attempts,
            base_wait=10, retryable_codes=("SMTPException","Connection","timeout","SMTP"))
 
 
 # ══════════════════════════════════════════════
-# [공통] 파이프라인 장애 감지 + 알림 — 2순위 핵심
+# [공통] 파이프라인 장애 감지 + 알림
 # ══════════════════════════════════════════════
-# 실행 중 발생한 모든 장애를 여기에 누적 → 완료 후 한 번에 알림
 _pipeline_errors: list[dict] = []
 
 def _record_error(stage: str, target: str, err: Exception | str):
-    """장애 기록 (메모리 누적 + Supabase action_logs)."""
     msg = str(err)
     _pipeline_errors.append({"stage": stage, "target": target, "error": msg})
     print(f"  🔴 [FAULT] {stage} | {target} | {msg[:80]}")
@@ -129,24 +130,20 @@ def _record_error(stage: str, target: str, err: Exception | str):
             "execution_method": stage,
             "details":          msg[:300],
         }).execute()
-    except: pass   # 로깅 실패 자체는 삼킴
+    except: pass
 
 
 def _send_pipeline_summary(stats: dict):
-    """
-    브리핑 완료 후 관리자에게 요약 알림 발송.
-    stats = {"total": N, "success": N, "failed": N, "skipped": N,
-             "keyword_ok": [...], "keyword_fail": [...]}
-    """
     ok    = stats.get("success", 0)
     fail  = stats.get("failed",  0)
     skip  = stats.get("skipped", 0)
     total = stats.get("total",   0)
+    g_calls = stats.get("gemini_calls", 0)
+    g_cost  = stats.get("gemini_cost",  0.0)
 
     status_icon = "✅" if fail == 0 else ("⚠️" if ok > 0 else "🚨")
     subject = f"{status_icon} [{TODAY}] Fitz 브리핑 완료 — 성공 {ok}/{total}"
 
-    # 장애 목록
     error_rows = ""
     for e in _pipeline_errors:
         error_rows += (
@@ -176,6 +173,8 @@ def _send_pipeline_summary(stats: dict):
           <tr><td>✅ 성공</td><td style='color:#16a34a'><b>{ok}명</b></td></tr>
           <tr><td>❌ 실패</td><td style='color:#dc2626'><b>{fail}명</b></td></tr>
           <tr><td>⏭️ 스킵</td><td style='color:#9333ea'><b>{skip}명</b></td></tr>
+          <tr><td>🤖 Gemini 호출</td><td><b>{g_calls}회</b></td></tr>
+          <tr><td>💰 추정 비용</td><td style='color:#d97706'><b>${g_cost:.4f} USD</b></td></tr>
         </table>
         <hr>
         <p><b>✅ 성공 키워드:</b> {kw_ok}</p>
@@ -202,7 +201,7 @@ def log_to_db(user_id, target_word, action="분석", method="Auto"):
             "target_word": target_word, "execution_method": method, "details": "Success"
         }).execute(), label="log_to_db")
     except Exception as e:
-        print(f"  ⚠️ [log_to_db] 기록 실패 (비치명): {e}")
+        print(f"  ⚠️ [log_to_db] 기록 실패: {e}")
 
 def record_performance(user_id, keyword, count):
     try:
@@ -211,7 +210,50 @@ def record_performance(user_id, keyword, count):
             "hit_count": count, "report_date": TODAY
         }).execute(), label="record_perf")
     except Exception as e:
-        print(f"  ⚠️ [record_performance] 기록 실패 (비치명): {e}")
+        print(f"  ⚠️ [record_performance] 기록 실패: {e}")
+
+
+# ══════════════════════════════════════════════
+# [과금] 호출 기록 + Supabase 통계
+# ══════════════════════════════════════════════
+def record_cost(call_type: str = "text", model: str = "gemini-2.0-flash"):
+    global _gemini_call_count, _gemini_cost_usd
+    price = _GEMINI_PRICE.get(model, _GEMINI_PRICE["gemini-2.0-flash"])
+    cost  = (_AVG_INPUT_TOKENS * price["input"] + _AVG_OUTPUT_TOKENS * price["output"]) / 1000
+    _gemini_call_count += 1
+    _gemini_cost_usd   += cost
+    try:
+        _sb_write(lambda: supabase.table("cost_log").insert({
+            "log_date":   TODAY,
+            "call_type":  call_type,
+            "model":      model,
+            "call_count": 1,
+            "cost_usd":   round(cost, 6),
+        }).execute(), label="cost_log")
+    except Exception as e:
+        print(f"  ⚠️ [Cost] 기록 실패 (비치명): {e}")
+
+
+def record_supabase_stats():
+    tables = ["action_logs", "reports", "keyword_analysis_cache",
+              "youtube_cache", "cost_log", "pending_approvals", "dev_backlog"]
+    counts = {}
+    for t in tables:
+        try:
+            res = supabase.table(t).select("id", count="exact").execute()
+            counts[t] = res.count or 0
+        except:
+            counts[t] = -1
+    try:
+        _sb_write(lambda: supabase.table("supabase_stats").upsert({
+            "stat_date":  TODAY,
+            "row_counts": counts,
+            "total_rows": sum(v for v in counts.values() if v >= 0),
+        }, on_conflict="stat_date").execute(), label="supabase_stats")
+        print(f"📊 [Cost] Supabase row 통계 저장 완료: 총 {sum(v for v in counts.values() if v>=0):,}행")
+    except Exception as e:
+        print(f"  ⚠️ [Cost] Supabase 통계 저장 실패: {e}")
+
 
 def get_agents():
     res = supabase.table("agents").select("*").execute()
@@ -232,11 +274,12 @@ def call_agent(prompt, agent_info, persona_override=None, force_one_line=False):
             model='gemini-2.0-flash',
             contents=f"당신은 {role}입니다.\n지침: {agent_info['instruction']}\n\n입력: {fp}"
         )
-        output = res.text.strip()
-        return output.split('\n')[0] if force_one_line else output
+        return res.text.strip().split('\n')[0] if force_one_line else res.text.strip()
 
     try:
-        return _retry(_call, label=f"Gemini:{role}", max_attempts=3, base_wait=5)
+        result = _retry(_call, label=f"Gemini:{role}", max_attempts=3, base_wait=5)
+        record_cost("text")
+        return result
     except Exception as e:
         print(f"  ❌ [Gemini:{role}] 최종 실패: {str(e)[:80]}")
         return "분석 지연 중"
@@ -268,12 +311,13 @@ def call_agent_json(prompt, agent_info, persona_override=None):
         raw = res.text.strip()
         raw = re.sub(r"^```json\s*", "", raw)
         raw = re.sub(r"\s*```$",     "", raw)
-        return json.loads(raw)   # JSONDecodeError는 _retry 밖에서 처리
+        return json.loads(raw)
 
     try:
-        return _retry(_call, label=f"GeminiJSON:{role}", max_attempts=3, base_wait=5)
+        result = _retry(_call, label=f"GeminiJSON:{role}", max_attempts=3, base_wait=5)
+        record_cost("json")
+        return result
     except json.JSONDecodeError:
-        # JSON 파싱 오류는 재시도해도 의미 없음 → 원문 일부 반환
         try:
             raw_text = google_genai.models.generate_content(
                 model='gemini-2.0-flash',
@@ -327,6 +371,7 @@ def call_agent_brief_batch(news_list: list, agents: dict) -> list:
 
     try:
         parsed = _retry(_call, label="Batch", max_attempts=3, base_wait=5)
+        record_cost("batch")
         if len(parsed) == len(news_list):
             return parsed
         result_map = {item.get("idx", i+1): item for i, item in enumerate(parsed)}
@@ -628,7 +673,6 @@ def manage_deadline_approvals():
                     _sb_write(lambda: supabase.table("agents").update({
                         "instruction": item['proposed_instruction']
                     }).eq("agent_role", item['agent_role']).execute(), label="approval_apply")
-
                     _sb_write(lambda: supabase.table("pending_approvals").update({
                         "status": "APPROVED"
                     }).eq("id", item['id']).execute(), label="approval_status")
@@ -652,7 +696,7 @@ def manage_deadline_approvals():
 
 
 # ──────────────────────────────────────────────
-# [4] 이메일 발송 — v18
+# [4] 이메일 발송
 # ──────────────────────────────────────────────
 def _build_email_html(report, yt_videos=None):
     bk        = report.get("by_keyword", {})
@@ -740,22 +784,24 @@ def send_email_report(user_email, report, yt_videos=None):
         _send_gmail_retry(user_email, f"[{TODAY}] Fitz 비즈니스 인사이트 리포트", html)
         print(f"  📧 [Email] {user_email} 발송 완료")
     except Exception as e:
-        raise   # 호출부(_run_autonomous_engine)에서 _record_error 처리
+        raise
 
 
 # ──────────────────────────────────────────────
-# [5] 자율 분석 엔진 — v18 (장애감지 통합)
+# [5] 자율 분석 엔진
 # ──────────────────────────────────────────────
 def run_autonomous_engine():
-    global _pipeline_errors
-    _pipeline_errors = []   # 실행마다 초기화
+    global _pipeline_errors, _gemini_call_count, _gemini_cost_usd
+    _pipeline_errors   = []
+    _gemini_call_count = 0
+    _gemini_cost_usd   = 0.0
 
     agents = get_agents()
-    print(f"🚀 {TODAY} Sovereign Engine v18.0 가동")
+    print(f"🚀 {TODAY} Sovereign Engine v18.1 가동")
 
-    user_res  = supabase.table("user_settings").select("*").execute()
-    stats     = {"total": 0, "success": 0, "failed": 0, "skipped": 0,
-                 "keyword_ok": [], "keyword_fail": []}
+    user_res = supabase.table("user_settings").select("*").execute()
+    stats    = {"total": 0, "success": 0, "failed": 0, "skipped": 0,
+                "keyword_ok": [], "keyword_fail": []}
 
     for user in (user_res.data or []):
         user_id    = user['id']
@@ -851,7 +897,6 @@ def run_autonomous_engine():
                 except Exception as e:
                     _record_error("KEYWORD_ANALYSIS", word, e)
                     stats["keyword_fail"].append(word)
-                    # 키워드 1개 실패해도 나머지는 계속 진행
                     by_keyword[word] = {
                         "ba_brief":         {"summary": f"[분석 실패] {str(e)[:40]}", "points": [], "deep": []},
                         "securities_brief": {"summary": "분석 실패", "points": [], "deep": []},
@@ -866,10 +911,8 @@ def run_autonomous_engine():
 
             all_ctx     = "\n".join(all_articles)
             hr_proposal = call_agent(f"조직 및 인사 관리 제안:\n{all_ctx}", agents['HR'])
-
             final_report = {"by_keyword": by_keyword, "hr_proposal": hr_proposal}
 
-            # ── Supabase 저장 (retry 적용) ──
             try:
                 res = _sb_write(lambda: supabase.table("reports").upsert({
                     "user_id": user_id, "report_date": TODAY,
@@ -883,8 +926,6 @@ def run_autonomous_engine():
             if res.data:
                 report_id = res.data[0]['id']
                 run_agent_self_reflection(report_id)
-
-                # ── 이메일 발송 (retry 적용) ──
                 try:
                     send_email_report(user_email, final_report, all_yt)
                     _sb_write(lambda: supabase.table("reports").update({"email_sent": True})
@@ -902,7 +943,10 @@ def run_autonomous_engine():
     sync_data_to_github()
     run_agent_initiative(by_keyword_all=_collect_all_by_keyword(user_res.data or []))
 
-    # ── 파이프라인 완료 요약 알림 (2순위 핵심) ──
+    # ── 과금 통계 저장 + 파이프라인 요약 알림 ──
+    record_supabase_stats()
+    stats["gemini_calls"] = _gemini_call_count
+    stats["gemini_cost"]  = round(_gemini_cost_usd, 4)
     _send_pipeline_summary(stats)
 
 
@@ -1028,14 +1072,10 @@ def run_agent_initiative(by_keyword_all: dict):
                 add_kws    = [k.strip() for k in (add_m.group(1).split(",")    if add_m    else []) if k.strip()]
                 remove_kws = [k.strip() for k in (remove_m.group(1).split(",") if remove_m else []) if k.strip()]
                 reason     = reason_m.group(1).strip() if reason_m else "KW 자율 분석"
-                if not add_kws and not remove_kws:
-                    structured = proposal
-                else:
-                    structured = (
-                        f"[키워드 관리 제안]\n"
-                        f"✅ 추가: {', '.join(add_kws) or '없음'}\n"
-                        f"❌ 제거: {', '.join(remove_kws) or '없음'}\n\n[근거]\n{reason}"
-                    )
+                structured = (
+                    f"[키워드 관리 제안]\n✅ 추가: {', '.join(add_kws) or '없음'}\n❌ 제거: {', '.join(remove_kws) or '없음'}\n\n[근거]\n{reason}"
+                    if (add_kws or remove_kws) else proposal
+                )
                 _sb_write(lambda: supabase.table("pending_approvals").insert({
                     "agent_role": "KW", "proposed_instruction": structured,
                     "proposal_reason": f"{TODAY} 키워드 제안 — 추가 {len(add_kws)}개 / 제거 {len(remove_kws)}개",
