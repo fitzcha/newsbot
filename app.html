@@ -14,7 +14,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .brand { font-size:14px; font-weight:800; color:#1e293b; }
 .collapse-btn { background:none; border:none; cursor:pointer; padding:6px 10px; border-radius:8px; color:#94a3b8; font-size:12px; font-weight:600; }
 
-/* 접힌 상태 */
 .collapsed-bar { display:none; padding:6px 20px 10px; align-items:center; gap:0; }
 .collapsed-bar.hidden { display:none; }
 .c-chip { position:relative; display:inline-flex; align-items:center; gap:4px; flex-shrink:0; font-size:11px; font-weight:600; padding:5px 10px; border-radius:8px; cursor:pointer; white-space:nowrap; border:1px solid #e2e8f0; background:#f8fafc; color:#475569; user-select:none; }
@@ -23,7 +22,7 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .c-chip.agent-c { background:#eff6ff; border-color:#bfdbfe; color:#2563eb; }
 .c-chip.agent-c[data-a="STOCK"] { background:#ecfeff; border-color:#a5f3fc; color:#0891b2; }
 .c-chip.agent-c[data-a="PM"]    { background:#f5f3ff; border-color:#ddd6fe; color:#7c3aed; }
-.c-chip.kw-c    { background:#f1f5f9; border-color:#e2e8f0; color:#1e293b; }
+.c-chip.kw-c { background:#f1f5f9; border-color:#e2e8f0; color:#1e293b; }
 .c-sep { color:#e2e8f0; font-size:14px; padding:0 5px; flex-shrink:0; }
 
 .c-dropdown { display:none; position:absolute; top:calc(100% + 6px); left:0; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,.1); z-index:400; min-width:140px; overflow:hidden; }
@@ -33,7 +32,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .c-dd-item.active { color:#2563eb; background:#eff6ff; }
 .c-dd-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
 
-/* 펼쳐진 상태 */
 .date-row { padding:0 20px 10px; display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; }
 .date-row::-webkit-scrollbar { display:none; }
 .date-chip { flex-shrink:0; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:600; border:1px solid #e2e8f0; color:#64748b; background:#fff; cursor:pointer; }
@@ -58,14 +56,17 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .top-bar.collapsed .collapsed-bar { display:flex; }
 .top-bar.collapsed .collapsed-bar.hidden { display:none; }
 
-/* 피드 */
+/* 로딩 / 에러 */
+.feed-state { padding:60px 20px; text-align:center; color:#94a3b8; font-size:14px; }
+.skeleton { background:#f1f5f9; border-radius:14px; height:180px; margin-bottom:28px; animation:pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
 .feed { padding:20px; display:flex; flex-direction:column; gap:28px; padding-bottom:80px; }
 .kw-section { display:flex; flex-direction:column; gap:12px; }
 .kw-section-header { display:flex; align-items:center; justify-content:space-between; }
 .kw-title { font-size:18px; font-weight:800; color:#0f172a; }
 .kw-meta { font-size:11px; color:#94a3b8; }
 
-/* 브리핑 카드 */
 .brief-card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; }
 .brief-card[data-a="BA"]    { border-top:3px solid #2563eb; }
 .brief-card[data-a="STOCK"] { border-top:3px solid #0891b2; }
@@ -97,7 +98,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .secret-chevron { font-size:10px; color:#cbd5e1; transition:transform .3s; }
 .secret-btn.open .secret-chevron { transform:rotate(180deg); }
 
-/* 시크릿 패널 */
 .secret-panel { max-height:0; overflow:hidden; transition:max-height .4s ease; background:#f8fafc; border-top:1px solid #e2e8f0; }
 .secret-panel.open { max-height:700px; }
 .secret-inner { padding:16px 18px; display:flex; flex-direction:column; gap:12px; }
@@ -108,9 +108,10 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .secret-agent-badge[data-a="PM"]    { background:#f5f3ff; color:#7c3aed; }
 .secret-agent-sub { font-size:11px; color:#94a3b8; font-weight:600; }
 .s-headline { font-size:13px; font-weight:700; color:#1e293b; line-height:1.55; margin-bottom:6px; }
+.s-point { display:flex; gap:8px; align-items:flex-start; margin-bottom:6px; }
+.s-point-dot { width:4px; height:4px; border-radius:50%; flex-shrink:0; margin-top:8px; background:#94a3b8; }
 .s-text { font-size:13px; color:#475569; line-height:1.75; }
 
-/* 헤드라인 */
 .headlines-card { background:#fff; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; }
 .hl-label { padding:12px 18px 8px; font-size:10px; font-weight:700; color:#94a3b8; letter-spacing:1.5px; text-transform:uppercase; }
 .hl-item { padding:11px 18px; border-top:1px solid #f1f5f9; display:flex; gap:10px; align-items:flex-start; cursor:pointer; }
@@ -121,7 +122,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 
 .fab { position:fixed; bottom:28px; right:20px; background:#1e293b; color:#fff; border:none; border-radius:50px; padding:12px 18px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 20px rgba(0,0,0,.15); z-index:100; }
 
-/* 모달 */
 .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:300; align-items:flex-end; }
 .modal-overlay.open { display:flex; }
 .modal { background:#fff; border-radius:20px 20px 0 0; padding:24px 20px 40px; width:100%; max-height:85vh; overflow-y:auto; }
@@ -155,15 +155,10 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
     <button class="collapse-btn" onclick="toggleTopBar()" id="collapseBtn">접기 ▲</button>
   </div>
 
-  <!-- 접힌 상태 드롭다운 칩 -->
   <div class="collapsed-bar hidden" id="collapsedBar">
     <div class="c-chip date-c" id="chip-date" onclick="toggleDD('dd-date',event)">
-      <span id="chip-date-txt">02.21 오늘</span><span class="arrow">▼</span>
-      <div class="c-dropdown" id="dd-date">
-        <div class="c-dd-item active" onclick="selectDate('02.21 오늘',event)">02.21 오늘</div>
-        <div class="c-dd-item" onclick="selectDate('02.20',event)">02.20</div>
-        <div class="c-dd-item" onclick="selectDate('02.19',event)">02.19</div>
-      </div>
+      <span id="chip-date-txt">불러오는 중...</span><span class="arrow">▼</span>
+      <div class="c-dropdown" id="dd-date"></div>
     </div>
     <span class="c-sep">·</span>
     <div class="c-chip agent-c" id="chip-agent" data-a="BA" onclick="toggleDD('dd-agent',event)">
@@ -176,118 +171,30 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
     </div>
     <span class="c-sep">·</span>
     <div class="c-chip kw-c" id="chip-kw" onclick="toggleDD('dd-kw',event)">
-      <span id="chip-kw-txt"># K-바이오</span><span class="arrow">▼</span>
-      <div class="c-dropdown" id="dd-kw">
-        <div class="c-dd-item active" onclick="jumpKwDD(0,event)"># K-바이오</div>
-        <div class="c-dd-item" onclick="jumpKwDD(1,event)"># AI반도체</div>
-        <div class="c-dd-item" onclick="jumpKwDD(2,event)"># 미국증시</div>
-      </div>
+      <span id="chip-kw-txt">-</span><span class="arrow">▼</span>
+      <div class="c-dropdown" id="dd-kw"></div>
     </div>
   </div>
 
   <div class="collapsible">
-    <div class="date-row">
-      <div class="date-chip active">02.21 오늘</div>
-      <div class="date-chip">02.20</div>
-      <div class="date-chip">02.19</div>
-    </div>
+    <div class="date-row" id="date-row"></div>
     <div class="agent-row">
       <div class="agent-chip active" data-a="BA"    onclick="selectAgent('BA','비즈니스',this)"><span class="agent-dot"></span>비즈니스</div>
       <div class="agent-chip"        data-a="STOCK" onclick="selectAgent('STOCK','주식',this)"><span class="agent-dot"></span>주식</div>
       <div class="agent-chip"        data-a="PM"    onclick="selectAgent('PM','기획',this)"><span class="agent-dot"></span>기획</div>
     </div>
-    <div class="kw-nav">
-      <div class="kw-chip active" id="nav-kw-0" onclick="scrollToKw('kw-0',this)"># K-바이오</div>
-      <div class="kw-chip"        id="nav-kw-1" onclick="scrollToKw('kw-1',this)"># AI반도체</div>
-      <div class="kw-chip"        id="nav-kw-2" onclick="scrollToKw('kw-2',this)"># 미국증시</div>
+    <div class="kw-nav" id="kw-nav">
       <button class="kw-edit-btn" onclick="openModal('kw-modal')">✏️ 수정하기</button>
     </div>
   </div>
 </div>
 
-<div class="feed">
-
-  <!-- K-바이오 -->
-  <div class="kw-section" id="kw-0">
-    <div class="kw-section-header"><span class="kw-title"># K-바이오</span><span class="kw-meta">기사 3건</span></div>
-    <div class="brief-card" id="card-0" data-a="BA">
-      <div class="brief-header">
-        <div class="brief-agent-label" id="card-0-label" data-a="BA">● 비즈니스 분석</div>
-        <div class="brief-summary" id="card-0-summary">CMO 수주·바이오시밀러 글로벌 진출로 K-바이오 성장 모멘텀 강화</div>
-      </div>
-      <div class="brief-points" id="card-0-points"></div>
-      <button class="secret-btn" id="sbtn-0" onclick="toggleSecret(0)">
-        <div class="envelope-wrap" id="env-0"></div>
-        <div class="secret-text-wrap">
-          <span class="secret-title">맞춤 브리핑 도착</span>
-          <span class="secret-sub" id="secret-sub-0">불러오는 중...</span>
-        </div>
-        <span class="secret-chevron">▼</span>
-      </button>
-      <div class="secret-panel" id="s0"><div class="secret-inner" id="si-0"></div></div>
-    </div>
-    <div class="headlines-card">
-      <div class="hl-label">오늘의 헤드라인</div>
-      <div class="hl-item"><span class="hl-num">01</span><div><div class="hl-title">삼성바이오로직스, 유럽 CMO 수주 1조 달성…글로벌 1위 굳히기</div><div class="hl-summary">글로벌 위탁생산 경쟁에서 유럽 시장 점유율 확대</div></div></div>
-      <div class="hl-item"><span class="hl-num">02</span><div><div class="hl-title">셀트리온, 바이오시밀러 미국 FDA 최종 승인…연내 출시 확정</div><div class="hl-summary">미국 시장 진입으로 연간 매출 30% 성장 전망</div></div></div>
-      <div class="hl-item"><span class="hl-num">03</span><div><div class="hl-title">K-바이오 펀드 외국인 순매수 3개월 연속…기관 관심 집중</div><div class="hl-summary">중장기 성장 기대감 반영</div></div></div>
-    </div>
+<div id="feed-wrap">
+  <div class="feed-state">
+    <div class="skeleton"></div>
+    <div class="skeleton" style="height:140px;opacity:.6"></div>
+    <div class="skeleton" style="height:160px;opacity:.4"></div>
   </div>
-
-  <!-- AI반도체 -->
-  <div class="kw-section" id="kw-1">
-    <div class="kw-section-header"><span class="kw-title"># AI반도체</span><span class="kw-meta">기사 3건</span></div>
-    <div class="brief-card" id="card-1" data-a="BA">
-      <div class="brief-header">
-        <div class="brief-agent-label" id="card-1-label" data-a="BA">● 비즈니스 분석</div>
-        <div class="brief-summary" id="card-1-summary">AI 인프라 투자 확대로 반도체 수요 구조적 성장 국면 진입</div>
-      </div>
-      <div class="brief-points" id="card-1-points"></div>
-      <button class="secret-btn" id="sbtn-1" onclick="toggleSecret(1)">
-        <div class="envelope-wrap" id="env-1"></div>
-        <div class="secret-text-wrap">
-          <span class="secret-title">맞춤 브리핑 도착</span>
-          <span class="secret-sub" id="secret-sub-1">불러오는 중...</span>
-        </div>
-        <span class="secret-chevron">▼</span>
-      </button>
-      <div class="secret-panel" id="s1"><div class="secret-inner" id="si-1"></div></div>
-    </div>
-    <div class="headlines-card">
-      <div class="hl-label">오늘의 헤드라인</div>
-      <div class="hl-item"><span class="hl-num">01</span><div><div class="hl-title">엔비디아 GB300 공급 확대…삼성·SK하이닉스 HBM 수혜 전망</div><div class="hl-summary">차세대 GPU 출하량 증가로 HBM 공급 계약 확대 예상</div></div></div>
-      <div class="hl-item"><span class="hl-num">02</span><div><div class="hl-title">미국 AI 데이터센터 투자 2026년 사상 최대…반도체 수요 폭증</div><div class="hl-summary">빅테크 투자 집중으로 AI 가속기·메모리 수요 증가</div></div></div>
-      <div class="hl-item"><span class="hl-num">03</span><div><div class="hl-title">TSMC, 2nm 공정 양산 개시…파운드리 경쟁 본격화</div><div class="hl-summary">삼성전자의 추격 전략과 수율 개선 여부 주목</div></div></div>
-    </div>
-  </div>
-
-  <!-- 미국증시 -->
-  <div class="kw-section" id="kw-2">
-    <div class="kw-section-header"><span class="kw-title"># 미국증시</span><span class="kw-meta">기사 3건</span></div>
-    <div class="brief-card" id="card-2" data-a="BA">
-      <div class="brief-header">
-        <div class="brief-agent-label" id="card-2-label" data-a="BA">● 비즈니스 분석</div>
-        <div class="brief-summary" id="card-2-summary">연준 금리 동결 기조 속 빅테크 중심 상승 모멘텀 유지</div>
-      </div>
-      <div class="brief-points" id="card-2-points"></div>
-      <button class="secret-btn" id="sbtn-2" onclick="toggleSecret(2)">
-        <div class="envelope-wrap" id="env-2"></div>
-        <div class="secret-text-wrap">
-          <span class="secret-title">맞춤 브리핑 도착</span>
-          <span class="secret-sub" id="secret-sub-2">불러오는 중...</span>
-        </div>
-        <span class="secret-chevron">▼</span>
-      </button>
-      <div class="secret-panel" id="s2"><div class="secret-inner" id="si-2"></div></div>
-    </div>
-    <div class="headlines-card">
-      <div class="hl-label">오늘의 헤드라인</div>
-      <div class="hl-item"><span class="hl-num">01</span><div><div class="hl-title">나스닥 연고점 재도전…AI 랠리 지속 여부 주목</div><div class="hl-summary">빅테크 실적 서프라이즈가 상승 동력으로 작용</div></div></div>
-      <div class="hl-item"><span class="hl-num">02</span><div><div class="hl-title">연준, 금리 동결 유지…인하 시점 불확실성 지속</div><div class="hl-summary">파월 의장 발언 후 채권 수익률 소폭 상승</div></div></div>
-      <div class="hl-item"><span class="hl-num">03</span><div><div class="hl-title">달러 강세 지속…신흥국 자금 이탈 압력 확대</div><div class="hl-summary">원/달러 환율 1,440원대, 외국인 매도 지속</div></div></div>
-    </div>
-  </div>
-
 </div>
 
 <button class="fab" onclick="openModal('feedback-modal')">💬 피드백</button>
@@ -298,15 +205,11 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
     <div class="modal-header"><span class="modal-title">키워드 관리</span><button class="modal-close" onclick="closeModal('kw-modal')">✕</button></div>
     <div class="modal-notice">⏰ 변경 사항은 내일 오전 9시 브리핑부터 적용됩니다.</div>
     <label class="form-label">등록된 키워드 (최대 5개)</label>
-    <div class="kw-list">
-      <div class="kw-manage-item"><span class="kw-manage-name"># K-바이오</span><button class="kw-del-btn">✕</button></div>
-      <div class="kw-manage-item"><span class="kw-manage-name"># AI반도체</span><button class="kw-del-btn">✕</button></div>
-      <div class="kw-manage-item"><span class="kw-manage-name"># 미국증시</span><button class="kw-del-btn">✕</button></div>
-    </div>
+    <div class="kw-list" id="kw-manage-list"></div>
     <label class="form-label">키워드 추가</label>
     <div class="kw-add-row">
-      <input class="kw-add-input" type="text" placeholder="새 키워드 입력">
-      <button class="kw-add-btn">추가</button>
+      <input class="kw-add-input" id="kw-add-input" type="text" placeholder="새 키워드 입력">
+      <button class="kw-add-btn" onclick="addKeyword()">추가</button>
     </div>
   </div>
 </div>
@@ -330,23 +233,74 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 </div>
 
 <script>
-/* ── Supabase 클라이언트 ── */
+/* ── Supabase ── */
 const sc = supabase.createClient(
   'https://zrlpwmpbrvohautldcon.supabase.co',
   'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G'
 );
 
-/* ── 전역 유저 상태 ── */
-window.CURRENT_USER = { email: '', userName: '' };
+/* ── 전역 상태 ── */
+window.CURRENT_USER = { email:'', userName:'' };
+let curAgent   = 'BA';
+let curDate    = '';
+let allDates   = [];   // ['2026-02-21', '2026-02-20', ...]
+let reportData = null; // 현재 날짜의 content.by_keyword
+let kwNames    = [];   // 현재 리포트 키워드 목록
+let userKeywords = []; // user_settings.keywords
 
-function getUserName() {
-  return window.CURRENT_USER.userName || '사용자';
+const AGENT_KEY  = { BA:'ba_brief', STOCK:'securities_brief', PM:'pm_brief' };
+const AGENT_NAME = { BA:'비즈니스 분석', STOCK:'주식 브리핑', PM:'기획 브리핑' };
+const AGENT_ICON = { BA:'📊', STOCK:'📈', PM:'🎯' };
+
+/* ────────────────────────────────
+   마크다운 → 텍스트 파싱 유틸
+──────────────────────────────── */
+function stripMd(str) {
+  return (str || '')
+    .replace(/#{1,6}\s*/g, '')   // ## 헤더
+    .replace(/\*\*(.+?)\*\*/g, '$1') // **bold**
+    .replace(/\*(.+?)\*/g, '$1')     // *italic*
+    .replace(/`(.+?)`/g, '$1')       // `code`
+    .replace(/^\s*[-*]\s+/gm, '')    // 리스트 기호
+    .replace(/\[.*?\]\(.*?\)/g, '')  // 링크
+    .trim();
 }
 
-/* ── 봉투 SVG ── */
+// 마크다운 텍스트 → 의미있는 문장 배열 (빈줄·기호줄 제거)
+function parseToLines(md) {
+  return md.split('\n')
+    .map(l => stripMd(l))
+    .filter(l => l.length > 8) // 너무 짧은 줄 제거
+    .filter(l => !/^[\-_=]{3,}$/.test(l)) // 구분선 제거
+    .slice(0, 6); // 최대 6줄
+}
+
+// 첫 번째 의미있는 문장을 summary로
+function parseSummary(md) {
+  const lines = parseToLines(md);
+  return lines[0] || '분석 중...';
+}
+
+// 나머지 문장들을 points로
+function parsePoints(md) {
+  const lines = parseToLines(md);
+  return lines.slice(1, 5); // 최대 4개 포인트
+}
+
+// 심층 분석용: 더 많은 문장 추출
+function parseDeepLines(md) {
+  return md.split('\n')
+    .map(l => stripMd(l))
+    .filter(l => l.length > 12)
+    .filter(l => !/^[\-_=]{3,}$/.test(l))
+    .slice(2, 10); // summary/points 이후 내용
+}
+
+/* ────────────────────────────────
+   봉투 SVG
+──────────────────────────────── */
 function makeSVG(a) {
-  const colors = { BA:'#2563eb', STOCK:'#0891b2', PM:'#7c3aed' };
-  const c = colors[a] || '#64748b';
+  const c = { BA:'#2563eb', STOCK:'#0891b2', PM:'#7c3aed' }[a] || '#64748b';
   return `<svg viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect x="1" y="5" width="30" height="18" rx="2.5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.2"/>
     <path class="env-lid" d="M1 7 L16 16 L31 7 L31 5.5 Q31 4 29.5 4 L2.5 4 Q1 4 1 5.5 Z" fill="${c}" opacity="0.9"/>
@@ -357,96 +311,228 @@ function makeSVG(a) {
   </svg>`;
 }
 
-function renderEnvelopes() {
-  [0,1,2].forEach(i => {
-    document.getElementById('env-'+i).innerHTML = makeSVG(curAgent);
-  });
-}
-
-/* ── 브리핑 서브 텍스트 렌더 ── */
-function renderSecretSubs() {
-  const name = getUserName();
-  [0,1,2].forEach(i => {
-    const el = document.getElementById('secret-sub-'+i);
-    if (el) el.textContent = `${name}님을 위해 정리했어요.`;
-  });
-}
-
-/* ── 데이터 ── */
-const DATA = {
-  0:{
-    BA:    { label:'● 비즈니스 분석', summary:'CMO 수주·바이오시밀러 글로벌 진출로 K-바이오 성장 모멘텀 강화', points:['삼성바이오·셀트리온, 유럽·미국 동시 수주 달성으로 수익성 개선 중','외국인 투자 유입 증가, 글로벌 경쟁력 입증 단계 진입','원가 절감·생산 효율화로 마진율 지속 개선 전망','중장기 수출 주력 산업 자리잡을 가능성 높음'] },
-    STOCK: { label:'● 주식 브리핑',   summary:'단기 주가 모멘텀 유효, 바이오 ETF 비중 확대 시점', points:['셀트리온 FDA 승인 후 단기 모멘텀 유효','삼성바이오 CMO 수주 확대로 EPS 상향 가능성','바이오 ETF 비중 확대 시점 검토 권장','임상 리스크 및 환율 변동성 유의 필요'] },
-    PM:    { label:'● 기획 브리핑',   summary:'디지털 바이오 플랫폼 서비스 기획 기회 증가', points:['CMO 공정 관리 SaaS 수요 증가 예상','임상 데이터 추적 툴 서비스 기획 기회','디지털 헬스케어 연계 전략 검토','규제 샌드박스 활용 서비스 기획 유효'] }
-  },
-  1:{
-    BA:    { label:'● 비즈니스 분석', summary:'AI 인프라 투자 확대로 반도체 수요 구조적 성장 국면 진입', points:['HBM 수요 급증, 국내 업체 ASP 개선 기대','TSMC 2nm 양산으로 파운드리 경쟁 심화','미·중 규제 속 한국 기업 미국 동맹 수혜','2026년 섹터 전체 실적 전년 대비 개선 전망'] },
-    STOCK: { label:'● 주식 브리핑',   summary:'HBM3E 전환 수혜 집중, SK하이닉스 단기 모멘텀 유효', points:['HBM3E 전환 수혜 집중','SK하이닉스 단기 모멘텀 유효','반도체 장비주 선행 매수 전략 고려','엔비디아 공급망 내 삼성 비중 회복 여부 모니터링'] },
-    PM:    { label:'● 기획 브리핑',   summary:'AI 칩 수요 모니터링 SaaS, 공급망 플랫폼 기획 기회', points:['AI 칩 수요 모니터링 SaaS 기획 기회','공급망 가시성 플랫폼 수요 증가','데이터센터 운영 효율화 툴 수요 증가 예상','반도체 설계 자동화 연계 서비스 검토'] }
-  },
-  2:{
-    BA:    { label:'● 비즈니스 분석', summary:'연준 금리 동결 기조 속 빅테크 중심 상승 모멘텀 유지', points:['S&P500 기술주 강세, 나스닥 연고점 근접','AI 투자 수요가 금리 동결에도 버팀목 역할','달러 강세로 신흥국 자금 이탈 압력 존재','실적 시즌 마무리 후 매크로 변수 주목'] },
-    STOCK: { label:'● 주식 브리핑',   summary:'나스닥 단기 과열 신호, 분할 매수 전략 유효', points:['나스닥 단기 과열 신호 일부 감지','분할 매수 전략 유효','채권 수익률 상승 시 성장주 변동성 확대 유의','빅테크 실적 서프라이즈 지속 여부가 단기 방향성 결정'] },
-    PM:    { label:'● 기획 브리핑',   summary:'달러 강세로 미국 시장 진출 SaaS 기업 매출 환산 유리', points:['달러 강세로 미국 진출 기업 매출 환산 유리','미국 현지 법인 설립 검토 적절한 시기','핀테크·AI 서비스 미국 진출 기회 존재','글로벌 시장 다변화 전략 검토'] }
+/* ────────────────────────────────
+   피드 렌더링
+──────────────────────────────── */
+function renderFeed() {
+  if (!reportData || kwNames.length === 0) {
+    document.getElementById('feed-wrap').innerHTML =
+      '<div class="feed-state">오늘 브리핑 데이터가 없습니다.</div>';
+    return;
   }
-};
 
-const AGENT_NAME = { BA:'비즈니스 분석', STOCK:'주식 브리핑', PM:'기획 브리핑' };
-const AGENT_ICON = { BA:'📊', STOCK:'📈', PM:'🎯' };
-const KW_NAMES   = ['# K-바이오','# AI반도체','# 미국증시'];
-let curAgent = 'BA';
-let curDate  = '02.21 오늘';
+  // 키워드 네비 갱신
+  const nav = document.getElementById('kw-nav');
+  nav.innerHTML = kwNames.map((kw, i) =>
+    `<div class="kw-chip${i===0?' active':''}" id="nav-kw-${i}" onclick="scrollToKw('kw-${i}',this)"># ${kw}</div>`
+  ).join('') + `<button class="kw-edit-btn" onclick="openModal('kw-modal')">✏️ 수정하기</button>`;
 
-const DEEP = {
-  BA:{
-    0:{h:'K-바이오, 단순 수주를 넘어 글로벌 공급망 재편의 수혜자로',b:'삼성바이오·셀트리온의 잇따른 대형 수주는 단순 실적 이벤트가 아닙니다. 미·중 갈등으로 중국 CMO 공급망이 흔들리는 구조 속에서, 한국 바이오가 서방 제약사들의 대체 파트너로 자리매김하는 장기 전환점입니다. FDA·EMA 동시 승인 역량을 갖춘 국내 기업은 전 세계에서 3~4곳뿐이라는 점이 경쟁 해자를 더욱 공고히 합니다.'},
-    1:{h:'AI반도체, 수요 폭증은 맞지만 수익 귀속 구조를 봐야 합니다',b:'HBM·파운드리 수요 급증의 수혜는 실제로 엔비디아와 TSMC에 집중됩니다. 국내 메모리 기업은 공급자 위치에 머물러 있어 ASP 협상력이 제한적입니다. 진짜 기회는 AI 가속기 설계 내재화(NPU)와 온디바이스 AI 칩 시장이며, 이 두 분야에서 국내 팹리스 생태계가 어떻게 자리를 잡느냐가 중기 비즈니스 구조를 결정합니다.'},
-    2:{h:'미국 증시 강세, 한국 기업의 시장 진입 타이밍 관점에서 읽어야 합니다',b:'달러 강세와 미국 빅테크 중심 상승은 역설적으로 한국 SaaS·AI 스타트업에게 미국 법인 설립 및 현지 매출 전환의 최적 구간입니다. 원화 가치 하락으로 인건비 경쟁력이 올라간 지금, 미국 고객을 확보하면 달러 매출이 자동으로 환차익을 포함합니다. 단, 연준 동결 장기화는 성장주 밸류에이션 압축 리스크를 내포해 IPO 타이밍 설계 시 유의해야 합니다.'}
-  },
-  STOCK:{
-    0:{h:'셀트리온·삼성바이오, 지금 매수해야 하는 이유와 주의해야 할 한 가지',b:'FDA 최종 승인 이후 주가 모멘텀은 통상 3~6개월 유효합니다. 셀트리온은 미국 시장 침투율이 실제 매출로 전환되는 Q2~Q3 실적 확인 전까지 단기 트레이딩 관점이 적합합니다. 삼성바이오는 CMO 수주 잔고가 중기 가시성을 제공하지만, 원/달러 1,380원 이하 하락 시 EPS에 부정적 영향을 줄 수 있어 환율 모니터링이 필수입니다.'},
-    1:{h:'HBM 수혜주, 선도 매수 타이밍은 지났습니다—다음 사이클을 봐야 합니다',b:'SK하이닉스의 HBM3E 수혜는 이미 주가에 상당 부분 반영됐습니다. 지금 시점 진입은 HBM4 전환 발표(2025 H2 예상)까지의 공백기 리스크를 감수해야 합니다. 오히려 장비주(한미반도체, 이오테크닉스)가 선행 수혜 기회를 제공합니다. AI 서버 증설 사이클이 2026년까지 지속된다면, 장비 수주 잔고가 쌓이는 Q3부터가 진입 시점입니다.'},
-    2:{h:'나스닥 과열 신호, 숏은 아직—조정 구간의 섹터 로테이션이 핵심입니다',b:'나스닥 RSI 70 근접과 밸류에이션 부담은 명확하지만, 연준 동결 기조가 유지되는 한 하락 트리거가 제한적입니다. 기술주 비중을 줄이고 에너지·소재 등 매크로 수혜 섹터로 부분 이동하는 전략이 유효합니다. 한국 투자자는 원/달러 헤지 여부에 따라 나스닥 ETF 실질 수익률이 크게 달라지므로, 환헤지형 상품 비중 조절을 먼저 검토해야 합니다.'}
-  },
-  PM:{
-    0:{h:'K-바이오 성장이 만드는 SaaS 기회, 지금 기획해야 할 이유',b:'CMO 수주가 늘수록 배치 추적, 품질 문서화, 규제 제출 자동화 수요가 폭발적으로 증가합니다. 글로벌 바이오 CMO 특화 SaaS는 공급이 극도로 부족한 블루오션입니다. FDA 21 CFR Part 11 준수 기능을 내재화한 국내 플랫폼이라면, 국내 CMO 레퍼런스를 기반으로 글로벌 진출까지 가능합니다. 초기 MVP는 배치 기록 디지털화 하나의 기능으로 충분합니다.'},
-    1:{h:'AI반도체 공급망 가시성, 이것이 만들어야 할 제품입니다',b:'반도체 공급망은 여전히 엑셀과 이메일로 관리됩니다. HBM·파운드리 수급 데이터를 실시간 집계해 의사결정 인텔리전스를 제공하는 B2B SaaS는 구매 담당자·SCM 팀 모두에게 절실합니다. 구독 ACV $50K~200K 수준의 엔터프라이즈 계약이 가능한 시장으로, 초기 파일럿은 반도체 중간 유통상이나 EMS 기업을 타깃으로 빠르게 검증할 수 있습니다.'},
-    2:{h:'달러 강세 지금, 미국 시장 진입 제품의 포지셔닝을 재설계해야 합니다',b:'달러 강세 구간은 한국 팀의 번인 레이트를 달러 환산으로 낮춰줍니다. 같은 원화 비용으로 더 오래 미국 시장을 실험할 수 있습니다. 이 구간에 해야 할 것은 제품 현지화(영문 UX, 미국 결제 인프라, SOC 2 준비)와 미국 파트너·채널 구축입니다. 연준 동결 장기화로 미국 스타트업 투자 심리가 위축된 만큼 B2B SaaS로 빠른 수익화를 설계하는 것이 현 환경에 최적입니다.'}
-  }
-};
-
-/* ── 카드 업데이트 ── */
-function updateCard(i, key) {
-  const d = DATA[i][key];
-  const card = document.getElementById('card-'+i);
-  const lbl  = document.getElementById('card-'+i+'-label');
-  const sum  = document.getElementById('card-'+i+'-summary');
-  const pts  = document.getElementById('card-'+i+'-points');
-  card.setAttribute('data-a', key);
-  lbl.setAttribute('data-a', key);
-  lbl.textContent = d.label;
-  sum.textContent = d.summary;
-  pts.innerHTML = d.points.map(p =>
-    `<div class="brief-point"><div class="brief-dot" data-a="${key}"></div><div class="brief-text">${p}</div></div>`
+  // 키워드 DD 갱신
+  document.getElementById('dd-kw').innerHTML = kwNames.map((kw, i) =>
+    `<div class="c-dd-item${i===0?' active':''}" onclick="jumpKwDD(${i},event)"># ${kw}</div>`
   ).join('');
-  card.style.animation='none'; card.offsetHeight; card.style.animation='fadeUp .2s ease';
+  document.getElementById('chip-kw-txt').textContent = `# ${kwNames[0]}`;
+
+  // 섹션 렌더
+  const feed = document.createElement('div');
+  feed.className = 'feed';
+
+  kwNames.forEach((kw, i) => {
+    const kwData  = reportData[kw];
+    if (!kwData) return;
+    const brief   = kwData[AGENT_KEY[curAgent]] || '';
+    const arts    = kwData.articles || [];
+    const summary = parseSummary(brief);
+    const points  = parsePoints(brief);
+    const deepLines = parseDeepLines(brief);
+    const userName = window.CURRENT_USER.userName || '사용자';
+
+    const section = document.createElement('div');
+    section.className = 'kw-section';
+    section.id = `kw-${i}`;
+    section.innerHTML = `
+      <div class="kw-section-header">
+        <span class="kw-title"># ${kw}</span>
+        <span class="kw-meta">기사 ${arts.length}건</span>
+      </div>
+      <div class="brief-card" id="card-${i}" data-a="${curAgent}">
+        <div class="brief-header">
+          <div class="brief-agent-label" data-a="${curAgent}">● ${AGENT_NAME[curAgent]}</div>
+          <div class="brief-summary" id="summary-${i}">${summary}</div>
+        </div>
+        <div class="brief-points" id="points-${i}">
+          ${points.map(p => `
+            <div class="brief-point">
+              <div class="brief-dot" data-a="${curAgent}"></div>
+              <div class="brief-text">${p}</div>
+            </div>`).join('')}
+        </div>
+        <button class="secret-btn" id="sbtn-${i}" onclick="toggleSecret(${i})">
+          <div class="envelope-wrap">${makeSVG(curAgent)}</div>
+          <div class="secret-text-wrap">
+            <span class="secret-title">맞춤 브리핑 도착</span>
+            <span class="secret-sub">${userName}님을 위해 정리했어요.</span>
+          </div>
+          <span class="secret-chevron">▼</span>
+        </button>
+        <div class="secret-panel" id="s-${i}">
+          <div class="secret-inner">
+            <div class="secret-agent-header">
+              <span class="secret-agent-badge" data-a="${curAgent}">${AGENT_ICON[curAgent]} ${AGENT_NAME[curAgent]}</span>
+              <span class="secret-agent-sub">심층 분석</span>
+            </div>
+            ${deepLines.length > 0
+              ? deepLines.map(l => `
+                  <div class="s-point">
+                    <div class="s-point-dot"></div>
+                    <div class="s-text">${l}</div>
+                  </div>`).join('')
+              : `<div class="s-text" style="color:#94a3b8">추가 분석 내용이 없습니다.</div>`
+            }
+          </div>
+        </div>
+      </div>
+      <div class="headlines-card">
+        <div class="hl-label">오늘의 헤드라인</div>
+        ${arts.map((a, n) => `
+          <div class="hl-item" onclick="window.open('${a.url}','_blank')">
+            <span class="hl-num">0${n+1}</span>
+            <div>
+              <div class="hl-title">${a.title}</div>
+              <div class="hl-summary">${a.pm_summary || a.description || ''}</div>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    feed.appendChild(section);
+  });
+
+  document.getElementById('feed-wrap').innerHTML = '';
+  document.getElementById('feed-wrap').appendChild(feed);
+
+  // 스크롤 감지 재등록
+  bindScroll();
 }
 
-function renderDeep(i) {
-  const dp = DEEP[curAgent][i];
-  document.getElementById('si-'+i).innerHTML = `
-    <div class="secret-agent-header">
-      <span class="secret-agent-badge" data-a="${curAgent}">${AGENT_ICON[curAgent]} ${AGENT_NAME[curAgent]}</span>
-      <span class="secret-agent-sub">심층 분석</span>
-    </div>
-    <div>
-      <div class="s-headline">${dp.h}</div>
-      <div class="s-text">${dp.b}</div>
-    </div>
-  `;
+/* ────────────────────────────────
+   에이전트 전환 (카드만 업데이트)
+──────────────────────────────── */
+function switchAgent() {
+  if (!reportData) return;
+  kwNames.forEach((kw, i) => {
+    const kwData = reportData[kw];
+    if (!kwData) return;
+    const brief   = kwData[AGENT_KEY[curAgent]] || '';
+    const summary = parseSummary(brief);
+    const points  = parsePoints(brief);
+    const deepLines = parseDeepLines(brief);
+
+    const card = document.getElementById(`card-${i}`);
+    if (!card) return;
+    card.setAttribute('data-a', curAgent);
+    card.querySelector('.brief-agent-label').setAttribute('data-a', curAgent);
+    card.querySelector('.brief-agent-label').textContent = `● ${AGENT_NAME[curAgent]}`;
+    card.querySelector(`#summary-${i}`).textContent = summary;
+    card.querySelector(`#points-${i}`).innerHTML = points.map(p => `
+      <div class="brief-point">
+        <div class="brief-dot" data-a="${curAgent}"></div>
+        <div class="brief-text">${p}</div>
+      </div>`).join('');
+
+    // 봉투 SVG 색상 교체
+    card.querySelector('.envelope-wrap').innerHTML = makeSVG(curAgent);
+
+    // 심층 분석 내용 교체
+    const inner = card.querySelector('.secret-inner');
+    inner.innerHTML = `
+      <div class="secret-agent-header">
+        <span class="secret-agent-badge" data-a="${curAgent}">${AGENT_ICON[curAgent]} ${AGENT_NAME[curAgent]}</span>
+        <span class="secret-agent-sub">심층 분석</span>
+      </div>
+      ${deepLines.length > 0
+        ? deepLines.map(l => `<div class="s-point"><div class="s-point-dot"></div><div class="s-text">${l}</div></div>`).join('')
+        : `<div class="s-text" style="color:#94a3b8">추가 분석 내용이 없습니다.</div>`
+      }`;
+
+    card.style.animation = 'none'; card.offsetHeight; card.style.animation = 'fadeUp .2s ease';
+  });
 }
 
-/* ── 에이전트 선택 ── */
+/* ────────────────────────────────
+   날짜 로드 & 전환
+──────────────────────────────── */
+async function loadDates(userId) {
+  const { data } = await sc.from('reports').select('report_date')
+    .eq('user_id', userId).order('report_date', { ascending: false });
+  if (!data || !data.length) return;
+  allDates = [...new Set(data.map(d => d.report_date))];
+  curDate  = allDates[0];
+  renderDateUI();
+}
+
+function renderDateUI() {
+  // 펼쳐진 날짜 칩
+  document.getElementById('date-row').innerHTML = allDates.map((d, i) => {
+    const label = i === 0 ? `${fmtDate(d)} 오늘` : fmtDate(d);
+    return `<div class="date-chip${d===curDate?' active':''}" onclick="selectDate('${d}',this)">${label}</div>`;
+  }).join('');
+
+  // 드롭다운
+  document.getElementById('dd-date').innerHTML = allDates.map((d, i) => {
+    const label = i === 0 ? `${fmtDate(d)} 오늘` : fmtDate(d);
+    return `<div class="c-dd-item${d===curDate?' active':''}" onclick="selectDateDD('${d}',event)">${label}</div>`;
+  }).join('');
+
+  const i0label = allDates.indexOf(curDate) === 0 ? `${fmtDate(curDate)} 오늘` : fmtDate(curDate);
+  document.getElementById('chip-date-txt').textContent = i0label;
+}
+
+function fmtDate(iso) {
+  const [,m,d] = iso.split('-');
+  return `${m}.${d}`;
+}
+
+async function fetchReport(userId, date) {
+  document.getElementById('feed-wrap').innerHTML =
+    '<div class="feed-state"><div class="skeleton"></div><div class="skeleton" style="height:140px;opacity:.6"></div></div>';
+
+  const { data } = await sc.from('reports').select('content')
+    .eq('user_id', userId).eq('report_date', date).limit(1);
+
+  if (!data || !data.length || !data[0].content?.by_keyword) {
+    document.getElementById('feed-wrap').innerHTML =
+      `<div class="feed-state">📭 ${date} 브리핑 데이터가 없습니다.</div>`;
+    return;
+  }
+
+  reportData = data[0].content.by_keyword;
+  kwNames    = Object.keys(reportData);
+  renderFeed();
+  renderKwManage();
+}
+
+async function selectDate(date, el) {
+  curDate = date;
+  document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('#dd-date .c-dd-item').forEach(it =>
+    it.classList.toggle('active', it.textContent.trim().startsWith(fmtDate(date)))
+  );
+  const idx = allDates.indexOf(date);
+  document.getElementById('chip-date-txt').textContent =
+    idx === 0 ? `${fmtDate(date)} 오늘` : fmtDate(date);
+  await fetchReport(window.CURRENT_USER.id, date);
+}
+
+async function selectDateDD(date, e) {
+  e.stopPropagation(); closeAllDD();
+  const chip = document.querySelector(`.date-chip[onclick*="${date}"]`);
+  if (chip) await selectDate(date, chip);
+  else { curDate = date; await fetchReport(window.CURRENT_USER.id, date); }
+}
+
+/* ────────────────────────────────
+   에이전트
+──────────────────────────────── */
 function selectAgent(key, label, el) {
   curAgent = key;
   document.querySelectorAll('.agent-chip').forEach(c => c.classList.remove('active'));
@@ -454,43 +540,57 @@ function selectAgent(key, label, el) {
   const chip = document.getElementById('chip-agent');
   chip.setAttribute('data-a', key);
   document.getElementById('chip-agent-txt').textContent = label;
-  document.querySelectorAll('#dd-agent .c-dd-item').forEach((it,idx) => {
-    it.classList.toggle('active', ['BA','STOCK','PM'][idx] === key);
-  });
-  [0,1,2].forEach(i => { updateCard(i, key); renderDeep(i); });
-  renderEnvelopes();
+  document.querySelectorAll('#dd-agent .c-dd-item').forEach((it, idx) =>
+    it.classList.toggle('active', ['BA','STOCK','PM'][idx] === key)
+  );
+  switchAgent();
 }
 
 function selectAgentDD(key, label, e) {
-  e.stopPropagation();
-  closeAllDD();
+  e.stopPropagation(); closeAllDD();
   selectAgent(key, label, document.querySelector(`.agent-chip[data-a="${key}"]`));
 }
 
-/* ── 날짜 선택 ── */
-function selectDate(val, e) {
-  e.stopPropagation();
-  closeAllDD();
-  curDate = val;
-  document.getElementById('chip-date-txt').textContent = val;
-  document.querySelectorAll('#dd-date .c-dd-item').forEach(it =>
-    it.classList.toggle('active', it.textContent.trim() === val)
-  );
-  document.querySelectorAll('.date-chip').forEach(c =>
-    c.classList.toggle('active', c.textContent.trim() === val)
-  );
-}
-
-/* ── 키워드 DD ── */
+/* ────────────────────────────────
+   키워드 DD
+──────────────────────────────── */
 function jumpKwDD(i, e) {
-  e.stopPropagation();
-  closeAllDD();
-  document.getElementById('chip-kw-txt').textContent = KW_NAMES[i];
-  document.querySelectorAll('#dd-kw .c-dd-item').forEach((it,j) => it.classList.toggle('active', j===i));
-  scrollToKw('kw-'+i, document.getElementById('nav-kw-'+i));
+  e.stopPropagation(); closeAllDD();
+  document.getElementById('chip-kw-txt').textContent = `# ${kwNames[i]}`;
+  document.querySelectorAll('#dd-kw .c-dd-item').forEach((it, j) => it.classList.toggle('active', j===i));
+  const navChip = document.getElementById(`nav-kw-${i}`);
+  if (navChip) scrollToKw(`kw-${i}`, navChip);
 }
 
-/* ── 드롭다운 ── */
+/* ────────────────────────────────
+   키워드 관리
+──────────────────────────────── */
+function renderKwManage() {
+  document.getElementById('kw-manage-list').innerHTML = userKeywords.map(kw => `
+    <div class="kw-manage-item">
+      <span class="kw-manage-name"># ${kw}</span>
+      <button class="kw-del-btn" onclick="removeKeyword('${kw}')">✕</button>
+    </div>`).join('');
+}
+
+async function addKeyword() {
+  const v = document.getElementById('kw-add-input').value.trim();
+  if (!v || userKeywords.length >= 5) return;
+  userKeywords.push(v);
+  await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
+  document.getElementById('kw-add-input').value = '';
+  renderKwManage();
+}
+
+async function removeKeyword(kw) {
+  userKeywords = userKeywords.filter(k => k !== kw);
+  await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
+  renderKwManage();
+}
+
+/* ────────────────────────────────
+   드롭다운 / 접기 / 스크롤
+──────────────────────────────── */
 function toggleDD(id, e) {
   e.stopPropagation();
   const el = document.getElementById(id);
@@ -498,15 +598,12 @@ function toggleDD(id, e) {
   closeAllDD();
   if (!isOpen) el.classList.add('open');
 }
-function closeAllDD() {
-  document.querySelectorAll('.c-dropdown').forEach(d => d.classList.remove('open'));
-}
+function closeAllDD() { document.querySelectorAll('.c-dropdown').forEach(d => d.classList.remove('open')); }
 document.addEventListener('click', closeAllDD);
 
-/* ── 접기 ── */
 function toggleTopBar() {
-  const bar  = document.getElementById('topBar');
-  const btn  = document.getElementById('collapseBtn');
+  const bar = document.getElementById('topBar');
+  const btn = document.getElementById('collapseBtn');
   const cBar = document.getElementById('collapsedBar');
   bar.classList.toggle('collapsed');
   const c = bar.classList.contains('collapsed');
@@ -514,33 +611,39 @@ function toggleTopBar() {
   cBar.classList.toggle('hidden', !c);
 }
 
-/* ── 키워드 스크롤 ── */
 function scrollToKw(id, el) {
   document.querySelectorAll('.kw-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   const target = document.getElementById(id);
+  if (!target) return;
   const offset = document.getElementById('topBar').offsetHeight + 12;
   window.scrollTo({ top: target.getBoundingClientRect().top + window.scrollY - offset, behavior:'smooth' });
 }
 
-/* ── 스크롤 감지 ── */
-const sections = [0,1,2].map(i => document.getElementById('kw-'+i));
-window.addEventListener('scroll', () => {
-  const topH = document.getElementById('topBar').offsetHeight;
-  let active = 0;
-  sections.forEach((s,i) => { if (s.getBoundingClientRect().top <= topH + 40) active = i; });
-  document.querySelectorAll('.kw-chip').forEach((c,i) => c.classList.toggle('active', i===active));
-  document.getElementById('chip-kw-txt').textContent = KW_NAMES[active];
-  document.querySelectorAll('#dd-kw .c-dd-item').forEach((it,j) => it.classList.toggle('active', j===active));
-}, { passive:true });
-
-/* ── 시크릿 토글 ── */
-function toggleSecret(i) {
-  document.getElementById('s'+i).classList.toggle('open');
-  document.getElementById('sbtn-'+i).classList.toggle('open');
+function bindScroll() {
+  window.onscroll = () => {
+    const topH = document.getElementById('topBar').offsetHeight;
+    let active = 0;
+    kwNames.forEach((_, i) => {
+      const s = document.getElementById(`kw-${i}`);
+      if (s && s.getBoundingClientRect().top <= topH + 40) active = i;
+    });
+    document.querySelectorAll('.kw-chip').forEach((c, i) => c.classList.toggle('active', i===active));
+    if (kwNames[active]) {
+      document.getElementById('chip-kw-txt').textContent = `# ${kwNames[active]}`;
+      document.querySelectorAll('#dd-kw .c-dd-item').forEach((it, j) => it.classList.toggle('active', j===active));
+    }
+  };
 }
 
-/* ── 모달 ── */
+function toggleSecret(i) {
+  document.getElementById(`s-${i}`).classList.toggle('open');
+  document.getElementById(`sbtn-${i}`).classList.toggle('open');
+}
+
+/* ────────────────────────────────
+   모달
+──────────────────────────────── */
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id, e) {
   if (!e || e.target.classList.contains('modal-overlay'))
@@ -551,32 +654,39 @@ function selectRating(el) {
   el.classList.add('selected');
 }
 
-/* ── 초기화 (Supabase 세션 기반) ── */
+/* ────────────────────────────────
+   초기화
+──────────────────────────────── */
 async function init() {
   try {
     const { data: { session } } = await sc.auth.getSession();
+    if (!session) { location.href = 'index.html'; return; }
 
-    if (!session) {
-      // 비로그인 시 로그인 페이지로 이동
-      location.href = 'index.html';
-      return;
+    const email    = session.user.email;
+    const userName = email.split('@')[0];
+    const userId   = session.user.id;
+    window.CURRENT_USER = { email, userName, id: userId };
+
+    // 유저 키워드 로드
+    const { data: uSettings } = await sc.from('user_settings').select('keywords')
+      .eq('id', userId).maybeSingle();
+    userKeywords = uSettings?.keywords || [];
+
+    // 날짜 목록 로드
+    await loadDates(userId);
+
+    // 최신 날짜 리포트 로드
+    if (allDates.length > 0) {
+      await fetchReport(userId, allDates[0]);
+    } else {
+      document.getElementById('feed-wrap').innerHTML =
+        '<div class="feed-state">아직 발송된 브리핑이 없습니다.<br>내일 오전 9시에 첫 브리핑이 도착합니다.</div>';
     }
 
-    // 이메일에서 @ 앞 부분 추출해 전역 저장
-    const email    = session.user.email;           // ex) positivecha@gmail.com
-    const userName = email.split('@')[0];           // ex) positivecha
-    window.CURRENT_USER = { email, userName };
-
   } catch (err) {
-    // 세션 조회 실패 시 폴백 (로컬 개발 등)
-    console.warn('세션 조회 실패, 폴백 적용:', err);
-    window.CURRENT_USER = { email: '', userName: '사용자' };
+    console.error('초기화 오류:', err);
+    window.CURRENT_USER = { email:'', userName:'사용자', id:'' };
   }
-
-  // 렌더
-  [0,1,2].forEach(i => { updateCard(i, 'BA'); renderDeep(i); });
-  renderEnvelopes();
-  renderSecretSubs();
 }
 
 init();
