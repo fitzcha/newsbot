@@ -484,6 +484,15 @@ def run_autonomous_engine():
 # 엔트리포인트
 # ──────────────────────────────────────────────
 if __name__ == "__main__":
-    manage_deadline_approvals()
-    run_self_evolution()
-    run_autonomous_engine()
+    cron_type = os.environ.get("CRON_TYPE", "BRIEFING")
+
+    if cron_type == "GOVERNANCE":
+        # 23:30 KST — 승인/마감 처리만, 분석 엔진 스킵
+        print("🌙 [GOVERNANCE] 23:30 마감 작업 모드")
+        manage_deadline_approvals()
+    else:
+        # 09:00 KST / 수동 실행 — 전체 실행
+        print("☀️ [BRIEFING] 09:00 정기 브리핑 모드")
+        manage_deadline_approvals()
+        run_self_evolution()
+        run_autonomous_engine()
