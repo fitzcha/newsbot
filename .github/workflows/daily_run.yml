@@ -46,6 +46,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           CURRENT_BACKLOG_ID: ${{ github.event.inputs.backlog_id }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}  # ← 이번에 추가된 부분
           # 23:30 cron 여부를 news_bot.py에 전달 — 분석 엔진 스킵 제어
           CRON_TYPE: ${{ github.event.schedule == '30 14 * * *' && 'GOVERNANCE' || 'BRIEFING' }}
         run: python news_bot.py
