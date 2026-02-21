@@ -5,6 +5,7 @@
 <title>Fitz Intelligence | Sovereign HQ</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
 <style>
 :root{--admin:#ff4d4f;--primary:#007bff;--success:#28a745;--dev:#6f42c1;--dark:#1a1a2e;--warn:#fd7e14;--bg:#f8f9fa}
@@ -80,6 +81,13 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 /* 알림 토스트 */
 #toast{position:fixed;bottom:30px;right:30px;background:#222;color:#fff;padding:12px 22px;border-radius:12px;font-size:.88rem;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
 #toast.show{opacity:1}
+
+/* 비용 탭 */
+.cost-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
+.cost-card{background:#fff;border:1px solid #eee;border-radius:16px;padding:18px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.cost-label{font-size:.72rem;color:#9ca3af;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.cost-value{font-size:2rem;font-weight:900;color:#111;line-height:1.1}
+.cost-unit{font-size:.78rem;color:#6b7280;margin-top:4px}
 </style>
 </head>
 <body>
@@ -98,7 +106,7 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
   <div class="hdr">
     <div>
       <h1 onclick="location.href='index.html'">Sovereign HQ</h1>
-      <small>v14.0 · <span id="now-time"></span></small>
+      <small>v18.0 · <span id="now-time"></span></small>
     </div>
     <div class="hdr-btns">
       <button class="btn" onclick="location.href='index.html'">🌐 홈</button>
@@ -109,11 +117,12 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 
   <!-- 탭 -->
   <div class="tabs">
-    <div id="t-hr" class="tab on" onclick="tab('hr')">🕵️ 전략</div>
-    <div id="t-evo" class="tab" onclick="tab('evo')">🧠 지능 <span class="badge" id="evo-cnt" style="display:none">0</span></div>
-    <div id="t-dev" class="tab" onclick="tab('dev')">🛠️ 개발 <span class="badge" id="dev-cnt" style="display:none">0</span></div>
-    <div id="t-log" class="tab" onclick="tab('log')">📋 포럼</div>
-    <div id="t-voc" class="tab" onclick="tab('voc')">💬 VOC</div>
+    <div id="t-hr"   class="tab on" onclick="tab('hr')">🕵️ 전략</div>
+    <div id="t-evo"  class="tab"    onclick="tab('evo')">🧠 지능 <span class="badge" id="evo-cnt" style="display:none">0</span></div>
+    <div id="t-dev"  class="tab"    onclick="tab('dev')">🛠️ 개발 <span class="badge" id="dev-cnt" style="display:none">0</span></div>
+    <div id="t-log"  class="tab"    onclick="tab('log')">📋 포럼</div>
+    <div id="t-voc"  class="tab"    onclick="tab('voc')">💬 VOC</div>
+    <div id="t-cost" class="tab"    onclick="tab('cost')">💰 비용</div>
   </div>
 
   <!-- ① 전략 탭 -->
@@ -127,7 +136,6 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 
   <!-- ② 지능 탭 -->
   <div id="v-evo" style="display:none">
-    <!-- 자동승인 카운트다운 -->
     <div class="countdown" id="countdown-bar">
       <div>
         <div style="font-weight:700;margin-bottom:2px">⏳ 23:30 자동승인까지</div>
@@ -135,8 +143,6 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
       </div>
       <div class="timer" id="countdown-timer">--:--:--</div>
     </div>
-
-    <!-- 지능 하달 -->
     <div class="card" style="border-left-color:#333;background:#fafafa">
       <h3>✍️ 지능 하달</h3>
       <div class="row">
@@ -153,11 +159,7 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
       <textarea id="m-text" rows="3" placeholder="에이전트에게 직접 지침을 하달하세요. 저장 즉시 해당 에이전트의 instruction이 업데이트됩니다."></textarea>
       <button class="btn" style="background:#111;color:#fff;border:none;width:100%" onclick="sendDirectOrder()">⚡ 즉시 하달 (바로 적용)</button>
     </div>
-
-    <!-- 결재 대기 -->
     <div id="pending-evo-list"></div>
-
-    <!-- 현재 가동 지침 -->
     <div id="live-agent-list"></div>
   </div>
 
@@ -186,21 +188,68 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
     <div id="voc-list"></div>
   </div>
 
+  <!-- ⑥ 비용 탭 -->
+  <div id="v-cost" style="display:none">
+
+    <!-- 요약 카드 4개 -->
+    <div class="cost-grid">
+      <div class="cost-card" style="border-top:3px solid #f59e0b">
+        <div class="cost-label">오늘 Gemini 호출</div>
+        <div class="cost-value" id="c-calls">—</div>
+        <div class="cost-unit">회</div>
+      </div>
+      <div class="cost-card" style="border-top:3px solid #10b981">
+        <div class="cost-label">오늘 추정 비용</div>
+        <div class="cost-value" id="c-cost" style="color:#059669">—</div>
+        <div class="cost-unit">USD</div>
+      </div>
+      <div class="cost-card" style="border-top:3px solid #6366f1">
+        <div class="cost-label">Supabase 총 rows</div>
+        <div class="cost-value" id="c-rows">—</div>
+        <div class="cost-unit">/ 500,000 무료 한도</div>
+      </div>
+      <div class="cost-card" style="border-top:3px solid #ec4899">
+        <div class="cost-label">7일 누적 비용</div>
+        <div class="cost-value" id="c-week">—</div>
+        <div class="cost-unit">USD</div>
+      </div>
+    </div>
+
+    <!-- 7일 차트 -->
+    <div class="card" style="border-left-color:#f59e0b">
+      <h3>📈 7일 Gemini 호출 추이</h3>
+      <canvas id="cost-chart" height="180"></canvas>
+    </div>
+
+    <!-- Supabase row 상세 -->
+    <div class="card" style="border-left-color:#6366f1">
+      <h3>🗄️ Supabase 테이블별 row 수</h3>
+      <div id="c-row-detail">로드 중...</div>
+    </div>
+
+    <!-- 호출 유형별 내역 -->
+    <div class="card" style="border-left-color:#e5e7eb">
+      <h3>📋 오늘 호출 유형별 내역</h3>
+      <div id="c-breakdown">로드 중...</div>
+    </div>
+
+  </div>
+
 </div>
 
 <div id="toast"></div>
 
 <script>
 const CFG = {
-  url: 'https://zrlpwmpbrvohautldcon.supabase.co',
-  key: 'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G',
-  master: 'positivecha@gmail.com',
-  owner: 'fitzcha',
-  repo: 'newsbot',
+  url:      'https://zrlpwmpbrvohautldcon.supabase.co',
+  key:      'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G',
+  master:   'positivecha@gmail.com',
+  owner:    'fitzcha',
+  repo:     'newsbot',
   workflow: 'daily_run.yml'
 };
 const sc = supabase.createClient(CFG.url, CFG.key);
-let me = null, autoTimer = null;
+let me = null, autoTimer = null, costChartInstance = null;
 
 /* ── 유틸 ── */
 function toast(msg, dur=2800) {
@@ -227,10 +276,11 @@ function updateTokenStatus(t) {
 
 /* ── 탭 ── */
 function tab(t) {
-  ['hr','evo','dev','log','voc'].forEach(x => {
+  ['hr','evo','dev','log','voc','cost'].forEach(x => {
     $id('v-'+x).style.display = x===t ? 'block' : 'none';
     $id('t-'+x).classList.toggle('on', x===t);
   });
+  if(t === 'cost') loadCost();
 }
 
 /* ── 시계 ── */
@@ -251,20 +301,14 @@ function startAutoApprovalTimer() {
     const now = new Date();
     const kst = new Date(now.getTime() + (9*60 - now.getTimezoneOffset())*60000);
     const h = kst.getHours(), m = kst.getMinutes(), s = kst.getSeconds();
-
-    // 23:30 자동승인 실행
     if(h === 23 && m === 30 && s < 5) { await runAutoApproval(); return; }
-
-    // 카운트다운 계산
-    let targetH = 23, targetM = 30;
     let nowSecs = h*3600 + m*60 + s;
-    let tgtSecs = targetH*3600 + targetM*60;
-    if(nowSecs >= tgtSecs) tgtSecs += 86400; // 내일 23:30
+    let tgtSecs = 23*3600 + 30*60;
+    if(nowSecs >= tgtSecs) tgtSecs += 86400;
     let diff = tgtSecs - nowSecs;
     let rh = Math.floor(diff/3600), rm = Math.floor((diff%3600)/60), rs = diff%60;
-    let str = `${String(rh).padStart(2,'0')}:${String(rm).padStart(2,'0')}:${String(rs).padStart(2,'0')}`;
     const el = $id('countdown-timer');
-    el.textContent = str;
+    el.textContent = `${String(rh).padStart(2,'0')}:${String(rm).padStart(2,'0')}:${String(rs).padStart(2,'0')}`;
     el.className = 'timer' + (rh < 1 ? (rm < 30 ? ' danger' : ' warn') : '');
   }, 1000);
 }
@@ -285,52 +329,45 @@ async function runAutoApproval() {
 /* ── 지능 탭 ── */
 async function loadEvo() {
   try {
-    // SERVICE_ROLE이 아닌 anon key여도 select 가능하도록 .select() 단순화
     const [agRes, prRes] = await Promise.all([
       sc.from('agents').select('agent_role, instruction').order('agent_role'),
-      sc.from('pending_approvals').select('id, agent_role, proposed_instruction, proposal_reason, created_at').eq('status','PENDING').order('created_at', { ascending: false })
+      sc.from('pending_approvals').select('id, agent_role, proposed_instruction, proposal_reason, created_at')
+        .eq('status','PENDING').order('created_at', { ascending: false })
     ]);
-
     const agents = agRes.data || [];
-    const props = prRes.data || [];
+    const props  = prRes.data || [];
 
-    // 뱃지
     if(props.length > 0) { $id('evo-cnt').style.display=''; $id('evo-cnt').textContent=props.length; }
     else { $id('evo-cnt').style.display='none'; }
 
-    // 결재 대기
     let pHtml = `<h3>📄 결재 대기 <span style="color:var(--admin)">(${props.length}건)</span></h3>`;
-    if(props.length === 0) {
-      pHtml += `<div class="empty">✅ 현재 대기 중인 안건이 없습니다</div>`;
-    } else {
-      pHtml += props.map(p => {
-        const created = p.created_at ? new Date(p.created_at).toLocaleString('ko-KR') : '';
-        return `<div class="evo-card">
-          <div class="meta">🤖 ${p.agent_role} · ${created} · ${p.proposal_reason || '에이전트 자율 제안'}</div>
-          <strong>제안된 지침</strong>
-          <div class="box">${escHtml(p.proposed_instruction)}</div>
-          <div class="evo-actions">
-            <button class="sm" style="background:var(--success)" onclick="decideEvo('${p.id}','${p.agent_role}','APPROVED')">✅ 승인 — 즉시 적용</button>
-            <button class="sm" style="background:var(--admin)" onclick="decideEvo('${p.id}','${p.agent_role}','REJECTED')">❌ 반려</button>
-          </div>
-        </div>`;
-      }).join('');
-    }
+    pHtml += props.length === 0
+      ? `<div class="empty">✅ 현재 대기 중인 안건이 없습니다</div>`
+      : props.map(p => {
+          const created = p.created_at ? new Date(p.created_at).toLocaleString('ko-KR') : '';
+          return `<div class="evo-card">
+            <div class="meta">🤖 ${p.agent_role} · ${created} · ${p.proposal_reason||'에이전트 자율 제안'}</div>
+            <strong>제안된 지침</strong>
+            <div class="box">${escHtml(p.proposed_instruction)}</div>
+            <div class="evo-actions">
+              <button class="sm" style="background:var(--success)" onclick="decideEvo('${p.id}','${p.agent_role}','APPROVED')">✅ 승인 — 즉시 적용</button>
+              <button class="sm" style="background:var(--admin)"   onclick="decideEvo('${p.id}','${p.agent_role}','REJECTED')">❌ 반려</button>
+            </div>
+          </div>`;
+        }).join('');
     render('pending-evo-list', pHtml);
 
-    // 현재 가동 지침
     let aHtml = `<h3>🚀 현재 가동 중인 에이전트 지침</h3>`;
     aHtml += agents.length === 0
       ? `<div class="empty">에이전트 정보 없음</div>`
       : agents.map(a => `<div class="card" style="border-left-color:#bbb">
           <strong>🤖 ${a.agent_role}</strong>
-          <div class="box">${escHtml(a.instruction || '지침 없음')}</div>
+          <div class="box">${escHtml(a.instruction||'지침 없음')}</div>
         </div>`).join('');
     render('live-agent-list', aHtml);
 
   } catch(e) {
-    console.error('loadEvo 오류:', e);
-    render('pending-evo-list', `<div class="card" style="border-left-color:var(--admin)">⚠️ 데이터 로드 실패: ${e.message}<br><small>Supabase RLS 정책 또는 네트워크를 확인하세요</small></div>`);
+    render('pending-evo-list', `<div class="card" style="border-left-color:var(--admin)">⚠️ 데이터 로드 실패: ${e.message}</div>`);
   }
 }
 
@@ -346,10 +383,7 @@ async function decideEvo(id, role, status) {
     await sc.from('pending_approvals').update({ status }).eq('id', id);
     toast(status === 'APPROVED' ? `✅ ${role} 지침 승인 및 적용 완료` : `❌ ${role} 안건 반려됨`);
     loadEvo();
-  } catch(e) {
-    toast('❌ 처리 실패: ' + e.message);
-    console.error(e);
-  }
+  } catch(e) { toast('❌ 처리 실패: ' + e.message); }
 }
 
 async function sendDirectOrder() {
@@ -357,10 +391,8 @@ async function sendDirectOrder() {
   const text = $id('m-text').value.trim();
   if(!text) return toast('❌ 지침 내용을 입력하세요');
   try {
-    // 1. 에이전트 지침 즉시 업데이트
     const { error } = await sc.from('agents').update({ instruction: text }).eq('agent_role', role);
     if(error) throw error;
-    // 2. 로그 기록 (pending_approvals에 APPROVED로 바로 저장)
     await sc.from('pending_approvals').insert([{
       agent_role: role, proposed_instruction: text,
       proposal_reason: '마스터 직접 하달', status: 'APPROVED'
@@ -368,10 +400,7 @@ async function sendDirectOrder() {
     $id('m-text').value = '';
     toast(`⚡ ${role} 에이전트 지침 즉시 하달 완료`);
     loadEvo();
-  } catch(e) {
-    toast('❌ 하달 실패: ' + e.message);
-    console.error(e);
-  }
+  } catch(e) { toast('❌ 하달 실패: ' + e.message); }
 }
 
 /* ── 개발 탭 ── */
@@ -379,25 +408,19 @@ async function loadDev() {
   try {
     const { data, error } = await sc.from('dev_backlog').select('*').order('created_at', { ascending: false });
     if(error) throw error;
-
-    const pending = (data || []).filter(b => b.status === 'PENDING').length;
+    const pending = (data||[]).filter(b => b.status === 'PENDING').length;
     if(pending > 0) { $id('dev-cnt').style.display=''; $id('dev-cnt').textContent=pending; }
     else { $id('dev-cnt').style.display='none'; }
 
-    render('dev-list', (data || []).length === 0
+    render('dev-list', (data||[]).length === 0
       ? `<div class="empty">등록된 백로그가 없습니다</div>`
-      : (data || []).map(b => {
+      : (data||[]).map(b => {
           const created = b.created_at ? new Date(b.created_at).toLocaleString('ko-KR') : '';
           let btns = '';
-          if(b.status === 'PENDING') {
-            btns = `<button class="sm" style="background:var(--primary)" onclick="upDev('${b.id}','CONFIRMED')">✅ 개발 확정</button>`;
-          } else if(b.status === 'CONFIRMED') {
-            btns = `<button class="sm" style="background:var(--dev)" onclick="triggerDev('${b.id}')">🚀 배포 시작</button>`;
-          } else if(b.status === 'DEVELOPING') {
-            btns = `<span class="pulse" style="color:var(--dev);font-weight:700">⏳ AI 배포 중...</span>`;
-          } else {
-            btns = `<span style="color:var(--success);font-weight:700">✅ 배포 완료</span>`;
-          }
+          if(b.status === 'PENDING')    btns = `<button class="sm" style="background:var(--primary)" onclick="upDev('${b.id}','CONFIRMED')">✅ 개발 확정</button>`;
+          else if(b.status==='CONFIRMED') btns = `<button class="sm" style="background:var(--dev)" onclick="triggerDev('${b.id}')">🚀 배포 시작</button>`;
+          else if(b.status==='DEVELOPING') btns = `<span class="pulse" style="color:var(--dev);font-weight:700">⏳ AI 배포 중...</span>`;
+          else btns = `<span style="color:var(--success);font-weight:700">✅ 배포 완료</span>`;
           return `<div class="card" style="border-left-color:var(--dev)">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
               <div><strong>${escHtml(b.title||'무제')}</strong><span class="s-tag s-${b.status}">${b.status}</span></div>
@@ -415,7 +438,7 @@ async function loadDev() {
 
 async function addDev() {
   const title = $id('d-title').value.trim();
-  const task = $id('d-task').value.trim();
+  const task  = $id('d-task').value.trim();
   if(!title || !task) return toast('❌ 제목과 요구사항을 모두 입력하세요');
   try {
     const { error } = await sc.from('dev_backlog').insert([{ title, task_detail: task, status: 'PENDING', priority: 5 }]);
@@ -445,36 +468,29 @@ async function triggerDev(id) {
         body: JSON.stringify({ ref: 'main', inputs: { backlog_id: String(id) } })
       }
     );
-    if(res.status === 204) {
-      toast('🚀 GitHub Actions 배포 트리거 완료!');
-    } else {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(`GitHub API ${res.status}: ${err.message || '알 수 없는 오류'}`);
+    if(res.status === 204) { toast('🚀 GitHub Actions 배포 트리거 완료!'); }
+    else {
+      const e = await res.json().catch(()=>({}));
+      await sc.from('dev_backlog').update({ status: 'CONFIRMED' }).eq('id', id);
+      throw new Error(`GitHub API ${res.status}: ${e.message||'오류'}`);
     }
     loadDev();
-  } catch(e) {
-    await sc.from('dev_backlog').update({ status: 'CONFIRMED' }).eq('id', id); // 롤백
-    toast('❌ 배포 실패: ' + e.message);
-    console.error(e);
-  }
+  } catch(e) { toast('❌ 배포 실패: ' + e.message); }
 }
 
-/* ── 포럼 ── */
+/* ── 포럼 탭 ── */
 async function loadLogs() {
   try {
     const { data, error } = await sc.from('action_logs').select('*').order('executed_at', { ascending: false }).limit(30);
     if(error) throw error;
-    const lines = (data || []).map(l => {
-      const t = l.executed_at ? l.executed_at.slice(11,19) : '??:??:??';
-      const msg = l.memo || l.details || (l.target_word ? l.target_word + ' 분석 완료' : '시스템 이벤트');
-      const cls = msg.includes('❌')||msg.includes('실패') ? 'err' : msg.includes('⚠️') ? 'warn' : msg.includes('✅')||msg.includes('완료') ? '' : 'info';
+    const lines = (data||[]).map(l => {
+      const t   = l.executed_at ? l.executed_at.slice(11,19) : '??:??:??';
+      const msg = l.memo || l.details || (l.target_word ? l.target_word+' 분석 완료' : '시스템 이벤트');
+      const cls = msg.includes('❌')||msg.includes('실패') ? 'err' : msg.includes('⚠️') ? 'warn' : 'info';
       return `<div class="${cls}">[${t} KST] ${escHtml(String(msg))}</div>`;
     });
-    render('forum-box', `<span class="info"># Sovereign HQ — 작전 로그 (최근 ${lines.length}건)</span><br>` + (lines.join('') || '<span style="color:#aaa">로그 없음</span>'));
-    $id('forum-box').scrollTop = 0;
-  } catch(e) {
-    render('forum-box', `<span class="err">로그 로드 실패: ${e.message}</span>`);
-  }
+    render('forum-box', `<span class="info"># Sovereign HQ — 작전 로그 (최근 ${lines.length}건)</span><br>` + (lines.join('')||'<span style="color:#aaa">로그 없음</span>'));
+  } catch(e) { render('forum-box', `<span class="err">로그 로드 실패: ${e.message}</span>`); }
 }
 
 async function triggerRun() {
@@ -513,15 +529,15 @@ async function loadHrReport() {
     const { data } = await sc.from('reports').select('content').eq('report_date', date).eq('user_id', me.id).single();
     const c = data?.content;
     let html = '';
-    if(c?.hr_proposal) html += `<h2>👤 HR 제안</h2>${marked.parse(c.hr_proposal)}`;
-    if(c?.ba_brief) html += `<h2>🔍 BA 분석</h2>${marked.parse(c.ba_brief)}`;
-    if(c?.pm_brief) html += `<h2>🗂 PM 브리핑</h2>${marked.parse(c.pm_brief)}`;
+    if(c?.hr_proposal)      html += `<h2>👤 HR 제안</h2>${marked.parse(c.hr_proposal)}`;
+    if(c?.ba_brief)         html += `<h2>🔍 BA 분석</h2>${marked.parse(c.ba_brief)}`;
+    if(c?.pm_brief)         html += `<h2>🗂 PM 브리핑</h2>${marked.parse(c.pm_brief)}`;
     if(c?.securities_brief) html += `<h2>📈 증권 인사이트</h2>${marked.parse(c.securities_brief)}`;
     render('hr-content', html || '<div style="color:#aaa;text-align:center;padding:40px">내용 없음</div>');
   } catch(e) { render('hr-content', `<span style="color:#f55">로드 실패: ${e.message}</span>`); }
 }
 
-/* ── VOC ── */
+/* ── VOC 탭 ── */
 async function loadVoc() {
   try {
     const { data } = await sc.from('report_feedback').select('*').order('created_at', { ascending: false }).limit(15);
@@ -537,6 +553,106 @@ async function loadVoc() {
         </div>`).join('')
     );
   } catch(e) { render('voc-list', `<div class="card">⚠️ VOC 로드 실패</div>`); }
+}
+
+/* ── 💰 비용 탭 ── */
+async function loadCost() {
+  try {
+    const todayFmt = new Date(new Date().getTime() + 9*60*60*1000).toISOString().slice(0,10);
+
+    // 1. 오늘 cost_log 집계
+    const { data: todayLogs } = await sc
+      .from('cost_log').select('call_type, call_count, cost_usd').eq('log_date', todayFmt);
+
+    const totalCalls = (todayLogs||[]).reduce((s,r) => s+(r.call_count||0), 0);
+    const totalCost  = (todayLogs||[]).reduce((s,r) => s+(r.cost_usd||0),   0);
+    $id('c-calls').textContent = totalCalls.toLocaleString();
+    $id('c-cost').textContent  = `$${totalCost.toFixed(4)}`;
+
+    // 호출 유형별 내역
+    const byType = {};
+    (todayLogs||[]).forEach(r => { byType[r.call_type] = (byType[r.call_type]||0)+(r.call_count||0); });
+    const typeIcon = { text:'📝', json:'📊', batch:'🗞️' };
+    $id('c-breakdown').innerHTML = Object.keys(byType).length === 0
+      ? '<span style="color:#aaa">오늘 데이터 없음 (첫 실행 후 표시됩니다)</span>'
+      : `<table style="width:100%;border-collapse:collapse">
+          <tr style="background:#f8fafc;font-weight:700"><td style="padding:8px">유형</td><td style="padding:8px;text-align:right">호출 수</td></tr>
+          ${Object.entries(byType).map(([k,v])=>`
+            <tr style="border-top:1px solid #f0f0f0">
+              <td style="padding:8px">${typeIcon[k]||'•'} ${k}</td>
+              <td style="padding:8px;text-align:right;font-weight:700">${v.toLocaleString()}회</td>
+            </tr>`).join('')}
+        </table>`;
+
+    // 2. 7일 누적
+    const since7 = new Date(new Date().getTime() + 9*60*60*1000 - 6*86400*1000).toISOString().slice(0,10);
+    const { data: weekLogs } = await sc
+      .from('cost_log').select('log_date, call_count, cost_usd').gte('log_date', since7);
+    const weekCost = (weekLogs||[]).reduce((s,r) => s+(r.cost_usd||0), 0);
+    $id('c-week').textContent = `$${weekCost.toFixed(3)}`;
+
+    // 3. 7일 차트
+    const days = Array.from({length:7}, (_,i) => {
+      const d = new Date(new Date().getTime() + 9*60*60*1000 - (6-i)*86400*1000);
+      return d.toISOString().slice(0,10);
+    });
+    const callByDay = {};
+    (weekLogs||[]).forEach(r => { callByDay[r.log_date] = (callByDay[r.log_date]||0)+(r.call_count||0); });
+    const ctx = $id('cost-chart').getContext('2d');
+    if(costChartInstance) costChartInstance.destroy();
+    costChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: days.map(d => d.slice(5)),
+        datasets: [{
+          label: 'Gemini 호출 수',
+          data: days.map(d => callByDay[d]||0),
+          backgroundColor: 'rgba(245,158,11,0.7)',
+          borderColor: '#f59e0b',
+          borderWidth: 2,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+
+    // 4. Supabase row 통계
+    const { data: sbStats } = await sc
+      .from('supabase_stats').select('row_counts, total_rows').eq('stat_date', todayFmt).maybeSingle();
+    if(sbStats) {
+      const total = sbStats.total_rows || 0;
+      const pct   = ((total/500000)*100).toFixed(1);
+      const color = total > 400000 ? '#dc2626' : total > 250000 ? '#d97706' : '#16a34a';
+      $id('c-rows').textContent = total.toLocaleString();
+      $id('c-rows').style.color = color;
+      const counts = sbStats.row_counts || {};
+      $id('c-row-detail').innerHTML = `
+        <div style="margin-bottom:10px">
+          <div style="background:#f3f4f6;border-radius:8px;height:12px;overflow:hidden">
+            <div style="background:${color};height:100%;width:${Math.min(pct,100)}%;border-radius:8px;transition:.5s"></div>
+          </div>
+          <div style="font-size:.8rem;color:#6b7280;margin-top:4px">${pct}% 사용 중 (무료 한도 50만 rows)</div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:.88rem">
+          ${Object.entries(counts).map(([t,n])=>`
+            <tr style="border-top:1px solid #f0f0f0">
+              <td style="padding:6px 8px;color:#555">${t}</td>
+              <td style="padding:6px 8px;text-align:right;font-weight:700;color:${n>100000?'#dc2626':'#111'}">${n.toLocaleString()}</td>
+            </tr>`).join('')}
+        </table>`;
+    } else {
+      $id('c-rows').textContent = '—';
+      $id('c-row-detail').innerHTML = '<span style="color:#aaa">오늘 통계 없음 (첫 실행 후 표시됩니다)</span>';
+    }
+
+  } catch(e) {
+    console.error('loadCost 오류:', e);
+    $id('c-breakdown').innerHTML = `<span style="color:#f55">로드 실패: ${e.message}</span>`;
+  }
 }
 
 /* ── XSS 방지 ── */
@@ -556,7 +672,6 @@ async function init() {
   const tok = getToken();
   if(tok) { $id('ghp-token').value = tok; updateTokenStatus(tok); }
   else { updateTokenStatus(''); }
-
   try {
     const { data: { session } } = await sc.auth.getSession();
     if(!session || session.user.email !== CFG.master) {
@@ -566,22 +681,17 @@ async function init() {
     }
     me = session.user;
   } catch(e) {
-    // 로컬 테스트 또는 세션 없을 때도 기본 동작
     me = { id: 'master', email: CFG.master };
     console.warn('세션 없음, 기본 모드 동작:', e.message);
   }
-
   startAutoApprovalTimer();
   await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadLogs(), loadVoc()]);
 
-  // 실시간 pending_approvals 구독
   sc.channel('evo-updates')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'pending_approvals' }, () => { loadEvo(); })
+    .on('postgres_changes', { event:'*', schema:'public', table:'pending_approvals' }, () => loadEvo())
     .subscribe();
-
-  // 실시간 dev_backlog 구독
   sc.channel('dev-updates')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'dev_backlog' }, () => { loadDev(); })
+    .on('postgres_changes', { event:'*', schema:'public', table:'dev_backlog' }, () => loadDev())
     .subscribe();
 }
 
