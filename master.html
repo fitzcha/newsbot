@@ -13,25 +13,21 @@
 body{font-family:'Pretendard',sans-serif;margin:0;background:var(--bg);color:#222}
 .wrap{max-width:1050px;margin:0 auto;padding:20px}
 
-/* 보안바 */
 .sec-bar{background:#111;color:#eee;padding:12px 20px;border-radius:14px;margin-bottom:18px;display:flex;gap:12px;align-items:center;font-size:.85rem;flex-wrap:wrap}
 .sec-bar input{flex:1;min-width:220px;padding:6px 12px;background:rgba(255,255,255,.1);border:1px solid #444;color:#fff;border-radius:8px;font-size:.85rem}
 .sec-bar button{padding:6px 14px;background:#ff4d4f;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.82rem}
 .auto-badge{background:#28a745;color:#fff;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700}
 
-/* 헤더 */
 .hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px}
 .hdr h1{margin:0;font-size:1.8rem;letter-spacing:-2px;cursor:pointer}
 .hdr small{color:var(--admin);font-weight:700;display:block;font-size:.8rem}
 .hdr-btns{display:flex;gap:8px}
 
-/* 탭 */
 .tabs{display:flex;gap:4px;border-bottom:2px solid #e9ecef;margin-bottom:22px;overflow-x:auto}
 .tab{padding:12px 18px;cursor:pointer;font-weight:800;color:#999;border-bottom:4px solid transparent;margin-bottom:-2px;transition:.2s;white-space:nowrap;font-size:.9rem}
 .tab.on{color:var(--admin);border-bottom-color:var(--admin)}
 .badge{background:var(--admin);color:#fff;border-radius:20px;padding:1px 7px;font-size:.72rem;margin-left:5px;font-weight:700}
 
-/* 공통 컴포넌트 */
 .card{background:#fff;border:1px solid #eee;padding:18px;border-radius:16px;margin-bottom:14px;border-left:6px solid var(--admin);box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .box{background:#f8f9fa;padding:13px;border-radius:10px;font-size:.88rem;border:1px solid #efefef;margin:8px 0;white-space:pre-wrap;line-height:1.6}
 .btn{padding:9px 18px;border-radius:10px;border:1px solid #ddd;cursor:pointer;font-weight:700;transition:.2s;background:#fff;font-size:.88rem}
@@ -43,7 +39,6 @@ textarea,select{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px
 h3{margin:0 0 14px;font-size:1rem;color:#444}
 .empty{color:#aaa;font-style:italic;padding:20px;text-align:center}
 
-/* 상태 뱃지 */
 .s-tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.75rem;font-weight:700;margin-left:6px}
 .s-PENDING{background:#fff3cd;color:#856404}
 .s-CONFIRMED{background:#cce5ff;color:#004085}
@@ -52,44 +47,37 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 .s-APPROVED{background:#d4edda;color:#155724}
 .s-REJECTED{background:#f8d7da;color:#721c24}
 
-/* 포럼 */
 #forum-box{background:#0d1117;color:#50fa7b;padding:18px;border-radius:14px;font-family:'Courier New',monospace;height:320px;overflow-y:auto;font-size:.82rem;line-height:1.7}
 #forum-box .err{color:#ff5555}
 #forum-box .warn{color:#ffb86c}
 #forum-box .info{color:#8be9fd}
 
-/* 카운트다운 */
 .countdown{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#eee;padding:14px 20px;border-radius:12px;margin-bottom:16px;display:flex;align-items:center;gap:14px;font-size:.88rem}
 .countdown .timer{font-size:1.4rem;font-weight:900;color:#50fa7b;letter-spacing:1px;min-width:80px}
 .countdown .timer.warn{color:#ffb86c}
 .countdown .timer.danger{color:#ff5555}
 
-/* 진화 결재 */
 .evo-card{background:#fff;border:1px solid #e0e0e0;border-left:6px solid var(--warn);padding:18px;border-radius:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
 .evo-card .meta{font-size:.78rem;color:#999;margin-bottom:6px}
 .evo-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
-/* 펄스 */
-.pulse{animation:pulse 1.5s infe}
+/* ★ 버그 수정: infe → infinite */
+.pulse{animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-/* 다크 리포트 */
 #hr-content{background:var(--dark);color:#dde;padding:32px;border-radius:18px;min-height:260px;margin-top:14px;line-height:1.8;font-size:.92rem}
 #hr-content h1,#hr-content h2,#hr-content h3{color:#7eb8ff}
 #hr-content a{color:#50fa7b}
 
-/* 알림 토스트 */
 #toast{position:fixed;bottom:30px;right:30px;background:#222;color:#fff;padding:12px 22px;border-radius:12px;font-size:.88rem;font-weight:600;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
 #toast.show{opacity:1}
 
-/* 비용 탭 */
 .cost-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px}
 .cost-card{background:#fff;border:1px solid #eee;border-radius:16px;padding:18px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .cost-label{font-size:.72rem;color:#9ca3af;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
 .cost-value{font-size:2rem;font-weight:900;color:#111;line-height:1.1}
 .cost-unit{font-size:.78rem;color:#6b7280;margin-top:4px}
 
-/* ⑦ 지능하달 개선 스타일 */
 .directive-section{background:#fff;border:1px solid #eee;border-left:6px solid #333;padding:18px;border-radius:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .directive-section h3{margin:0 0 14px;color:#222}
 .mode-tabs{display:flex;gap:6px;margin-bottom:14px}
@@ -101,7 +89,6 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 .one-rule-warn{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:.82rem;color:#c2410c;margin-bottom:10px;display:none}
 .one-rule-warn.show{display:block}
 
-/* ⑥ 피드백 스타일 */
 .feedback-thumb{display:flex;gap:10px;margin-bottom:12px}
 .thumb-btn{flex:1;padding:14px;border-radius:12px;border:2px solid #e5e7eb;background:#fff;font-size:1.5rem;cursor:pointer;transition:.15s;text-align:center}
 .thumb-btn:hover{border-color:#6366f1;background:#f5f3ff}
@@ -113,7 +100,6 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 <body>
 <div class="wrap">
 
-  <!-- 보안바 -->
   <div class="sec-bar">
     <span>🔒 <b>Auth Center</b></span>
     <input type="password" id="ghp-token" placeholder="ghp_... GitHub Personal Access Token">
@@ -122,7 +108,6 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
     <span class="auto-badge" id="auto-badge" style="display:none">⏱ 자동승인 ON</span>
   </div>
 
-  <!-- 헤더 -->
   <div class="hdr">
     <div>
       <h1 onclick="location.href='index.html'">Sovereign HQ</h1>
@@ -135,7 +120,6 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
     </div>
   </div>
 
-  <!-- 탭 -->
   <div class="tabs">
     <div id="t-hr"   class="tab on" onclick="tab('hr')">🕵️ 전략</div>
     <div id="t-evo"  class="tab"    onclick="tab('evo')">🧠 지능 <span class="badge" id="evo-cnt" style="display:none">0</span></div>
@@ -145,7 +129,7 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
     <div id="t-cost" class="tab"    onclick="tab('cost')">💰 비용</div>
   </div>
 
-  <!-- ① 전략 탭 -->
+  <!-- 전략 탭 -->
   <div id="v-hr">
     <div class="row" style="align-items:center;margin-bottom:14px">
       <h3 style="margin:0">📅 마스터 리포트</h3>
@@ -154,7 +138,7 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
     <div id="hr-content">로드 중...</div>
   </div>
 
-  <!-- ② 지능 탭 -->
+  <!-- 지능 탭 -->
   <div id="v-evo" style="display:none">
     <div class="countdown" id="countdown-bar">
       <div>
@@ -164,28 +148,20 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
       <div class="timer" id="countdown-timer">--:--:--</div>
     </div>
 
-    <!-- ⑦ 개선된 지능 하달 섹션 -->
     <div class="directive-section">
       <h3>✍️ 지능 하달</h3>
-
-      <!-- 모드 전환: 개별 / 전체 -->
       <div class="mode-tabs">
         <button class="mode-tab on" id="mode-single" onclick="setDirectiveMode('single')">🎯 개별 에이전트</button>
         <button class="mode-tab" id="mode-all" onclick="setDirectiveMode('all')">📢 전체 에이전트 동시 하달</button>
       </div>
-
-      <!-- 개별 모드: 에이전트 선택 (DB에서 동적 로드) -->
       <div id="directive-single">
         <select id="m-role" style="margin:0 0 10px">
           <option value="">⏳ 에이전트 로딩 중...</option>
         </select>
       </div>
-      <!-- 전체 모드 안내 -->
       <div id="directive-all" style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:.84rem;color:#92400e;margin-bottom:10px;">
         📢 아래 지침이 <b>현재 등록된 모든 에이전트</b>에게 동시 적용됩니다.
       </div>
-
-      <!-- 하달 방식 선택 -->
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
         <label style="display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:700;cursor:pointer">
           <input type="radio" name="apply-mode" value="append" checked> ➕ 기존 지침에 추가
@@ -194,17 +170,13 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
           <input type="radio" name="apply-mode" value="replace"> 🔄 기존 지침 대체
         </label>
       </div>
-
-      <!-- 1안건 1건 경고 -->
       <div class="one-rule-warn" id="one-rule-warn">
         ⚠️ 지침은 <b>1개 안건만</b> 입력해주세요. 여러 내용을 동시에 입력하면 반영 효과가 낮아집니다.<br>
         예시 ✅: "결론을 항상 첫 문장에 배치할 것"<br>
         예시 ❌: "결론을 첫 문장에 쓰고, 데이터를 인용하며, 300자 이내로 요약하고, 한국 시장 중심으로 분석할 것"
       </div>
-
-      <textarea id="m-text" rows="3" placeholder="에이전트에게 직접 지침을 하달하세요. 1개 안건만 입력하세요. (예: '분석 결론을 항상 첫 문장에 배치할 것')" oninput="onDirectiveInput(this)"></textarea>
+      <textarea id="m-text" rows="3" placeholder="에이전트에게 직접 지침을 하달하세요. 1개 안건만 입력하세요." oninput="onDirectiveInput(this)"></textarea>
       <div class="char-count" id="char-count">0자</div>
-
       <button class="btn" style="background:#111;color:#fff;border:none;width:100%" onclick="sendDirectOrder()">⚡ 즉시 하달 (바로 적용)</button>
     </div>
 
@@ -212,18 +184,18 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
     <div id="live-agent-list"></div>
   </div>
 
-  <!-- ③ 개발 탭 -->
+  <!-- 개발 탭 -->
   <div id="v-dev" style="display:none">
     <div class="card" style="border-left-color:var(--dev);background:#f5f0ff">
       <h3>🛠️ 새 개발 안건 등록</h3>
       <input id="d-title" placeholder="안건 제목" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;margin-bottom:10px;font-size:.9rem">
-      <textarea id="d-task" rows="4" placeholder="요구사항을 상세히 작성하세요. AI DEV 에이전트가 이 내용을 기반으로 코드를 작성합니다."></textarea>
+      <textarea id="d-task" rows="4" placeholder="요구사항을 상세히 작성하세요."></textarea>
       <button class="btn" style="background:var(--dev);color:#fff;border:none;width:100%" onclick="addDev()">📋 백로그 등록</button>
     </div>
     <div id="dev-list"></div>
   </div>
 
-  <!-- ④ 포럼 탭 -->
+  <!-- 포럼 탭 -->
   <div id="v-log" style="display:none">
     <div id="forum-box"><span style="color:#8be9fd"># Sovereign HQ — 작전 로그</span><br>로딩 중...</div>
     <div style="display:flex;gap:10px;margin-top:14px">
@@ -232,104 +204,95 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
     </div>
   </div>
 
-  <!-- ⑤ VOC 탭 -->
+  <!-- VOC 탭 -->
   <div id="v-voc" style="display:none">
     <div id="voc-list"></div>
   </div>
 
-  <!-- ⑥ 비용 탭 -->
+  <!-- 비용 탭 -->
   <div id="v-cost" style="display:none">
-
-  <!-- 회원 현황 카드 -->
-  <div class="card" style="border-left-color:#6366f1; margin-bottom:14px;">
-    <h3 style="margin-bottom:16px;">👥 회원 현황 및 가입 제한 설정</h3>
-
-    <!-- 현재 회원 수 / 최대 회원 수 표시 -->
-    <div style="display:flex; gap:12px; margin-bottom:18px; flex-wrap:wrap;">
-      <div class="cost-card" style="border-top:3px solid #6366f1; flex:1; min-width:120px;">
-        <div class="cost-label">현재 회원 수</div>
-        <div class="cost-value" id="m-current-count" style="color:#4f46e5;">—</div>
-        <div class="cost-unit">명</div>
+    <!-- 회원 현황 카드 -->
+    <div class="card" style="border-left-color:#6366f1;margin-bottom:14px;">
+      <h3 style="margin-bottom:16px;">👥 회원 현황 및 가입 제한 설정</h3>
+      <div style="display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
+        <div class="cost-card" style="border-top:3px solid #6366f1;flex:1;min-width:120px;">
+          <div class="cost-label">현재 회원 수</div>
+          <div class="cost-value" id="m-current-count" style="color:#4f46e5;">—</div>
+          <div class="cost-unit">명</div>
+        </div>
+        <div class="cost-card" style="border-top:3px solid #10b981;flex:1;min-width:120px;">
+          <div class="cost-label">최대 허용 회원</div>
+          <div class="cost-value" id="m-max-count" style="color:#059669;">—</div>
+          <div class="cost-unit">명</div>
+        </div>
+        <div class="cost-card" style="border-top:3px solid #f59e0b;flex:1;min-width:120px;">
+          <div class="cost-label">대기 신청자</div>
+          <div class="cost-value" id="m-waitlist-count" style="color:#d97706;">—</div>
+          <div class="cost-unit">명</div>
+        </div>
       </div>
-      <div class="cost-card" style="border-top:3px solid #10b981; flex:1; min-width:120px;">
-        <div class="cost-label">최대 허용 회원</div>
-        <div class="cost-value" id="m-max-count" style="color:#059669;">—</div>
-        <div class="cost-unit">명</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
+        <label style="font-size:.84rem;font-weight:700;color:#555;white-space:nowrap;">최대 회원 수 변경:</label>
+        <input id="m-max-input" type="number" min="1" max="9999"
+               style="width:90px;padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:.9rem;font-family:inherit;"
+               placeholder="예: 100">
+        <button class="sm" style="background:#6366f1;" onclick="saveMaxMembers()">저장</button>
       </div>
-      <div class="cost-card" style="border-top:3px solid #f59e0b; flex:1; min-width:120px;">
-        <div class="cost-label">대기 신청자</div>
-        <div class="cost-value" id="m-waitlist-count" style="color:#d97706;">—</div>
-        <div class="cost-unit">명</div>
+      <div style="display:flex;align-items:center;gap:12px;padding:14px;background:#f8fafc;border-radius:12px;border:1px solid #e5e7eb;">
+        <div style="flex:1;">
+          <div style="font-size:.88rem;font-weight:700;color:#222;margin-bottom:3px;">회원가입 상태</div>
+          <div style="font-size:.78rem;color:#6b7280;" id="signup-status-desc">현재 상태 확인 중...</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="sm" id="btn-signup-open"  style="background:#10b981;" onclick="setSignupStatus(true)">✅ 허용</button>
+          <button class="sm" id="btn-signup-close" style="background:#ef4444;" onclick="setSignupStatus(false)">🔒 제한</button>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;">
+        <div style="font-size:.84rem;font-weight:700;color:#92400e;margin-bottom:8px;">📬 대기자 일괄 이메일 발송</div>
+        <div style="font-size:.78rem;color:#78350f;margin-bottom:10px;">가입이 열리면 대기 신청자에게 알림 이메일을 발송합니다. (미발송 대기자: <span id="m-unsent-count">—</span>명)</div>
+        <button class="sm" style="background:#f59e0b;" onclick="notifyWaitlist()">📨 대기자 알림 발송</button>
+        <span id="notify-result" style="font-size:.78rem;margin-left:10px;color:#059669;display:none;"></span>
       </div>
     </div>
 
-    <!-- 최대 회원 수 설정 -->
-    <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap;">
-      <label style="font-size:.84rem; font-weight:700; color:#555; white-space:nowrap;">최대 회원 수 변경:</label>
-      <input id="m-max-input" type="number" min="1" max="9999"
-             style="width:90px; padding:8px 12px; border:1.5px solid #ddd; border-radius:8px; font-size:.9rem; font-family:inherit;"
-             placeholder="예: 100">
-      <button class="sm" style="background:#6366f1;" onclick="saveMaxMembers()">저장</button>
-    </div>
-
-    <!-- 가입 허용 / 제한 토글 -->
-    <div style="display:flex; align-items:center; gap:12px; padding:14px; background:#f8fafc; border-radius:12px; border:1px solid #e5e7eb;">
-      <div style="flex:1;">
-        <div style="font-size:.88rem; font-weight:700; color:#222; margin-bottom:3px;">회원가입 상태</div>
-        <div style="font-size:.78rem; color:#6b7280;" id="signup-status-desc">현재 상태 확인 중...</div>
+    <div class="cost-grid">
+      <div class="cost-card" style="border-top:3px solid #f59e0b">
+        <div class="cost-label">오늘 Gemini 호출</div>
+        <div class="cost-value" id="c-calls">—</div>
+        <div class="cost-unit">회</div>
       </div>
-      <div style="display:flex; gap:6px;">
-        <button class="sm" id="btn-signup-open"  style="background:#10b981;" onclick="setSignupStatus(true)">✅ 허용</button>
-        <button class="sm" id="btn-signup-close" style="background:#ef4444;" onclick="setSignupStatus(false)">🔒 제한</button>
+      <div class="cost-card" style="border-top:3px solid #10b981">
+        <div class="cost-label">오늘 추정 비용</div>
+        <div class="cost-value" id="c-cost" style="color:#059669">—</div>
+        <div class="cost-unit">USD</div>
+      </div>
+      <div class="cost-card" style="border-top:3px solid #6366f1">
+        <div class="cost-label">Supabase 총 rows</div>
+        <div class="cost-value" id="c-rows">—</div>
+        <div class="cost-unit">/ 500,000 무료 한도</div>
+      </div>
+      <div class="cost-card" style="border-top:3px solid #ec4899">
+        <div class="cost-label">7일 누적 비용</div>
+        <div class="cost-value" id="c-week">—</div>
+        <div class="cost-unit">USD</div>
       </div>
     </div>
-
-    <!-- 대기 이메일 발송 -->
-    <div style="margin-top:14px; padding:14px; background:#fffbeb; border:1px solid #fde68a; border-radius:12px;">
-      <div style="font-size:.84rem; font-weight:700; color:#92400e; margin-bottom:8px;">📬 대기자 일괄 이메일 발송</div>
-      <div style="font-size:.78rem; color:#78350f; margin-bottom:10px;">가입이 열리면 대기 신청자에게 알림 이메일을 발송합니다. (미발송 대기자: <span id="m-unsent-count">—</span>명)</div>
-      <button class="sm" style="background:#f59e0b;" onclick="notifyWaitlist()">📨 대기자 알림 발송</button>
-      <span id="notify-result" style="font-size:.78rem; margin-left:10px; color:#059669; display:none;"></span>
+    <div class="card" style="border-left-color:#f59e0b">
+      <h3>📈 7일 Gemini 호출 추이</h3>
+      <canvas id="cost-chart" height="180"></canvas>
+    </div>
+    <div class="card" style="border-left-color:#6366f1">
+      <h3>🗄️ Supabase 테이블별 row 수</h3>
+      <div id="c-row-detail">로드 중...</div>
+    </div>
+    <div class="card" style="border-left-color:#e5e7eb">
+      <h3>📋 오늘 호출 유형별 내역</h3>
+      <div id="c-breakdown">로드 중...</div>
     </div>
   </div>
 
-  <!-- 기존 비용 카드들 -->
-  <div class="cost-grid">
-    <div class="cost-card" style="border-top:3px solid #f59e0b">
-      <div class="cost-label">오늘 Gemini 호출</div>
-      <div class="cost-value" id="c-calls">—</div>
-      <div class="cost-unit">회</div>
-    </div>
-    <div class="cost-card" style="border-top:3px solid #10b981">
-      <div class="cost-label">오늘 추정 비용</div>
-      <div class="cost-value" id="c-cost" style="color:#059669">—</div>
-      <div class="cost-unit">USD</div>
-    </div>
-    <div class="cost-card" style="border-top:3px solid #6366f1">
-      <div class="cost-label">Supabase 총 rows</div>
-      <div class="cost-value" id="c-rows">—</div>
-      <div class="cost-unit">/ 500,000 무료 한도</div>
-    </div>
-    <div class="cost-card" style="border-top:3px solid #ec4899">
-      <div class="cost-label">7일 누적 비용</div>
-      <div class="cost-value" id="c-week">—</div>
-      <div class="cost-unit">USD</div>
-    </div>
-  </div>
-  <div class="card" style="border-left-color:#f59e0b">
-    <h3>📈 7일 Gemini 호출 추이</h3>
-    <canvas id="cost-chart" height="180"></canvas>
-  </div>
-  <div class="card" style="border-left-color:#6366f1">
-    <h3>🗄️ Supabase 테이블별 row 수</h3>
-    <div id="c-row-detail">로드 중...</div>
-  </div>
-  <div class="card" style="border-left-color:#e5e7eb">
-    <h3>📋 오늘 호출 유형별 내역</h3>
-    <div id="c-breakdown">로드 중...</div>
-  </div>
-</div>
-</div>
+</div><!-- /.wrap -->
 
 <div id="toast"></div>
 
@@ -344,7 +307,7 @@ const CFG = {
 };
 const sc = supabase.createClient(CFG.url, CFG.key);
 let me = null, autoTimer = null, costChartInstance = null;
-let directiveMode = 'single'; // 'single' | 'all'
+let directiveMode = 'single';
 
 /* ── 유틸 ── */
 function toast(msg, dur=2800) {
@@ -354,6 +317,11 @@ function toast(msg, dur=2800) {
 }
 function $id(id) { return document.getElementById(id); }
 function render(id, html) { const el=$id(id); if(el) el.innerHTML=html; }
+
+/* ★ 버그 수정: escHtml을 <script> 안으로 이동 */
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
 /* ── 토큰 ── */
 function saveToken() {
@@ -421,7 +389,7 @@ async function runAutoApproval() {
   } catch(e) { console.error('자동승인 오류:', e); }
 }
 
-/* ── ⑦ 지능 하달 모드 전환 ── */
+/* ── 지능 하달 ── */
 function setDirectiveMode(mode) {
   directiveMode = mode;
   $id('mode-single').classList.toggle('on', mode==='single');
@@ -430,83 +398,51 @@ function setDirectiveMode(mode) {
   $id('directive-all').style.display = mode==='all' ? 'block' : 'none';
 }
 
-/* ── ⑦ 텍스트 입력 시 1안건 경고 & 글자수 표시 ── */
 function onDirectiveInput(el) {
   const len = el.value.length;
   const ccEl = $id('char-count');
   ccEl.textContent = `${len}자`;
   ccEl.className = 'char-count' + (len > 300 ? ' over' : len > 200 ? ' warn' : '');
-
-  // 여러 안건 감지: 마침표+줄바꿈, 번호매기기(1. 2. 가. 나.), ';' 분리 등
   const multiPattern = /(\d+\.\s|\n{2,}|;\s*[^\n]|[가나다라마바사아자차카타파하]\.\s)/;
   $id('one-rule-warn').classList.toggle('show', multiPattern.test(el.value) && el.value.length > 30);
 }
 
-/* ── ⑦ 에이전트 목록 동적 로드 ── */
 async function loadAgentSelect() {
   try {
     const { data, error } = await sc.from('agents').select('agent_role').order('agent_role');
     if(error) throw error;
     const roles = (data||[]).map(a => a.agent_role);
-    if(roles.length === 0) {
-      // fallback: 코드에 하드코딩된 기본 목록
-      render('m-role', `
-        <option value="BA">🔍 BA</option>
-        <option value="STOCK">📈 STOCK</option>
-        <option value="PM">🗂 PM</option>
-        <option value="HR">👤 HR</option>
-        <option value="DEV">💻 DEV</option>
-        <option value="QA">✅ QA</option>
-        <option value="BRIEF">📝 BRIEF</option>
-      `);
-    } else {
-      const icons = {BA:'🔍',STOCK:'📈',PM:'🗂',HR:'👤',DEV:'💻',QA:'✅',BRIEF:'📝',KW:'🔑',DATA:'📉',INFO:'🌐'};
-      render('m-role', roles.map(r => `<option value="${r}">${icons[r]||'🤖'} ${r}</option>`).join(''));
-    }
+    const icons = {BA:'🔍',STOCK:'📈',PM:'🗂',HR:'👤',DEV:'💻',QA:'✅',BRIEF:'📝',KW:'🔑',DATA:'📉',INFO:'🌐'};
+    render('m-role', roles.length === 0
+      ? `<option value="BA">🔍 BA</option><option value="STOCK">📈 STOCK</option><option value="PM">🗂 PM</option><option value="HR">👤 HR</option><option value="BRIEF">📝 BRIEF</option>`
+      : roles.map(r => `<option value="${r}">${icons[r]||'🤖'} ${r}</option>`).join('')
+    );
   } catch(e) {
-    // fallback
-    render('m-role', `
-      <option value="BA">🔍 BA</option>
-      <option value="STOCK">📈 STOCK</option>
-      <option value="PM">🗂 PM</option>
-      <option value="HR">👤 HR</option>
-      <option value="BRIEF">📝 BRIEF</option>
-    `);
+    render('m-role', `<option value="BA">🔍 BA</option><option value="STOCK">📈 STOCK</option><option value="PM">🗂 PM</option>`);
   }
 }
 
-/* ── ⑦ 지능하달 (개별 또는 전체, 추가/대체 방식 지원) ── */
 async function sendDirectOrder() {
   const text = $id('m-text').value.trim();
   if(!text) return toast('❌ 지침 내용을 입력하세요');
-
-  // 1안건 강제 검사
   const multiPattern = /(\d+\.\s|\n{2,}|;\s*[^\n]|[가나다라마바사아자차카타파하]\.\s)/;
   if(multiPattern.test(text) && text.length > 30) {
-    if(!confirm('⚠️ 여러 안건이 감지되었습니다.\n지침은 1개 안건만 입력해야 효과적입니다.\n그래도 계속 진행하시겠습니까?')) return;
+    if(!confirm('⚠️ 여러 안건이 감지되었습니다.\n그래도 계속 진행하시겠습니까?')) return;
   }
-
-  const applyMode = document.querySelector('input[name="apply-mode"]:checked').value; // 'append' | 'replace'
-
+  const applyMode = document.querySelector('input[name="apply-mode"]:checked').value;
   try {
     if(directiveMode === 'single') {
-      // 개별 에이전트 하달
       const role = $id('m-role').value;
       if(!role) return toast('❌ 에이전트를 선택하세요');
       await applyDirective(role, text, applyMode);
       toast(`⚡ ${role} 에이전트 지침 즉시 하달 완료`);
-
     } else {
-      // 전체 에이전트 동시 하달
       const { data: agents } = await sc.from('agents').select('agent_role, instruction');
       if(!agents?.length) return toast('❌ 등록된 에이전트가 없습니다');
       if(!confirm(`📢 현재 등록된 에이전트 ${agents.length}명 전체에게 지침을 하달합니다.\n계속하시겠습니까?`)) return;
-      for(const a of agents) {
-        await applyDirective(a.agent_role, text, applyMode, a.instruction);
-      }
+      for(const a of agents) await applyDirective(a.agent_role, text, applyMode, a.instruction);
       toast(`📢 전체 ${agents.length}개 에이전트 지침 하달 완료`);
     }
-
     $id('m-text').value = '';
     $id('char-count').textContent = '0자';
     $id('one-rule-warn').classList.remove('show');
@@ -514,28 +450,21 @@ async function sendDirectOrder() {
   } catch(e) { toast('❌ 하달 실패: ' + e.message); }
 }
 
-/* ── ⑦ 지침 적용 헬퍼 (추가 또는 대체) ── */
 async function applyDirective(role, newText, mode, existingInstruction) {
-  // 기존 지침 조회 (개별 모드에서 existingInstruction 없을 때)
   let currentInstruction = existingInstruction;
   if(currentInstruction === undefined) {
     const { data } = await sc.from('agents').select('instruction').eq('agent_role', role).single();
     currentInstruction = data?.instruction || '';
   }
-
   let finalInstruction;
   if(mode === 'append') {
-    // 기존 지침 + 구분선 + 새 지침 추가
-    const separator = currentInstruction ? '\n\n---\n[마스터 추가 지침 ' + new Date().toLocaleDateString('ko-KR') + ']\n' : '';
-    finalInstruction = currentInstruction + separator + newText;
+    const sep = currentInstruction ? '\n\n---\n[마스터 추가 지침 ' + new Date().toLocaleDateString('ko-KR') + ']\n' : '';
+    finalInstruction = currentInstruction + sep + newText;
   } else {
-    // 완전 대체
     finalInstruction = newText;
   }
-
   const { error } = await sc.from('agents').update({ instruction: finalInstruction }).eq('agent_role', role);
   if(error) throw error;
-
   await sc.from('pending_approvals').insert([{
     agent_role: role,
     proposed_instruction: finalInstruction,
@@ -544,7 +473,7 @@ async function applyDirective(role, newText, mode, existingInstruction) {
   }]);
 }
 
-/* ── ⑦ 지능 탭 로드 ── */
+/* ── 지능 탭 ── */
 async function loadEvo() {
   try {
     const [agRes, prRes] = await Promise.all([
@@ -554,7 +483,6 @@ async function loadEvo() {
     ]);
     const agents = agRes.data || [];
     const props  = prRes.data || [];
-
     if(props.length > 0) { $id('evo-cnt').style.display=''; $id('evo-cnt').textContent=props.length; }
     else { $id('evo-cnt').style.display='none'; }
 
@@ -583,7 +511,6 @@ async function loadEvo() {
           <div class="box">${escHtml(a.instruction||'지침 없음')}</div>
         </div>`).join('');
     render('live-agent-list', aHtml);
-
   } catch(e) {
     render('pending-evo-list', `<div class="card" style="border-left-color:var(--admin)">⚠️ 데이터 로드 실패: ${e.message}</div>`);
   }
@@ -612,14 +539,13 @@ async function loadDev() {
     const pending = (data||[]).filter(b => b.status === 'PENDING').length;
     if(pending > 0) { $id('dev-cnt').style.display=''; $id('dev-cnt').textContent=pending; }
     else { $id('dev-cnt').style.display='none'; }
-
     render('dev-list', (data||[]).length === 0
       ? `<div class="empty">등록된 백로그가 없습니다</div>`
       : (data||[]).map(b => {
           const created = b.created_at ? new Date(b.created_at).toLocaleString('ko-KR') : '';
           let btns = '';
-          if(b.status === 'PENDING')    btns = `<button class="sm" style="background:var(--primary)" onclick="upDev('${b.id}','CONFIRMED')">✅ 개발 확정</button>`;
-          else if(b.status==='CONFIRMED') btns = `<button class="sm" style="background:var(--dev)" onclick="triggerDev('${b.id}')">🚀 배포 시작</button>`;
+          if(b.status==='PENDING')     btns = `<button class="sm" style="background:var(--primary)" onclick="upDev('${b.id}','CONFIRMED')">✅ 개발 확정</button>`;
+          else if(b.status==='CONFIRMED')  btns = `<button class="sm" style="background:var(--dev)" onclick="triggerDev('${b.id}')">🚀 배포 시작</button>`;
           else if(b.status==='DEVELOPING') btns = `<span class="pulse" style="color:var(--dev);font-weight:700">⏳ AI 배포 중...</span>`;
           else btns = `<span style="color:var(--success);font-weight:700">✅ 배포 완료</span>`;
           return `<div class="card" style="border-left-color:var(--dev)">
@@ -738,7 +664,7 @@ async function loadHrReport() {
   } catch(e) { render('hr-content', `<span style="color:#f55">로드 실패: ${e.message}</span>`); }
 }
 
-/* ── ⑥ VOC 탭 (👍/👎 + 자유의견 형태로 표시) ── */
+/* ── VOC 탭 ── */
 async function loadVoc() {
   try {
     const { data } = await sc.from('report_feedback').select('*').order('created_at', { ascending: false }).limit(15);
@@ -756,254 +682,180 @@ async function loadVoc() {
   } catch(e) { render('voc-list', `<div class="card">⚠️ VOC 로드 실패</div>`); }
 }
 
-/* ── 💰 비용 탭 ── */
+/* ── 비용 탭 / 회원 설정 ── */
 async function loadMemberSettings() {
   try {
-    // 현재 회원 수: auth.users 직접 조회 불가 → user_settings 행 수로 대체
     const [countRes, maxRes, waitlistRes, unsentRes] = await Promise.all([
       sc.from('user_settings').select('id', { count:'exact', head:true }),
       sc.from('app_settings').select('value').eq('key','max_members').maybeSingle(),
       sc.from('signup_waitlist').select('id', { count:'exact', head:true }),
       sc.from('signup_waitlist').select('id', { count:'exact', head:true }).eq('notified', false),
     ]);
+    $id('m-current-count').textContent  = countRes.count ?? '—';
+    $id('m-max-count').textContent      = maxRes.data?.value ?? '제한없음';
+    $id('m-waitlist-count').textContent = waitlistRes.count ?? '0';
+    $id('m-unsent-count').textContent   = unsentRes.count ?? '0';
+    if(maxRes.data?.value) $id('m-max-input').value = maxRes.data.value;
 
-    document.getElementById('m-current-count').textContent = countRes.count ?? '—';
-    document.getElementById('m-max-count').textContent     = maxRes.data?.value ?? '제한없음';
-    document.getElementById('m-waitlist-count').textContent = waitlistRes.count ?? '0';
-    document.getElementById('m-unsent-count').textContent   = unsentRes.count ?? '0';
-
-    if (maxRes.data?.value) {
-      document.getElementById('m-max-input').value = maxRes.data.value;
-    }
-
-    // 가입 상태 표시
     const openRes = await sc.from('app_settings').select('value').eq('key','signup_open').maybeSingle();
     const isOpen  = openRes.data?.value === 'true' || openRes.data?.value === true;
     updateSignupStatusUI(isOpen);
-
   } catch(e) { console.error('회원 설정 로드 오류:', e); }
 }
 
 function updateSignupStatusUI(isOpen) {
-  const desc = document.getElementById('signup-status-desc');
-  const btnO = document.getElementById('btn-signup-open');
-  const btnC = document.getElementById('btn-signup-close');
-  if (isOpen) {
+  const desc = $id('signup-status-desc');
+  const btnO = $id('btn-signup-open');
+  const btnC = $id('btn-signup-close');
+  if(isOpen) {
     desc.textContent = '✅ 가입 허용 중 — 신규 회원이 자유롭게 가입할 수 있습니다.';
     desc.style.color = '#059669';
-    btnO.style.opacity = '1'; btnO.style.fontWeight = '900';
-    btnC.style.opacity = '.5'; btnC.style.fontWeight = '700';
+    btnO.style.opacity='1'; btnO.style.fontWeight='900';
+    btnC.style.opacity='.5'; btnC.style.fontWeight='700';
   } else {
     desc.textContent = '🔒 가입 제한 중 — 신규 가입 시 대기 신청 화면이 표시됩니다.';
     desc.style.color = '#dc2626';
-    btnC.style.opacity = '1'; btnC.style.fontWeight = '900';
-    btnO.style.opacity = '.5'; btnO.style.fontWeight = '700';
+    btnC.style.opacity='1'; btnC.style.fontWeight='900';
+    btnO.style.opacity='.5'; btnO.style.fontWeight='700';
   }
 }
 
-/* ── 최대 회원 수 저장 ── */
 async function saveMaxMembers() {
-  const val = document.getElementById('m-max-input').value.trim();
-  if (!val || isNaN(val) || Number(val) < 1) return toast('❌ 올바른 숫자를 입력하세요');
+  const val = $id('m-max-input').value.trim();
+  if(!val || isNaN(val) || Number(val) < 1) return toast('❌ 올바른 숫자를 입력하세요');
   try {
-    await sc.from('app_settings').upsert(
-      { key: 'max_members', value: String(val) },
-      { onConflict: 'key' }
-    );
-    document.getElementById('m-max-count').textContent = val;
+    await sc.from('app_settings').upsert({ key:'max_members', value:String(val) }, { onConflict:'key' });
+    $id('m-max-count').textContent = val;
     toast(`✅ 최대 회원 수 ${val}명으로 저장됨`);
   } catch(e) { toast('❌ 저장 실패: ' + e.message); }
 }
 
-/* ── 가입 허용 / 제한 토글 ── */
 async function setSignupStatus(open) {
   try {
-    await sc.from('app_settings').upsert(
-      { key: 'signup_open', value: String(open) },
-      { onConflict: 'key' }
-    );
+    await sc.from('app_settings').upsert({ key:'signup_open', value:String(open) }, { onConflict:'key' });
     updateSignupStatusUI(open);
     toast(open ? '✅ 회원가입 허용으로 변경됨' : '🔒 회원가입 제한으로 변경됨');
   } catch(e) { toast('❌ 변경 실패: ' + e.message); }
 }
 
-/* ── 대기자 알림 발송 (Supabase Edge Function 또는 직접 이메일 발송) ── */
 async function notifyWaitlist() {
-  if (!confirm('미발송 대기자 전원에게 알림 이메일을 발송합니다. 계속하시겠습니까?')) return;
+  if(!confirm('미발송 대기자 전원에게 알림 이메일을 발송합니다. 계속하시겠습니까?')) return;
   try {
-    // 미발송 대기자 목록 조회
-    const { data: list, error } = await sc
-      .from('signup_waitlist')
-      .select('id, email')
-      .eq('notified', false);
-    if (error) throw error;
-    if (!list?.length) { toast('📭 발송할 대기자가 없습니다'); return; }
-
-    // Resend를 통한 발송은 서버 사이드(Edge Function)에서 처리 권장
-    // 여기서는 notified 플래그를 true로 마킹하고, 실제 발송은 백엔드 트리거로 연동
+    const { data: list, error } = await sc.from('signup_waitlist').select('id, email').eq('notified', false);
+    if(error) throw error;
+    if(!list?.length) { toast('📭 발송할 대기자가 없습니다'); return; }
     const ids = list.map(r => r.id);
-    await sc.from('signup_waitlist')
-      .update({ notified: true, notified_at: new Date().toISOString() })
-      .in('id', ids);
-
-    // 발송 요청 로그 기록 (news_bot.py가 pickup해서 실제 이메일 발송)
+    await sc.from('signup_waitlist').update({ notified:true, notified_at:new Date().toISOString() }).in('id', ids);
     await sc.from('action_logs').insert({
       action_type: 'WAITLIST_NOTIFY',
       target_word: 'SYSTEM',
       details: `📬 대기자 ${list.length}명 이메일 발송 요청. 이메일: ${list.map(r=>r.email).join(', ')}`
     });
-
-    document.getElementById('m-unsent-count').textContent = '0';
-    document.getElementById('m-waitlist-count').textContent = String(list.length);
-    const result = document.getElementById('notify-result');
+    $id('m-unsent-count').textContent = '0';
+    const result = $id('notify-result');
     result.textContent = `✅ ${list.length}명에게 발송 요청 완료!`;
     result.style.display = 'inline';
-    setTimeout(() => result.style.display = 'none', 4000);
+    setTimeout(() => result.style.display='none', 4000);
     toast(`📨 대기자 ${list.length}명 발송 요청 완료`);
     loadMemberSettings();
   } catch(e) { toast('❌ 발송 실패: ' + e.message); }
 }
 
-/* ── 비용 탭 진입 시 회원 현황도 함께 로드 ── */
 async function loadCost() {
-  loadMemberSettings(); // 회원 현황 병렬 로드
-
+  loadMemberSettings();
   try {
     const todayFmt = new Date(new Date().getTime() + 9*60*60*1000).toISOString().slice(0,10);
-    const { data: todayLogs } = await sc
-      .from('cost_log').select('call_type, call_count, cost_usd').eq('log_date', todayFmt);
-
-    const totalCalls = (todayLogs||[]).reduce((s,r) => s+(r.call_count||0), 0);
-    const totalCost  = (todayLogs||[]).reduce((s,r) => s+(r.cost_usd||0),   0);
-    document.getElementById('c-calls').textContent = totalCalls.toLocaleString();
-    document.getElementById('c-cost').textContent  = `$${totalCost.toFixed(4)}`;
+    const { data: todayLogs } = await sc.from('cost_log').select('call_type, call_count, cost_usd').eq('log_date', todayFmt);
+    const totalCalls = (todayLogs||[]).reduce((s,r)=>s+(r.call_count||0),0);
+    const totalCost  = (todayLogs||[]).reduce((s,r)=>s+(r.cost_usd||0),0);
+    $id('c-calls').textContent = totalCalls.toLocaleString();
+    $id('c-cost').textContent  = `$${totalCost.toFixed(4)}`;
 
     const byType = {};
-    (todayLogs||[]).forEach(r => { byType[r.call_type] = (byType[r.call_type]||0)+(r.call_count||0); });
-    const typeIcon = { text:'📝', json:'📊', batch:'🗞️' };
-    document.getElementById('c-breakdown').innerHTML = Object.keys(byType).length === 0
+    (todayLogs||[]).forEach(r => { byType[r.call_type]=(byType[r.call_type]||0)+(r.call_count||0); });
+    const typeIcon = {text:'📝',json:'📊',batch:'🗞️'};
+    $id('c-breakdown').innerHTML = Object.keys(byType).length===0
       ? '<span style="color:#aaa">오늘 데이터 없음</span>'
       : `<table style="width:100%;border-collapse:collapse">
           <tr style="background:#f8fafc;font-weight:700"><td style="padding:8px">유형</td><td style="padding:8px;text-align:right">호출 수</td></tr>
-          ${Object.entries(byType).map(([k,v])=>`
-            <tr style="border-top:1px solid #f0f0f0">
-              <td style="padding:8px">${typeIcon[k]||'•'} ${k}</td>
-              <td style="padding:8px;text-align:right;font-weight:700">${v.toLocaleString()}회</td>
-            </tr>`).join('')}
+          ${Object.entries(byType).map(([k,v])=>`<tr style="border-top:1px solid #f0f0f0"><td style="padding:8px">${typeIcon[k]||'•'} ${k}</td><td style="padding:8px;text-align:right;font-weight:700">${v.toLocaleString()}회</td></tr>`).join('')}
         </table>`;
 
-    const since7 = new Date(new Date().getTime() + 9*60*60*1000 - 6*86400*1000).toISOString().slice(0,10);
-    const { data: weekLogs } = await sc
-      .from('cost_log').select('log_date, call_count, cost_usd').gte('log_date', since7);
-    const weekCost = (weekLogs||[]).reduce((s,r) => s+(r.cost_usd||0), 0);
-    document.getElementById('c-week').textContent = `$${weekCost.toFixed(3)}`;
+    const since7 = new Date(new Date().getTime()+9*60*60*1000-6*86400*1000).toISOString().slice(0,10);
+    const { data: weekLogs } = await sc.from('cost_log').select('log_date,call_count,cost_usd').gte('log_date',since7);
+    $id('c-week').textContent = `$${(weekLogs||[]).reduce((s,r)=>s+(r.cost_usd||0),0).toFixed(3)}`;
 
-    const days = Array.from({length:7}, (_,i) => {
-      const d = new Date(new Date().getTime() + 9*60*60*1000 - (6-i)*86400*1000);
+    const days = Array.from({length:7},(_,i)=>{
+      const d=new Date(new Date().getTime()+9*60*60*1000-(6-i)*86400*1000);
       return d.toISOString().slice(0,10);
     });
-    const callByDay = {};
-    (weekLogs||[]).forEach(r => { callByDay[r.log_date] = (callByDay[r.log_date]||0)+(r.call_count||0); });
-    const ctx = document.getElementById('cost-chart').getContext('2d');
-    if (costChartInstance) costChartInstance.destroy();
-    costChartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: days.map(d => d.slice(5)),
-        datasets: [{
-          label: 'Gemini 호출 수',
-          data: days.map(d => callByDay[d]||0),
-          backgroundColor: 'rgba(245,158,11,0.7)',
-          borderColor: '#f59e0b', borderWidth: 2, borderRadius: 6,
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-      }
+    const callByDay={};
+    (weekLogs||[]).forEach(r=>{callByDay[r.log_date]=(callByDay[r.log_date]||0)+(r.call_count||0);});
+    const ctx=$id('cost-chart').getContext('2d');
+    if(costChartInstance) costChartInstance.destroy();
+    costChartInstance=new Chart(ctx,{
+      type:'bar',
+      data:{labels:days.map(d=>d.slice(5)),datasets:[{label:'Gemini 호출 수',data:days.map(d=>callByDay[d]||0),backgroundColor:'rgba(245,158,11,0.7)',borderColor:'#f59e0b',borderWidth:2,borderRadius:6}]},
+      options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}
     });
 
-    const { data: sbStats } = await sc
-      .from('supabase_stats').select('row_counts, total_rows').eq('stat_date', todayFmt).maybeSingle();
-    if (sbStats) {
-      const total = sbStats.total_rows || 0;
-      const pct   = ((total/500000)*100).toFixed(1);
-      const color = total > 400000 ? '#dc2626' : total > 250000 ? '#d97706' : '#16a34a';
-      document.getElementById('c-rows').textContent = total.toLocaleString();
-      document.getElementById('c-rows').style.color = color;
-      const counts = sbStats.row_counts || {};
-      document.getElementById('c-row-detail').innerHTML = `
-        <div style="margin-bottom:10px">
-          <div style="background:#f3f4f6;border-radius:8px;height:12px;overflow:hidden">
-            <div style="background:${color};height:100%;width:${Math.min(pct,100)}%;border-radius:8px;transition:.5s"></div>
-          </div>
-          <div style="font-size:.8rem;color:#6b7280;margin-top:4px">${pct}% 사용 중 (무료 한도 50만 rows)</div>
-        </div>
-        <table style="width:100%;border-collapse:collapse;font-size:.88rem">
-          ${Object.entries(counts).map(([t,n])=>`
-            <tr style="border-top:1px solid #f0f0f0">
-              <td style="padding:6px 8px;color:#555">${t}</td>
-              <td style="padding:6px 8px;text-align:right;font-weight:700;color:${n>100000?'#dc2626':'#111'}">${n.toLocaleString()}</td>
-            </tr>`).join('')}
-        </table>`;
+    const { data: sbStats } = await sc.from('supabase_stats').select('row_counts,total_rows').eq('stat_date',todayFmt).maybeSingle();
+    if(sbStats){
+      const total=sbStats.total_rows||0, pct=((total/500000)*100).toFixed(1);
+      const color=total>400000?'#dc2626':total>250000?'#d97706':'#16a34a';
+      $id('c-rows').textContent=total.toLocaleString(); $id('c-rows').style.color=color;
+      const counts=sbStats.row_counts||{};
+      $id('c-row-detail').innerHTML=`<div style="margin-bottom:10px"><div style="background:#f3f4f6;border-radius:8px;height:12px;overflow:hidden"><div style="background:${color};height:100%;width:${Math.min(pct,100)}%;border-radius:8px;transition:.5s"></div></div><div style="font-size:.8rem;color:#6b7280;margin-top:4px">${pct}% 사용 중 (무료 한도 50만 rows)</div></div><table style="width:100%;border-collapse:collapse;font-size:.88rem">${Object.entries(counts).map(([t,n])=>`<tr style="border-top:1px solid #f0f0f0"><td style="padding:6px 8px;color:#555">${t}</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:${n>100000?'#dc2626':'#111'}">${n.toLocaleString()}</td></tr>`).join('')}</table>`;
     } else {
-      document.getElementById('c-rows').textContent = '—';
-      document.getElementById('c-row-detail').innerHTML = '<span style="color:#aaa">오늘 통계 없음</span>';
+      $id('c-rows').textContent='—';
+      $id('c-row-detail').innerHTML='<span style="color:#aaa">오늘 통계 없음</span>';
     }
   } catch(e) {
-    console.error('loadCost 오류:', e);
-    document.getElementById('c-breakdown').innerHTML = `<span style="color:#f55">로드 실패: ${e.message}</span>`;
+    console.error('loadCost 오류:',e);
+    $id('c-breakdown').innerHTML=`<span style="color:#f55">로드 실패: ${e.message}</span>`;
   }
-}
-</script>
-
-/* ── XSS 방지 ── */
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 /* ── 전체 새로고침 ── */
 async function refreshAll() {
-  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadLogs(), loadVoc()]);
+  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadLogs(), loadVoc(), loadMemberSettings()]);
   toast('🔄 전체 데이터 새로고침 완료');
 }
 
-/* ── 초기화 ── */
-async function () {
+/* ★ 버그 수정: async function init() 으로 함수명 복원 */
+async function init() {
   startClock();
   const tok = getToken();
-  if(tok) { $id('ghp-token').value = tok; updateTokenStatus(tok); }
+  if(tok) { $id('ghp-token').value=tok; updateTokenStatus(tok); }
   else { updateTokenStatus(''); }
   try {
     const { data: { session } } = await sc.auth.getSession();
     if(!session || session.user.email !== CFG.master) {
       toast('❌ 마스터 권한 없음. 로그인 페이지로 이동합니다.');
-      setTimeout(() => location.href = 'app.html', 1500);
+      setTimeout(() => location.href='app.html', 1500);
       return;
     }
     me = session.user;
   } catch(e) {
-    me = { id: 'master', email: CFG.master };
+    me = { id:'master', email:CFG.master };
     console.warn('세션 없음, 기본 모드 동작:', e.message);
   }
   startAutoApprovalTimer();
-  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadLogs(), loadVoc(),loadMemberSettings()]);
-  loadAgentSelect(); // ⑦ 에이전트 선택 목록 동적 로드
+  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadLogs(), loadVoc(), loadMemberSettings()]);
+  loadAgentSelect();
 
   sc.channel('evo-updates')
-    .on('postgres_changes', { event:'*', schema:'public', table:'pending_approvals' }, () => loadEvo())
+    .on('postgres_changes',{event:'*',schema:'public',table:'pending_approvals'},()=>loadEvo())
     .subscribe();
   sc.channel('dev-updates')
-    .on('postgres_changes', { event:'*', schema:'public', table:'dev_backlog' }, () => loadDev())
+    .on('postgres_changes',{event:'*',schema:'public',table:'dev_backlog'},()=>loadDev())
     .subscribe();
-  // ⑦ 에이전트 추가/수정 시 select 자동 반영
   sc.channel('agent-updates')
-    .on('postgres_changes', { event:'*', schema:'public', table:'agents' }, () => loadAgentSelect())
+    .on('postgres_changes',{event:'*',schema:'public',table:'agents'},()=>loadAgentSelect())
     .subscribe();
 }
 
-();
+init();
 </script>
 </body>
 </html>
