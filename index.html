@@ -10,17 +10,13 @@
 :root{--primary:#4f46e5;--g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;--g600:#4b5563;--g900:#111827;}
 body{font-family:'Pretendard',sans-serif;background:#fff;color:var(--g900);-webkit-tap-highlight-color:transparent;}
 
-/* NAV */
 .nav{position:sticky;top:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:56px;}
 .nav-logo{font-size:.95rem;font-weight:800;letter-spacing:-.5px;cursor:pointer;}
 .nav-links{display:flex;gap:8px;align-items:center;}
-.nav-link{font-size:.8rem;font-weight:600;color:var(--g600);padding:6px 12px;border-radius:8px;cursor:pointer;border:none;background:none;font-family:inherit;}
-/* ③ 이용방법 보기 버튼 스타일 */
 .btn-how{font-size:.8rem;font-weight:700;color:var(--g600);padding:7px 14px;border-radius:20px;cursor:pointer;border:1.5px solid var(--g200);background:#fff;font-family:inherit;transition:.15s;}
 .btn-how:hover{background:var(--g100);}
 .btn-cta-sm{background:var(--g900);color:#fff;border:none;padding:7px 16px;border-radius:20px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit;}
 
-/* HERO */
 .hero{text-align:center;padding:64px 20px 56px;background:linear-gradient(180deg,#fff 0%,var(--g50) 100%);}
 .hero-badge{display:inline-block;background:#eef2ff;color:var(--primary);font-size:.72rem;font-weight:700;padding:4px 14px;border-radius:20px;letter-spacing:.5px;margin-bottom:18px;}
 .hero h1{font-size:clamp(2rem,8vw,3.4rem);font-weight:800;letter-spacing:-2px;line-height:1.1;margin-bottom:14px;}
@@ -32,7 +28,6 @@ body{font-family:'Pretendard',sans-serif;background:#fff;color:var(--g900);-webk
 @keyframes bulb{0%,100%{filter:brightness(1);transform:scale(1);}40%{filter:brightness(1.6) drop-shadow(0 0 8px #fde68a);transform:scale(1.15);}60%{filter:brightness(1.2) drop-shadow(0 0 4px #fcd34d);transform:scale(1.08);}}
 .btn-sub{padding:16px 28px;border-radius:50px;background:#fff;color:var(--g900);border:1.5px solid var(--g200);font-weight:700;cursor:pointer;font-size:1rem;font-family:inherit;}
 
-/* STEP FLOW */
 .section{padding:56px 20px;max-width:800px;margin:0 auto;}
 .section-label{font-size:.72rem;font-weight:700;color:var(--primary);letter-spacing:2px;text-align:center;margin-bottom:10px;}
 .section-title{font-size:clamp(1.3rem,5vw,1.9rem);font-weight:800;text-align:center;letter-spacing:-.5px;margin-bottom:40px;}
@@ -48,12 +43,10 @@ body{font-family:'Pretendard',sans-serif;background:#fff;color:var(--g900);-webk
 .step-tag{background:var(--g100);color:var(--g600);padding:3px 10px;border-radius:18px;font-size:.74rem;font-weight:700;}
 .step-tag.blue{background:#eef2ff;color:var(--primary);}
 
-/* 분석 시각화 섹션 */
 .viz-section{background:var(--g900);padding:56px 20px;}
 .viz-inner{max-width:800px;margin:0 auto;}
 .viz-section .section-label{color:#a5b4fc;}
 .viz-section .section-title{color:#fff;}
-
 .agent-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
 @media(min-width:600px){.agent-grid{grid-template-columns:repeat(4,1fr);}}
 .agent-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:16px 14px;}
@@ -63,7 +56,6 @@ body{font-family:'Pretendard',sans-serif;background:#fff;color:var(--g900);-webk
 .agent-bar-wrap{height:4px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden;}
 .agent-bar{height:100%;border-radius:4px;background:linear-gradient(90deg,#818cf8,#a5b4fc);}
 
-/* 리포트 미리보기 */
 .preview-section{padding:56px 20px;background:var(--g50);}
 .preview-inner{max-width:800px;margin:0 auto;}
 .preview-card{background:#fff;border-radius:18px;border:1px solid var(--g200);overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.06);}
@@ -85,38 +77,44 @@ body{font-family:'Pretendard',sans-serif;background:#fff;color:var(--g900);-webk
 .preview-news-line-t{height:10px;border-radius:4px;background:var(--g200);}
 .preview-news-line-s{height:8px;border-radius:4px;background:var(--g100);width:70%;}
 
-/* CTA */
 .cta-section{padding:72px 20px;text-align:center;}
 .cta-section h2{font-size:clamp(1.4rem,5vw,2.2rem);font-weight:800;letter-spacing:-.5px;margin-bottom:12px;}
 .cta-section p{color:var(--g600);font-size:.9rem;margin-bottom:32px;}
 
-/* FOOTER */
 footer{border-top:1px solid var(--g200);padding:24px 20px;text-align:center;font-size:.75rem;color:var(--g600);}
 
-/* AUTH OVERLAY */
+/* ── AUTH 오버레이 ── */
 #auth-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;backdrop-filter:blur(8px);padding:20px;}
 .auth-modal{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:36px 28px;border-radius:24px;width:90%;max-width:380px;}
-.auth-modal h2{font-size:1.3rem;font-weight:800;margin-bottom:20px;}
+.auth-modal h2{font-size:1.3rem;font-weight:800;margin-bottom:6px;}
+.auth-modal-sub{font-size:.82rem;color:var(--g600);margin-bottom:20px;}
 .auth-input{width:100%;padding:13px 16px;border-radius:10px;border:1.5px solid var(--g200);font-size:.9rem;font-family:inherit;margin-bottom:12px;outline:none;}
 .auth-input:focus{border-color:var(--primary);}
-.auth-submit{width:100%;padding:14px;border-radius:12px;background:var(--primary);color:#fff;border:none;font-weight:800;font-size:.95rem;cursor:pointer;font-family:inherit;}
+.auth-submit{width:100%;padding:14px;border-radius:12px;background:var(--primary);color:#fff;border:none;font-weight:800;font-size:.95rem;cursor:pointer;font-family:inherit;transition:.15s;}
+.auth-submit:disabled{background:#9ca3af;cursor:default;}
 .auth-close{margin-top:14px;font-size:.78rem;color:var(--g600);cursor:pointer;text-align:center;}
+
+/* ── 가입 제한 뷰 ── */
+.waitlist-view{text-align:center;padding:8px 0;}
+.waitlist-icon{font-size:3rem;margin-bottom:14px;}
+.waitlist-title{font-size:1.05rem;font-weight:800;color:var(--g900);margin-bottom:10px;}
+.waitlist-msg{font-size:.88rem;color:var(--g600);line-height:1.7;margin-bottom:22px;background:var(--g50);border:1px solid var(--g200);border-radius:12px;padding:14px 16px;text-align:left;}
+.waitlist-input-wrap{display:flex;flex-direction:column;gap:10px;}
+.waitlist-submit{width:100%;padding:14px;border-radius:12px;background:#111;color:#fff;border:none;font-weight:800;font-size:.9rem;cursor:pointer;font-family:inherit;transition:.15s;}
+.waitlist-submit:disabled{background:#9ca3af;cursor:default;}
+.waitlist-done{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;text-align:center;font-size:.88rem;color:#065f46;font-weight:600;margin-top:4px;}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
 <nav class="nav">
   <span class="nav-logo">Fitz Intelligence</span>
   <div class="nav-links">
-    <!-- ③ 이용방법 보기 버튼 (④ 로그인 시 메인화면 바로가기 왼쪽에 위치) -->
     <button class="btn-how" onclick="scrollTo({top:document.getElementById('how').offsetTop-60,behavior:'smooth'})">이용방법 보기</button>
-    <!-- ④ 로그인 전: 무료로 시작하기 / 로그인 후: 메인화면 바로가기 -->
     <button class="btn-cta-sm" id="nav-cta" onclick="handleStart()">무료로 시작하기</button>
   </div>
 </nav>
 
-<!-- HERO -->
 <section class="hero">
   <div class="hero-badge">PROFESSIONAL AI INTELLIGENCE</div>
   <h1>오늘 꼭 알아야 할 소식<span id="bulb">💡</span><br>AI가 먼저 읽어드려요</h1>
@@ -126,7 +124,6 @@ footer{border-top:1px solid var(--g200);padding:24px 20px;text-align:center;font
   </div>
 </section>
 
-<!-- HOW IT WORKS -->
 <div class="section" id="how">
   <div class="section-label">HOW IT WORKS</div>
   <div class="section-title">3단계로 끝납니다</div>
@@ -148,17 +145,12 @@ footer{border-top:1px solid var(--g200);padding:24px 20px;text-align:center;font
       <div class="step-num">02</div>
       <div class="step-body">
         <h3>AI 에이전트 8명이 분석</h3>
-        <p>키워드 관련 <b>뉴스·유튜브</b>를 수집하고 심층 분석합니다.<br>블로그 및 SNS는 순차적으로 확대 예정입니다.</p>
+        <p>키워드 관련 <b>뉴스·유튜브</b>를 수집하고 심층 분석합니다.</p>
         <div class="step-tags">
           <span class="step-tag">📰 뉴스</span>
           <span class="step-tag">▶️ 유튜브</span>
-          <span class="step-tag" style="color:var(--g400);">+ 블로그 외 (예정)</span>
-        </div>
-        <div class="step-tags" style="margin-top:6px;">
           <span class="step-tag">비즈니스 분석</span>
           <span class="step-tag">증권·투자</span>
-          <span class="step-tag">전략기획</span>
-          <span class="step-tag">인사·조직</span>
         </div>
       </div>
     </div>
@@ -176,66 +168,23 @@ footer{border-top:1px solid var(--g200);padding:24px 20px;text-align:center;font
   </div>
 </div>
 
-<!-- AI AGENTS 시각화 -->
 <div class="viz-section" id="agents">
   <div class="viz-inner">
     <div class="section-label">AI AGENTS</div>
     <div class="section-title">8명의 전문 에이전트가 매일 진화합니다</div>
     <div class="agent-grid">
-      <div class="agent-card">
-        <div class="agent-icon">📊</div>
-        <div class="agent-name">BA AGENT</div>
-        <div class="agent-desc">비즈니스 수익 구조 및 경쟁사 분석</div>
-        <div class="agent-bar-wrap"><div class="agent-bar" style="width:92%;background:linear-gradient(90deg,#818cf8,#6366f1);"></div></div>
-      </div>
-      <div class="agent-card">
-        <div class="agent-icon">📈</div>
-        <div class="agent-name">STOCK AGENT</div>
-        <div class="agent-desc">주식 시장 반응 및 투자 인사이트</div>
-        <div class="agent-bar-wrap"><div class="agent-bar" style="width:85%;background:linear-gradient(90deg,#34d399,#10b981);"></div></div>
-      </div>
-      <div class="agent-card">
-        <div class="agent-icon">🎯</div>
-        <div class="agent-name">PM AGENT</div>
-        <div class="agent-desc">서비스 기획 전략 관점 브리핑</div>
-        <div class="agent-bar-wrap"><div class="agent-bar" style="width:88%;background:linear-gradient(90deg,#f472b6,#ec4899);"></div></div>
-      </div>
-      <div class="agent-card">
-        <div class="agent-icon">👥</div>
-        <div class="agent-name">HR AGENT</div>
-        <div class="agent-desc">조직·인사 관리 제안 및 트렌드</div>
-        <div class="agent-bar-wrap"><div class="agent-bar" style="width:79%;background:linear-gradient(90deg,#fb923c,#f97316);"></div></div>
-      </div>
-      <div class="agent-card">
-        <div class="agent-icon">📰</div>
-        <div class="agent-name">BRIEF AGENT</div>
-        <div class="agent-desc">뉴스 핵심 요약 및 1줄 브리핑</div>
-        <div class="agent-bar-wrap"><div class="agent-bar" style="width:95%;background:linear-gradient(90deg,#60a5fa,#3b82f6);"></div></div>
-      </div>
-      <div class="agent-card">
-        <div class="agent-icon">🔍</div>
-        <div class="agent-name">KW AGENT</div>
-        <div class="agent-desc">키워드 확장 및 연관 트렌드 발굴</div>
-        <div class="agent-bar-wrap"><div class="agent-bar" style="width:82%;background:linear-gradient(90deg,#a78bfa,#7c3aed);"></div></div>
-      </div>
-      <div class="agent-card">
-        <div class="agent-icon">📉</div>
-        <div class="agent-name">DATA AGENT</div>
-        <div class="agent-desc">수치·데이터 기반 지표 해석</div>
-        <div class="agent-bar-wrap"><div class="agent-bar" style="width:77%;background:linear-gradient(90deg,#fbbf24,#f59e0b);"></div></div>
-      </div>
-      <div class="agent-card">
-        <div class="agent-icon">🌐</div>
-        <div class="agent-name">INFO AGENT</div>
-        <div class="agent-desc">글로벌 정보 수집 및 맥락 분석</div>
-        <div class="agent-bar-wrap"><div class="agent-bar" style="width:84%;background:linear-gradient(90deg,#6ee7b7,#10b981);"></div></div>
-      </div>
+      <div class="agent-card"><div class="agent-icon">📊</div><div class="agent-name">BA AGENT</div><div class="agent-desc">비즈니스 수익 구조 및 경쟁사 분석</div><div class="agent-bar-wrap"><div class="agent-bar" style="width:92%;background:linear-gradient(90deg,#818cf8,#6366f1);"></div></div></div>
+      <div class="agent-card"><div class="agent-icon">📈</div><div class="agent-name">STOCK AGENT</div><div class="agent-desc">주식 시장 반응 및 투자 인사이트</div><div class="agent-bar-wrap"><div class="agent-bar" style="width:85%;background:linear-gradient(90deg,#34d399,#10b981);"></div></div></div>
+      <div class="agent-card"><div class="agent-icon">🎯</div><div class="agent-name">PM AGENT</div><div class="agent-desc">서비스 기획 전략 관점 브리핑</div><div class="agent-bar-wrap"><div class="agent-bar" style="width:88%;background:linear-gradient(90deg,#f472b6,#ec4899);"></div></div></div>
+      <div class="agent-card"><div class="agent-icon">👥</div><div class="agent-name">HR AGENT</div><div class="agent-desc">조직·인사 관리 제안 및 트렌드</div><div class="agent-bar-wrap"><div class="agent-bar" style="width:79%;background:linear-gradient(90deg,#fb923c,#f97316);"></div></div></div>
+      <div class="agent-card"><div class="agent-icon">📰</div><div class="agent-name">BRIEF AGENT</div><div class="agent-desc">뉴스 핵심 요약 및 1줄 브리핑</div><div class="agent-bar-wrap"><div class="agent-bar" style="width:95%;background:linear-gradient(90deg,#60a5fa,#3b82f6);"></div></div></div>
+      <div class="agent-card"><div class="agent-icon">🔍</div><div class="agent-name">KW AGENT</div><div class="agent-desc">키워드 확장 및 연관 트렌드 발굴</div><div class="agent-bar-wrap"><div class="agent-bar" style="width:82%;background:linear-gradient(90deg,#a78bfa,#7c3aed);"></div></div></div>
+      <div class="agent-card"><div class="agent-icon">📉</div><div class="agent-name">DATA AGENT</div><div class="agent-desc">수치·데이터 기반 지표 해석</div><div class="agent-bar-wrap"><div class="agent-bar" style="width:77%;background:linear-gradient(90deg,#fbbf24,#f59e0b);"></div></div></div>
+      <div class="agent-card"><div class="agent-icon">🌐</div><div class="agent-name">INFO AGENT</div><div class="agent-desc">글로벌 정보 수집 및 맥락 분석</div><div class="agent-bar-wrap"><div class="agent-bar" style="width:84%;background:linear-gradient(90deg,#6ee7b7,#10b981);"></div></div></div>
     </div>
-    <p style="text-align:center;color:rgba(255,255,255,.35);font-size:.75rem;margin-top:20px;">에이전트는 매일 VOC와 데이터를 기반으로 자율 진화합니다</p>
   </div>
 </div>
 
-<!-- 리포트 미리보기 -->
 <div class="preview-section">
   <div class="preview-inner">
     <div class="section-label" style="text-align:center;">REPORT PREVIEW</div>
@@ -261,39 +210,17 @@ footer{border-top:1px solid var(--g200);padding:24px 20px;text-align:center;font
             <div class="preview-line" style="width:100%;"></div>
             <div class="preview-line" style="width:88%;"></div>
             <div class="preview-line" style="width:75%;"></div>
-            <div class="preview-line" style="width:92%;"></div>
-            <div class="preview-line" style="width:60%;"></div>
           </div>
         </div>
         <div class="preview-news">
-          <div class="preview-news-item">
-            <div class="preview-news-dot"></div>
-            <div class="preview-news-lines">
-              <div class="preview-news-line-t" style="width:85%;"></div>
-              <div class="preview-news-line-s"></div>
-            </div>
-          </div>
-          <div class="preview-news-item">
-            <div class="preview-news-dot" style="background:#10b981;"></div>
-            <div class="preview-news-lines">
-              <div class="preview-news-line-t" style="width:72%;"></div>
-              <div class="preview-news-line-s"></div>
-            </div>
-          </div>
-          <div class="preview-news-item">
-            <div class="preview-news-dot" style="background:#f59e0b;"></div>
-            <div class="preview-news-lines">
-              <div class="preview-news-line-t" style="width:90%;"></div>
-              <div class="preview-news-line-s" style="width:55%;"></div>
-            </div>
-          </div>
+          <div class="preview-news-item"><div class="preview-news-dot"></div><div class="preview-news-lines"><div class="preview-news-line-t" style="width:85%;"></div><div class="preview-news-line-s"></div></div></div>
+          <div class="preview-news-item"><div class="preview-news-dot" style="background:#10b981;"></div><div class="preview-news-lines"><div class="preview-news-line-t" style="width:72%;"></div><div class="preview-news-line-s"></div></div></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- CTA -->
 <div class="cta-section">
   <h2>지금 바로 시작하세요</h2>
   <p>가입 후 키워드 등록까지 1분.<br>내일 오전 9시, 첫 리포트가 도착합니다.</p>
@@ -302,44 +229,124 @@ footer{border-top:1px solid var(--g200);padding:24px 20px;text-align:center;font
 
 <footer>© 2026 Fitz Intelligence · AI 기반 비즈니스 인사이트 플랫폼</footer>
 
-<!-- AUTH OVERLAY -->
-<div id="auth-overlay" onclick="if(event.target===this)this.style.display='none'">
+<!-- AUTH 오버레이 -->
+<div id="auth-overlay" onclick="if(event.target===this)closeAuthOverlay()">
   <div class="auth-modal">
-    <h2>무료로 시작하기</h2>
-    <input class="auth-input" type="email" id="email-input" placeholder="이메일 주소를 입력하세요">
-    <!-- ① 이메일 링크 클릭 시 newsbot-smoky.vercel.app/app.html 로 이동 -->
-    <button class="auth-submit" onclick="sendMagicLink()">로그인 링크 받기</button>
-    <div class="auth-close" onclick="document.getElementById('auth-overlay').style.display='none'">닫기</div>
+
+    <!-- 뷰 A: 일반 로그인 -->
+    <div id="view-login">
+      <h2>무료로 시작하기</h2>
+      <p class="auth-modal-sub">이메일로 로그인 링크를 받아 바로 시작하세요.</p>
+      <input class="auth-input" type="email" id="email-input" placeholder="이메일 주소를 입력하세요"
+             onkeydown="if(event.key==='Enter')sendMagicLink()">
+      <button class="auth-submit" id="login-submit-btn" onclick="sendMagicLink()">로그인 링크 받기</button>
+      <div class="auth-close" onclick="closeAuthOverlay()">닫기</div>
+    </div>
+
+    <!-- 뷰 B: 가입 제한 (마스터가 제한 ON일 때) -->
+    <div id="view-waitlist" style="display:none;">
+      <div class="waitlist-view">
+        <div class="waitlist-icon">🙏</div>
+        <div class="waitlist-title">잠시 가입이 제한되어 있어요</div>
+        <div class="waitlist-msg">
+          죄송해요. 안정적인 서비스를 제공하기 위해 현재 회원 가입을 제한하고 있어요.<br><br>
+          이메일을 남겨주시면 회원가입이 다시 열릴 때 가장 먼저 알려드릴게요. 📬
+        </div>
+        <div class="waitlist-input-wrap">
+          <input class="auth-input" type="email" id="waitlist-email" placeholder="알림 받을 이메일 주소"
+                 onkeydown="if(event.key==='Enter')submitWaitlist()"
+                 style="margin-bottom:0;">
+          <button class="waitlist-submit" id="waitlist-submit-btn" onclick="submitWaitlist()">대기 신청하기</button>
+          <div id="waitlist-done" class="waitlist-done" style="display:none;">
+            ✅ 등록 완료! 회원가입이 열리면 이메일로 알려드릴게요.
+          </div>
+        </div>
+      </div>
+      <div class="auth-close" onclick="closeAuthOverlay()">닫기</div>
+    </div>
+
   </div>
 </div>
 
 <script>
-const sc=supabase.createClient('https://zrlpwmpbrvohautldcon.supabase.co','sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G');
-let isLogged=false;
+const sc = supabase.createClient(
+  'https://zrlpwmpbrvohautldcon.supabase.co',
+  'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G'
+);
+let isLogged = false;
+let signupOpen = true; // 기본값: 가입 허용 (DB에서 override)
 
-async function checkSession(){
-  const{data:{session}}=await sc.auth.getSession();
-  if(session){
-    isLogged=true;
-    // ④ 로그인 시 버튼 텍스트: 메인화면 바로가기
-    ['main-cta','nav-cta'].forEach(id=>{
-      const b=document.getElementById(id);
-      if(b){b.textContent='메인화면 바로가기 →';if(id==='main-cta')b.style.background='#111';}
+/* ── 세션 확인 + 가입 제한 여부 로드 ── */
+async function checkSession() {
+  const [sessionRes, settingRes] = await Promise.all([
+    sc.auth.getSession(),
+    sc.from('app_settings').select('value').eq('key', 'signup_open').maybeSingle()
+  ]);
+
+  if (sessionRes.data?.session) {
+    isLogged = true;
+    ['main-cta','nav-cta'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) { b.textContent = '메인화면 바로가기 →'; if (id==='main-cta') b.style.background='#111'; }
     });
   }
+
+  // DB에 설정이 있으면 적용, 없으면 기본값 true(허용)
+  if (settingRes.data) {
+    signupOpen = settingRes.data.value === 'true' || settingRes.data.value === true;
+  }
 }
-function handleStart(){
-  if(isLogged)location.href='app.html';
-  else document.getElementById('auth-overlay').style.display='block';
+
+function handleStart() {
+  if (isLogged) { location.href = 'app.html'; return; }
+  document.getElementById('auth-overlay').style.display = 'block';
+  // 가입 제한 여부에 따라 뷰 전환
+  document.getElementById('view-login').style.display    = signupOpen ? 'block' : 'none';
+  document.getElementById('view-waitlist').style.display = signupOpen ? 'none'  : 'block';
 }
-async function sendMagicLink(){
-  const email=document.getElementById('email-input').value;
-  if(!email)return alert('이메일을 입력해주세요.');
-  // ① 이메일 링크 클릭 시 newsbot-smoky.vercel.app/app.html 로 이동
-  const{error}=await sc.auth.signInWithOtp({email,options:{emailRedirectTo:'https://newsbot-smoky.vercel.app/app.html'}});
-  if(error)alert('에러: '+error.message);
+
+function closeAuthOverlay() {
+  document.getElementById('auth-overlay').style.display = 'none';
+}
+
+/* ── 마법 링크 전송 ── */
+async function sendMagicLink() {
+  const email = document.getElementById('email-input').value.trim();
+  if (!email) return alert('이메일을 입력해주세요.');
+  const btn = document.getElementById('login-submit-btn');
+  btn.disabled = true; btn.textContent = '전송 중...';
+  const { error } = await sc.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: 'https://newsbot-smoky.vercel.app/app.html' }
+  });
+  btn.disabled = false; btn.textContent = '로그인 링크 받기';
+  if (error) alert('에러: ' + error.message);
   else alert('로그인 링크가 이메일로 전송되었습니다!');
 }
+
+/* ── 대기 신청 ── */
+async function submitWaitlist() {
+  const email = document.getElementById('waitlist-email').value.trim();
+  if (!email) return alert('이메일을 입력해주세요.');
+  const btn = document.getElementById('waitlist-submit-btn');
+  btn.disabled = true; btn.textContent = '신청 중...';
+  try {
+    // 중복 방지: upsert
+    const { error } = await sc.from('signup_waitlist').upsert(
+      { email, created_at: new Date().toISOString(), notified: false },
+      { onConflict: 'email' }
+    );
+    if (error) throw error;
+    document.getElementById('waitlist-done').style.display = 'block';
+    document.getElementById('waitlist-email').style.display = 'none';
+    btn.style.display = 'none';
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '대기 신청하기';
+    alert('오류가 발생했습니다. 다시 시도해주세요.');
+    console.error(e);
+  }
+}
+
 checkSession();
 </script>
 </body>
