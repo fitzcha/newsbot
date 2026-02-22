@@ -686,7 +686,7 @@ async function loadVoc() {
 async function loadMemberSettings() {
   try {
     const [countRes, maxRes, waitlistRes, unsentRes] = await Promise.all([
-      sc.from('user_settings').select('id', { count:'exact', head:true }),
+      sc.from('member_count_view').select('count').single(),
       sc.from('app_settings').select('value').eq('key','max_members').maybeSingle(),
       sc.from('signup_waitlist').select('id', { count:'exact', head:true }),
       sc.from('signup_waitlist').select('id', { count:'exact', head:true }).eq('notified', false),
