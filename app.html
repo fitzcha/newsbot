@@ -216,13 +216,28 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .modal-title { font-size:17px; font-weight:700; color:#0f172a; }
 .modal-close { font-size:20px; color:#94a3b8; border:none; background:none; cursor:pointer; padding:8px; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center; }
 .modal-notice { font-size:12px; color:#f59e0b; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:10px 14px; margin-bottom:18px; display:flex; align-items:center; gap:6px; line-height:1.5; }
+
+/* ── ⑥ 피드백: 👍/👎 + 자유의견 ── */
 .form-label { font-size:13px; font-weight:600; color:#64748b; margin-bottom:8px; display:block; }
 .form-textarea { width:100%; border:1.5px solid #e2e8f0; border-radius:12px; padding:12px 16px; font-size:15px; color:#1e293b; margin-bottom:16px; outline:none; font-family:inherit; resize:none; height:110px; -webkit-appearance:none; }
 .form-textarea:focus { border-color:#2563eb; }
-.rating-row { display:flex; gap:8px; margin-bottom:18px; }
-.rating-btn { flex:1; padding:12px 6px; border:1.5px solid #e2e8f0; border-radius:12px; font-size:22px; background:#fff; cursor:pointer; min-height:52px; }
-.rating-btn.selected { border-color:#2563eb; background:#eff6ff; }
-.rating-btn:active { transform:scale(.94); }
+
+/* 👍/👎 썸 버튼 */
+.thumb-row { display:flex; gap:12px; margin-bottom:20px; }
+.thumb-btn {
+  flex:1; padding:18px 12px; border-radius:16px;
+  border:2px solid #e2e8f0; background:#fff;
+  font-size:28px; cursor:pointer; transition:all .15s;
+  display:flex; flex-direction:column; align-items:center;
+  gap:6px; min-height:80px;
+}
+.thumb-btn span.thumb-label { font-size:12px; font-weight:700; color:#94a3b8; }
+.thumb-btn:active { transform:scale(.95); }
+.thumb-btn.selected-up   { border-color:#10b981; background:#f0fdf4; }
+.thumb-btn.selected-up span.thumb-label   { color:#10b981; }
+.thumb-btn.selected-down { border-color:#ef4444; background:#fef2f2; }
+.thumb-btn.selected-down span.thumb-label { color:#ef4444; }
+
 .submit-btn { width:100%; background:#2563eb; color:#fff; border:none; border-radius:14px; padding:16px; font-size:15px; font-weight:700; cursor:pointer; min-height:52px; transition:background .15s; }
 .submit-btn:active { background:#1d4ed8; }
 .submit-btn:disabled { background:#94a3b8; cursor:default; }
@@ -303,7 +318,7 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 
 <button class="fab" onclick="openModal('feedback-modal')">💬 피드백</button>
 
-<!-- 피드백 모달 -->
+<!-- ⑥ 피드백 모달 (👍/👎 + 자유의견 형태) -->
 <div class="modal-overlay" id="feedback-modal" onclick="closeModal('feedback-modal',event)">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -313,16 +328,24 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
     </div>
     <div id="feedback-form-view">
       <div class="modal-notice">⚠️ 피드백은 AI 에이전트 개선에 직접 반영됩니다.</div>
+
+      <!-- 👍/👎 썸 버튼 -->
       <label class="form-label">만족도</label>
-      <div class="rating-row">
-        <button class="rating-btn" onclick="selectRating(this,1)">😞</button>
-        <button class="rating-btn" onclick="selectRating(this,2)">😐</button>
-        <button class="rating-btn" onclick="selectRating(this,3)">🙂</button>
-        <button class="rating-btn" onclick="selectRating(this,4)">😊</button>
-        <button class="rating-btn" onclick="selectRating(this,5)">🤩</button>
+      <div class="thumb-row">
+        <button class="thumb-btn" id="thumb-up" onclick="selectThumb('up')">
+          👍
+          <span class="thumb-label">도움이 됐어요</span>
+        </button>
+        <button class="thumb-btn" id="thumb-down" onclick="selectThumb('down')">
+          👎
+          <span class="thumb-label">아쉬웠어요</span>
+        </button>
       </div>
-      <label class="form-label">자유 의견 (선택)</label>
-      <textarea class="form-textarea" id="feedback-text" placeholder="어떤 점이 좋았나요? 어떤 점이 부족했나요? 에이전트 개선에 반영됩니다."></textarea>
+
+      <!-- 자유의견 (선택) -->
+      <label class="form-label">자유 의견 <span style="font-weight:400;color:#94a3b8">(선택)</span></label>
+      <textarea class="form-textarea" id="feedback-text" placeholder="어떤 점이 좋았나요? 개선할 점이 있다면 알려주세요. 에이전트 개선에 반영됩니다."></textarea>
+
       <button class="submit-btn" id="feedback-submit-btn" onclick="submitFeedback()">제출하기</button>
     </div>
     <div id="feedback-done-view" style="display:none;">
@@ -369,11 +392,49 @@ let allDates     = [];
 let reportData   = null;
 let kwNames      = [];
 let userKeywords = [];
-let selectedRating = 0;
+
+// ⑥ 피드백: thumbs up/down (true/false/null)
+let selectedThumb = null;
 
 const AGENT_KEY  = { BA:'ba_brief', STOCK:'securities_brief', PM:'pm_brief' };
 const AGENT_NAME = { BA:'비즈니스 분석', STOCK:'주식 브리핑', PM:'기획 브리핑' };
 const AGENT_ICON = { BA:'📊', STOCK:'📈', PM:'🎯' };
+
+/* ── ⑥ 피드백: 썸 선택 ── */
+function selectThumb(type) {
+  selectedThumb = (type === 'up');
+  document.getElementById('thumb-up').className   = 'thumb-btn' + (type==='up'   ? ' selected-up'   : '');
+  document.getElementById('thumb-down').className = 'thumb-btn' + (type==='down' ? ' selected-down' : '');
+}
+
+/* ── ⑤ 키워드 추가 시 최대 5개 알럿 ── */
+async function addSuggestedKw(kw, el) {
+  if (userKeywords.length >= 5) {
+    // ⑤ 알럿 메시지
+    alert('키워드는 최대 5개까지 등록할 수 있습니다.\n키워드를 변경하려면 [✏️ 수정하기] 버튼을 클릭하세요.');
+    return;
+  }
+  userKeywords.push(kw);
+  await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
+  el.classList.add('added');
+  el.textContent = '✓ ' + kw;
+  renderKwManage();
+}
+
+/* ── ⑤ 키워드 관리 모달의 추가 버튼도 동일하게 처리 ── */
+async function addKeyword() {
+  const v = document.getElementById('kw-add-input').value.trim();
+  if (!v) return;
+  if (userKeywords.length >= 5) {
+    alert('키워드는 최대 5개까지 등록할 수 있습니다.\n기존 키워드를 삭제한 후 다시 추가해주세요.');
+    document.getElementById('kw-add-input').value = '';
+    return;
+  }
+  userKeywords.push(v);
+  await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
+  document.getElementById('kw-add-input').value = '';
+  renderKwManage();
+}
 
 /* ── JSON 브리프 파싱 ── */
 function getSummary(b) {
@@ -500,19 +561,6 @@ function buildKwSuggestCard(kw, kwData, i) {
                onclick="addSuggestedKw('${s}',this)">+ ${s}</div>`).join('')}
       </div>
     </div>`;
-}
-
-async function addSuggestedKw(kw, el) {
-  if (userKeywords.length >= 5) {
-    el.textContent = '최대 5개';
-    el.style.cssText = 'border-color:#fca5a5;color:#ef4444;background:#fef2f2';
-    return;
-  }
-  userKeywords.push(kw);
-  await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
-  el.classList.add('added');
-  el.textContent = '✓ ' + kw;
-  renderKwManage();
 }
 
 /* ── 탭 전환 ── */
@@ -765,38 +813,27 @@ function renderKwManage() {
     </div>`).join('');
 }
 
-async function addKeyword() {
-  const v = document.getElementById('kw-add-input').value.trim();
-  if (!v || userKeywords.length >= 5) return;
-  userKeywords.push(v);
-  await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
-  document.getElementById('kw-add-input').value = '';
-  renderKwManage();
-}
-
 async function removeKeyword(kw) {
   userKeywords = userKeywords.filter(k => k !== kw);
   await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
   renderKwManage();
 }
 
-/* ── 피드백 ── */
-function selectRating(el, score) {
-  selectedRating = score;
-  document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
-  el.classList.add('selected');
-}
-
+/* ── ⑥ 피드백 제출 (is_positive 필드로 저장) ── */
 async function submitFeedback() {
   const text = document.getElementById('feedback-text').value.trim();
   const btn  = document.getElementById('feedback-submit-btn');
-  if (!selectedRating && !text) return;
+  // 👍/👎 또는 자유의견 중 하나라도 있어야 제출 가능
+  if (selectedThumb === null && !text) {
+    alert('👍 또는 👎 중 하나를 선택하거나, 의견을 입력해주세요.');
+    return;
+  }
   btn.disabled = true; btn.textContent = '제출 중...';
   try {
-    await sc.from('feedback').insert({
+    await sc.from('report_feedback').insert({
       user_id:       window.CURRENT_USER.id,
       user_email:    window.CURRENT_USER.email,
-      rating:        selectedRating || null,
+      is_positive:   selectedThumb,          // true / false / null
       feedback_text: text || null,
       report_date:   curDate,
       created_at:    new Date().toISOString()
@@ -807,9 +844,10 @@ async function submitFeedback() {
 }
 
 function resetFeedback() {
-  selectedRating = 0;
-  document.getElementById('feedback-text').value = '';
-  document.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+  selectedThumb = null;
+  document.getElementById('thumb-up').className   = 'thumb-btn';
+  document.getElementById('thumb-down').className = 'thumb-btn';
+  document.getElementById('feedback-text').value  = '';
   const btn = document.getElementById('feedback-submit-btn');
   btn.disabled = false; btn.textContent = '제출하기';
   document.getElementById('feedback-done-view').style.display = 'none';
