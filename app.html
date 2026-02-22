@@ -418,29 +418,30 @@ function buildYtItems(vids) {
     </div>`).join('');
 }
 
-/* ── 산업군 매핑 ── */
-const INDUSTRY_MAP = [
-  { keys:['삼성','반도체','메모리','HBM','파운드리','TSMC','SK하이닉스','엔비디아'], industry:'반도체',      icon:'🔬', color:'#6366f1' },
-  { keys:['증시','주식','코스피','코스닥','나스닥','S&P','금리','연준','채권','ETF'],  industry:'금융·증시',   icon:'📈', color:'#0891b2' },
-  { keys:['AI','GPT','LLM','클로드','제미나이','딥러닝','머신러닝','생성형'],          industry:'AI·소프트웨어',icon:'🤖', color:'#7c3aed' },
-  { keys:['바이오','신약','임상','제약','mRNA','K-바이오','삼성바이오'],               industry:'바이오·헬스케어',icon:'🧬',color:'#059669' },
-  { keys:['전기차','배터리','2차전지','현대차','기아','테슬라','EV','자율주행'],        industry:'모빌리티·전기차',icon:'🚗',color:'#d97706' },
-  { keys:['네이버','카카오','쿠팡','이커머스','플랫폼','IT','앱'],                     industry:'플랫폼·IT',   icon:'🌐', color:'#2563eb' },
-  { keys:['엔터','하이브','SM','JYP','BTS','K팝','아이돌','드라마','OTT','넷플릭스'],  industry:'엔터·미디어', icon:'🎬', color:'#e8472a' },
-  { keys:['부동산','아파트','분양','재건축','리츠','임대'],                            industry:'부동산',      icon:'🏢', color:'#92400e' },
-  { keys:['원자력','에너지','태양광','풍력','ESG','탄소','수소'],                      industry:'에너지·ESG',  icon:'⚡', color:'#65a30d' },
-];
-const KW_EXPAND = {
-  '반도체':        ['HBM','AI반도체','파운드리','SK하이닉스'],
-  '금융·증시':     ['연준금리','환율달러','ETF투자','채권시장'],
-  'AI·소프트웨어': ['LLM활용','생성형AI','AI에이전트','클라우드'],
-  '바이오·헬스케어':['K-바이오','임상3상','mRNA치료제','디지털헬스'],
-  '모빌리티·전기차':['배터리소재','자율주행','전기차충전','수소차'],
-  '플랫폼·IT':     ['SaaS','핀테크','슈퍼앱','버티컬플랫폼'],
-  '엔터·미디어':   ['K팝IP','OTT전쟁','버추얼아이돌','팬덤비즈니스'],
-  '부동산':        ['리츠투자','PF위기','분양시장','임대주택'],
-  '에너지·ESG':    ['탄소배출권','SMR원전','태양광','ESG경영'],
-};
+/* ── 산업군 매핑 (DB에서 로드, 하드코딩 제거) ── */
+let INDUSTRY_MAP = [];  // DB에서 채워짐
+
+async function loadIndustryMap() {
+  try {
+    const { data, error } = await sc
+      .from('industry_map')
+      .select('industry, icon, color, keywords, expand_kws')
+      .eq('is_active', true)
+      .order('sort_order');
+    if (error) throw error;
+    // DB 컬럼명 → 기존 코드 호환 형태로 변환
+    INDUSTRY_MAP = (data || []).map(r => ({
+      industry:   r.industry,
+      icon:       r.icon,
+      color:      r.color,
+      keys:       r.keywords,      // keywords → keys
+      expand_kws: r.expand_kws,    // KW_EXPAND 통합
+    }));
+  } catch (e) {
+    console.warn('industry_map 로드 실패, 빈 배열로 계속:', e.message);
+    INDUSTRY_MAP = [];
+  }
+}
 
 function detectIndustry(kw) {
   const kl = kw.toLowerCase();
@@ -472,7 +473,7 @@ function buildIndustryCard(kw, kwData) {
 
 function buildKwSuggestCard(kw, kwData, i) {
   const ind  = detectIndustry(kw);
-  const pool = (ind && KW_EXPAND[ind.industry]) || [];
+  const pool = ind?.expand_kws || [];
   const extracted = [];
   (kwData.articles||[]).forEach(a => {
     (a.title||'').replace(/[^\w가-힣\s]/g,'').split(/\s+/).forEach(w => {
@@ -858,8 +859,12 @@ async function init() {
     if (email === MASTER_EMAIL) document.getElementById('master-nav').style.display = 'flex';
     document.getElementById('logout-btn').style.display = 'block';
 
-    const { data: uSettings } = await sc.from('user_settings').select('keywords').eq('id', userId).maybeSingle();
-    userKeywords = uSettings?.keywords || [];
+    // 산업군 매핑 + 유저 설정 병렬 로드
+    const [uSettingsRes] = await Promise.all([
+      sc.from('user_settings').select('keywords').eq('id', userId).maybeSingle(),
+      loadIndustryMap()
+    ]);
+    userKeywords = uSettingsRes?.data?.keywords || [];
 
     await loadDates(userId);
     if (allDates.length > 0) {
