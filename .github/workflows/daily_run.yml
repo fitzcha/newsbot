@@ -2,7 +2,7 @@ name: Daily News Analysis & Governance Bot
 
 on:
   schedule:
-    # 1. 한국 시간 오전 06:00 (KST) = UTC 21:00 - 산업군 모니터링
+    # 1. 한국 시간 오전 06:00 (KST) = UTC 21:00 전날 - 산업군 모니터링
     - cron: '0 21 * * *'
     # 2. 한국 시간 오전 09:00 (KST) = UTC 00:00 - 정기 브리핑 및 데이터 동기화
     - cron: '0 0 * * *'
@@ -12,6 +12,10 @@ on:
     inputs:
       backlog_id:
         description: '처리할 개발 백로그 ID (HQ 연동)'
+        required: false
+        default: ''
+      force_cron_type:
+        description: '강제 실행 타입 (BRIEFING / INDUSTRY / GOVERNANCE)'
         required: false
         default: ''
 
@@ -39,6 +43,30 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install supabase google-genai gnews resend
 
+      # CRON_TYPE 결정: 스케줄별로 명확히 분리
+      - name: Determine CRON_TYPE
+        id: cron_type
+        run: |
+          SCHEDULE="${{ github.event.schedule }}"
+          FORCE="${{ github.event.inputs.force_cron_type }}"
+
+          if [ -n "$FORCE" ]; then
+            echo "CRON_TYPE=$FORCE" >> $GITHUB_ENV
+            echo "✅ 강제 실행 타입: $FORCE"
+          elif [ "$SCHEDULE" = "30 14 * * *" ]; then
+            echo "CRON_TYPE=GOVERNANCE" >> $GITHUB_ENV
+            echo "✅ 스케줄 감지: GOVERNANCE (23:30 KST)"
+          elif [ "$SCHEDULE" = "0 21 * * *" ]; then
+            echo "CRON_TYPE=INDUSTRY" >> $GITHUB_ENV
+            echo "✅ 스케줄 감지: INDUSTRY (06:00 KST)"
+          elif [ "$SCHEDULE" = "0 0 * * *" ]; then
+            echo "CRON_TYPE=BRIEFING" >> $GITHUB_ENV
+            echo "✅ 스케줄 감지: BRIEFING (09:00 KST)"
+          else
+            echo "CRON_TYPE=BRIEFING" >> $GITHUB_ENV
+            echo "✅ 수동 실행 기본값: BRIEFING"
+          fi
+
       - name: Run news_bot.py
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -48,12 +76,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           CURRENT_BACKLOG_ID: ${{ github.event.inputs.backlog_id }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}  # ← 이번에 추가된 부분
-          CRON_TYPE: >-
-            ${{ github.event.schedule == '30 14 * * *' && 'GOVERNANCE'
-            || github.event.schedule == '0 21 * * *' && 'INDUSTRY'
-            || 'BRIEFING' }}
-        run: python news_bot.py
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          CRON_TYPE: ${{ env.CRON_TYPE }}
+        run: |
+          echo "🚀 실행 타입: $CRON_TYPE"
+          python news_bot.py
 
       - name: Final Git Sync
         run: |
@@ -61,7 +88,7 @@ jobs:
           git config --global user.email "positivecha@gmail.com"
           git add .
           if ! git diff --cached --quiet; then
-            git commit -m "🤖 [System Evolution] $(date +'%Y-%m-%d %H:%M') KST Update"
+            git commit -m "🤖 [System Evolution] $(date +'%Y-%m-%d %H:%M') KST - ${{ env.CRON_TYPE }}"
             git push origin main
           else
             echo "No file changes detected to push."
