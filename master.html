@@ -88,6 +88,26 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 .cost-label{font-size:.72rem;color:#9ca3af;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
 .cost-value{font-size:2rem;font-weight:900;color:#111;line-height:1.1}
 .cost-unit{font-size:.78rem;color:#6b7280;margin-top:4px}
+
+/* ⑦ 지능하달 개선 스타일 */
+.directive-section{background:#fff;border:1px solid #eee;border-left:6px solid #333;padding:18px;border-radius:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.directive-section h3{margin:0 0 14px;color:#222}
+.mode-tabs{display:flex;gap:6px;margin-bottom:14px}
+.mode-tab{padding:7px 16px;border-radius:20px;border:1.5px solid #ddd;background:#fff;font-size:.82rem;font-weight:700;cursor:pointer;transition:.15s;color:#666}
+.mode-tab.on{background:#111;color:#fff;border-color:#111}
+.char-count{font-size:.75rem;color:#aaa;text-align:right;margin-top:-8px;margin-bottom:8px}
+.char-count.warn{color:#f59e0b;font-weight:700}
+.char-count.over{color:#ef4444;font-weight:700}
+.one-rule-warn{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:.82rem;color:#c2410c;margin-bottom:10px;display:none}
+.one-rule-warn.show{display:block}
+
+/* ⑥ 피드백 스타일 */
+.feedback-thumb{display:flex;gap:10px;margin-bottom:12px}
+.thumb-btn{flex:1;padding:14px;border-radius:12px;border:2px solid #e5e7eb;background:#fff;font-size:1.5rem;cursor:pointer;transition:.15s;text-align:center}
+.thumb-btn:hover{border-color:#6366f1;background:#f5f3ff}
+.thumb-btn.selected-up{border-color:#10b981;background:#ecfdf5}
+.thumb-btn.selected-down{border-color:#ef4444;background:#fef2f2}
+.feedback-optional{font-size:.78rem;color:#9ca3af;margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -106,7 +126,7 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
   <div class="hdr">
     <div>
       <h1 onclick="location.href='index.html'">Sovereign HQ</h1>
-      <small>v18.0 · <span id="now-time"></span></small>
+      <small>v19.0 · <span id="now-time"></span></small>
     </div>
     <div class="hdr-btns">
       <button class="btn" onclick="location.href='index.html'">🌐 홈</button>
@@ -143,22 +163,51 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
       </div>
       <div class="timer" id="countdown-timer">--:--:--</div>
     </div>
-    <div class="card" style="border-left-color:#333;background:#fafafa">
+
+    <!-- ⑦ 개선된 지능 하달 섹션 -->
+    <div class="directive-section">
       <h3>✍️ 지능 하달</h3>
-      <div class="row">
-        <select id="m-role" style="margin:0;max-width:160px">
-          <option value="BA">🔍 BA</option>
-          <option value="STOCK">📈 STOCK</option>
-          <option value="PM">🗂 PM</option>
-          <option value="HR">👤 HR</option>
-          <option value="DEV">💻 DEV</option>
-          <option value="QA">✅ QA</option>
-          <option value="BRIEF">📝 BRIEF</option>
+
+      <!-- 모드 전환: 개별 / 전체 -->
+      <div class="mode-tabs">
+        <button class="mode-tab on" id="mode-single" onclick="setDirectiveMode('single')">🎯 개별 에이전트</button>
+        <button class="mode-tab" id="mode-all" onclick="setDirectiveMode('all')">📢 전체 에이전트 동시 하달</button>
+      </div>
+
+      <!-- 개별 모드: 에이전트 선택 (DB에서 동적 로드) -->
+      <div id="directive-single">
+        <select id="m-role" style="margin:0 0 10px">
+          <option value="">⏳ 에이전트 로딩 중...</option>
         </select>
       </div>
-      <textarea id="m-text" rows="3" placeholder="에이전트에게 직접 지침을 하달하세요. 저장 즉시 해당 에이전트의 instruction이 업데이트됩니다."></textarea>
+      <!-- 전체 모드 안내 -->
+      <div id="directive-all" style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:.84rem;color:#92400e;margin-bottom:10px;">
+        📢 아래 지침이 <b>현재 등록된 모든 에이전트</b>에게 동시 적용됩니다.
+      </div>
+
+      <!-- 하달 방식 선택 -->
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:700;cursor:pointer">
+          <input type="radio" name="apply-mode" value="append" checked> ➕ 기존 지침에 추가
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:.84rem;font-weight:700;cursor:pointer">
+          <input type="radio" name="apply-mode" value="replace"> 🔄 기존 지침 대체
+        </label>
+      </div>
+
+      <!-- 1안건 1건 경고 -->
+      <div class="one-rule-warn" id="one-rule-warn">
+        ⚠️ 지침은 <b>1개 안건만</b> 입력해주세요. 여러 내용을 동시에 입력하면 반영 효과가 낮아집니다.<br>
+        예시 ✅: "결론을 항상 첫 문장에 배치할 것"<br>
+        예시 ❌: "결론을 첫 문장에 쓰고, 데이터를 인용하며, 300자 이내로 요약하고, 한국 시장 중심으로 분석할 것"
+      </div>
+
+      <textarea id="m-text" rows="3" placeholder="에이전트에게 직접 지침을 하달하세요. 1개 안건만 입력하세요. (예: '분석 결론을 항상 첫 문장에 배치할 것')" oninput="onDirectiveInput(this)"></textarea>
+      <div class="char-count" id="char-count">0자</div>
+
       <button class="btn" style="background:#111;color:#fff;border:none;width:100%" onclick="sendDirectOrder()">⚡ 즉시 하달 (바로 적용)</button>
     </div>
+
     <div id="pending-evo-list"></div>
     <div id="live-agent-list"></div>
   </div>
@@ -190,8 +239,6 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 
   <!-- ⑥ 비용 탭 -->
   <div id="v-cost" style="display:none">
-
-    <!-- 요약 카드 4개 -->
     <div class="cost-grid">
       <div class="cost-card" style="border-top:3px solid #f59e0b">
         <div class="cost-label">오늘 Gemini 호출</div>
@@ -214,25 +261,18 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
         <div class="cost-unit">USD</div>
       </div>
     </div>
-
-    <!-- 7일 차트 -->
     <div class="card" style="border-left-color:#f59e0b">
       <h3>📈 7일 Gemini 호출 추이</h3>
       <canvas id="cost-chart" height="180"></canvas>
     </div>
-
-    <!-- Supabase row 상세 -->
     <div class="card" style="border-left-color:#6366f1">
       <h3>🗄️ Supabase 테이블별 row 수</h3>
       <div id="c-row-detail">로드 중...</div>
     </div>
-
-    <!-- 호출 유형별 내역 -->
     <div class="card" style="border-left-color:#e5e7eb">
       <h3>📋 오늘 호출 유형별 내역</h3>
       <div id="c-breakdown">로드 중...</div>
     </div>
-
   </div>
 
 </div>
@@ -250,6 +290,7 @@ const CFG = {
 };
 const sc = supabase.createClient(CFG.url, CFG.key);
 let me = null, autoTimer = null, costChartInstance = null;
+let directiveMode = 'single'; // 'single' | 'all'
 
 /* ── 유틸 ── */
 function toast(msg, dur=2800) {
@@ -326,7 +367,130 @@ async function runAutoApproval() {
   } catch(e) { console.error('자동승인 오류:', e); }
 }
 
-/* ── 지능 탭 ── */
+/* ── ⑦ 지능 하달 모드 전환 ── */
+function setDirectiveMode(mode) {
+  directiveMode = mode;
+  $id('mode-single').classList.toggle('on', mode==='single');
+  $id('mode-all').classList.toggle('on', mode==='all');
+  $id('directive-single').style.display = mode==='single' ? 'block' : 'none';
+  $id('directive-all').style.display = mode==='all' ? 'block' : 'none';
+}
+
+/* ── ⑦ 텍스트 입력 시 1안건 경고 & 글자수 표시 ── */
+function onDirectiveInput(el) {
+  const len = el.value.length;
+  const ccEl = $id('char-count');
+  ccEl.textContent = `${len}자`;
+  ccEl.className = 'char-count' + (len > 300 ? ' over' : len > 200 ? ' warn' : '');
+
+  // 여러 안건 감지: 마침표+줄바꿈, 번호매기기(1. 2. 가. 나.), ';' 분리 등
+  const multiPattern = /(\d+\.\s|\n{2,}|;\s*[^\n]|[가나다라마바사아자차카타파하]\.\s)/;
+  $id('one-rule-warn').classList.toggle('show', multiPattern.test(el.value) && el.value.length > 30);
+}
+
+/* ── ⑦ 에이전트 목록 동적 로드 ── */
+async function loadAgentSelect() {
+  try {
+    const { data, error } = await sc.from('agents').select('agent_role').order('agent_role');
+    if(error) throw error;
+    const roles = (data||[]).map(a => a.agent_role);
+    if(roles.length === 0) {
+      // fallback: 코드에 하드코딩된 기본 목록
+      render('m-role', `
+        <option value="BA">🔍 BA</option>
+        <option value="STOCK">📈 STOCK</option>
+        <option value="PM">🗂 PM</option>
+        <option value="HR">👤 HR</option>
+        <option value="DEV">💻 DEV</option>
+        <option value="QA">✅ QA</option>
+        <option value="BRIEF">📝 BRIEF</option>
+      `);
+    } else {
+      const icons = {BA:'🔍',STOCK:'📈',PM:'🗂',HR:'👤',DEV:'💻',QA:'✅',BRIEF:'📝',KW:'🔑',DATA:'📉',INFO:'🌐'};
+      render('m-role', roles.map(r => `<option value="${r}">${icons[r]||'🤖'} ${r}</option>`).join(''));
+    }
+  } catch(e) {
+    // fallback
+    render('m-role', `
+      <option value="BA">🔍 BA</option>
+      <option value="STOCK">📈 STOCK</option>
+      <option value="PM">🗂 PM</option>
+      <option value="HR">👤 HR</option>
+      <option value="BRIEF">📝 BRIEF</option>
+    `);
+  }
+}
+
+/* ── ⑦ 지능하달 (개별 또는 전체, 추가/대체 방식 지원) ── */
+async function sendDirectOrder() {
+  const text = $id('m-text').value.trim();
+  if(!text) return toast('❌ 지침 내용을 입력하세요');
+
+  // 1안건 강제 검사
+  const multiPattern = /(\d+\.\s|\n{2,}|;\s*[^\n]|[가나다라마바사아자차카타파하]\.\s)/;
+  if(multiPattern.test(text) && text.length > 30) {
+    if(!confirm('⚠️ 여러 안건이 감지되었습니다.\n지침은 1개 안건만 입력해야 효과적입니다.\n그래도 계속 진행하시겠습니까?')) return;
+  }
+
+  const applyMode = document.querySelector('input[name="apply-mode"]:checked').value; // 'append' | 'replace'
+
+  try {
+    if(directiveMode === 'single') {
+      // 개별 에이전트 하달
+      const role = $id('m-role').value;
+      if(!role) return toast('❌ 에이전트를 선택하세요');
+      await applyDirective(role, text, applyMode);
+      toast(`⚡ ${role} 에이전트 지침 즉시 하달 완료`);
+
+    } else {
+      // 전체 에이전트 동시 하달
+      const { data: agents } = await sc.from('agents').select('agent_role, instruction');
+      if(!agents?.length) return toast('❌ 등록된 에이전트가 없습니다');
+      if(!confirm(`📢 현재 등록된 에이전트 ${agents.length}명 전체에게 지침을 하달합니다.\n계속하시겠습니까?`)) return;
+      for(const a of agents) {
+        await applyDirective(a.agent_role, text, applyMode, a.instruction);
+      }
+      toast(`📢 전체 ${agents.length}개 에이전트 지침 하달 완료`);
+    }
+
+    $id('m-text').value = '';
+    $id('char-count').textContent = '0자';
+    $id('one-rule-warn').classList.remove('show');
+    loadEvo();
+  } catch(e) { toast('❌ 하달 실패: ' + e.message); }
+}
+
+/* ── ⑦ 지침 적용 헬퍼 (추가 또는 대체) ── */
+async function applyDirective(role, newText, mode, existingInstruction) {
+  // 기존 지침 조회 (개별 모드에서 existingInstruction 없을 때)
+  let currentInstruction = existingInstruction;
+  if(currentInstruction === undefined) {
+    const { data } = await sc.from('agents').select('instruction').eq('agent_role', role).single();
+    currentInstruction = data?.instruction || '';
+  }
+
+  let finalInstruction;
+  if(mode === 'append') {
+    // 기존 지침 + 구분선 + 새 지침 추가
+    const separator = currentInstruction ? '\n\n---\n[마스터 추가 지침 ' + new Date().toLocaleDateString('ko-KR') + ']\n' : '';
+    finalInstruction = currentInstruction + separator + newText;
+  } else {
+    // 완전 대체
+    finalInstruction = newText;
+  }
+
+  const { error } = await sc.from('agents').update({ instruction: finalInstruction }).eq('agent_role', role);
+  if(error) throw error;
+
+  await sc.from('pending_approvals').insert([{
+    agent_role: role,
+    proposed_instruction: finalInstruction,
+    proposal_reason: `마스터 직접 하달 (${mode === 'append' ? '추가' : '대체'})`,
+    status: 'APPROVED'
+  }]);
+}
+
+/* ── ⑦ 지능 탭 로드 ── */
 async function loadEvo() {
   try {
     const [agRes, prRes] = await Promise.all([
@@ -384,23 +548,6 @@ async function decideEvo(id, role, status) {
     toast(status === 'APPROVED' ? `✅ ${role} 지침 승인 및 적용 완료` : `❌ ${role} 안건 반려됨`);
     loadEvo();
   } catch(e) { toast('❌ 처리 실패: ' + e.message); }
-}
-
-async function sendDirectOrder() {
-  const role = $id('m-role').value;
-  const text = $id('m-text').value.trim();
-  if(!text) return toast('❌ 지침 내용을 입력하세요');
-  try {
-    const { error } = await sc.from('agents').update({ instruction: text }).eq('agent_role', role);
-    if(error) throw error;
-    await sc.from('pending_approvals').insert([{
-      agent_role: role, proposed_instruction: text,
-      proposal_reason: '마스터 직접 하달', status: 'APPROVED'
-    }]);
-    $id('m-text').value = '';
-    toast(`⚡ ${role} 에이전트 지침 즉시 하달 완료`);
-    loadEvo();
-  } catch(e) { toast('❌ 하달 실패: ' + e.message); }
 }
 
 /* ── 개발 탭 ── */
@@ -537,18 +684,18 @@ async function loadHrReport() {
   } catch(e) { render('hr-content', `<span style="color:#f55">로드 실패: ${e.message}</span>`); }
 }
 
-/* ── VOC 탭 ── */
+/* ── ⑥ VOC 탭 (👍/👎 + 자유의견 형태로 표시) ── */
 async function loadVoc() {
   try {
     const { data } = await sc.from('report_feedback').select('*').order('created_at', { ascending: false }).limit(15);
     render('voc-list', (data||[]).length === 0
       ? `<div class="empty">VOC 없음</div>`
       : (data||[]).map(v => `<div class="card" style="border-left-color:${v.is_positive?'var(--success)':'var(--admin)'}">
-          <div style="display:flex;justify-content:space-between">
-            <strong>${v.is_positive?'👍 긍정':'👎 부정'}</strong>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:1.5rem">${v.is_positive ? '👍' : '👎'}</span>
             <small style="color:#aaa">${v.created_at?.slice(0,10)||''}</small>
           </div>
-          <div class="box">${escHtml(v.feedback_text||'')}</div>
+          ${v.feedback_text ? `<div class="box" style="margin-top:8px">${escHtml(v.feedback_text)}</div>` : '<div style="color:#aaa;font-size:.82rem;padding:6px 0">의견 없음</div>'}
           ${v.target_agent ? `<small style="color:#999">대상 에이전트: ${v.target_agent}</small>` : ''}
         </div>`).join('')
     );
@@ -559,8 +706,6 @@ async function loadVoc() {
 async function loadCost() {
   try {
     const todayFmt = new Date(new Date().getTime() + 9*60*60*1000).toISOString().slice(0,10);
-
-    // 1. 오늘 cost_log 집계
     const { data: todayLogs } = await sc
       .from('cost_log').select('call_type, call_count, cost_usd').eq('log_date', todayFmt);
 
@@ -569,7 +714,6 @@ async function loadCost() {
     $id('c-calls').textContent = totalCalls.toLocaleString();
     $id('c-cost').textContent  = `$${totalCost.toFixed(4)}`;
 
-    // 호출 유형별 내역
     const byType = {};
     (todayLogs||[]).forEach(r => { byType[r.call_type] = (byType[r.call_type]||0)+(r.call_count||0); });
     const typeIcon = { text:'📝', json:'📊', batch:'🗞️' };
@@ -584,14 +728,12 @@ async function loadCost() {
             </tr>`).join('')}
         </table>`;
 
-    // 2. 7일 누적
     const since7 = new Date(new Date().getTime() + 9*60*60*1000 - 6*86400*1000).toISOString().slice(0,10);
     const { data: weekLogs } = await sc
       .from('cost_log').select('log_date, call_count, cost_usd').gte('log_date', since7);
     const weekCost = (weekLogs||[]).reduce((s,r) => s+(r.cost_usd||0), 0);
     $id('c-week').textContent = `$${weekCost.toFixed(3)}`;
 
-    // 3. 7일 차트
     const days = Array.from({length:7}, (_,i) => {
       const d = new Date(new Date().getTime() + 9*60*60*1000 - (6-i)*86400*1000);
       return d.toISOString().slice(0,10);
@@ -620,7 +762,6 @@ async function loadCost() {
       }
     });
 
-    // 4. Supabase row 통계
     const { data: sbStats } = await sc
       .from('supabase_stats').select('row_counts, total_rows').eq('stat_date', todayFmt).maybeSingle();
     if(sbStats) {
@@ -648,7 +789,6 @@ async function loadCost() {
       $id('c-rows').textContent = '—';
       $id('c-row-detail').innerHTML = '<span style="color:#aaa">오늘 통계 없음 (첫 실행 후 표시됩니다)</span>';
     }
-
   } catch(e) {
     console.error('loadCost 오류:', e);
     $id('c-breakdown').innerHTML = `<span style="color:#f55">로드 실패: ${e.message}</span>`;
@@ -686,12 +826,17 @@ async function init() {
   }
   startAutoApprovalTimer();
   await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadLogs(), loadVoc()]);
+  loadAgentSelect(); // ⑦ 에이전트 선택 목록 동적 로드
 
   sc.channel('evo-updates')
     .on('postgres_changes', { event:'*', schema:'public', table:'pending_approvals' }, () => loadEvo())
     .subscribe();
   sc.channel('dev-updates')
     .on('postgres_changes', { event:'*', schema:'public', table:'dev_backlog' }, () => loadDev())
+    .subscribe();
+  // ⑦ 에이전트 추가/수정 시 select 자동 반영
+  sc.channel('agent-updates')
+    .on('postgres_changes', { event:'*', schema:'public', table:'agents' }, () => loadAgentSelect())
     .subscribe();
 }
 
