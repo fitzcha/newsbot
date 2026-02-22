@@ -239,42 +239,96 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 
   <!-- ⑥ 비용 탭 -->
   <div id="v-cost" style="display:none">
-    <div class="cost-grid">
-      <div class="cost-card" style="border-top:3px solid #f59e0b">
-        <div class="cost-label">오늘 Gemini 호출</div>
-        <div class="cost-value" id="c-calls">—</div>
-        <div class="cost-unit">회</div>
+
+  <!-- 회원 현황 카드 -->
+  <div class="card" style="border-left-color:#6366f1; margin-bottom:14px;">
+    <h3 style="margin-bottom:16px;">👥 회원 현황 및 가입 제한 설정</h3>
+
+    <!-- 현재 회원 수 / 최대 회원 수 표시 -->
+    <div style="display:flex; gap:12px; margin-bottom:18px; flex-wrap:wrap;">
+      <div class="cost-card" style="border-top:3px solid #6366f1; flex:1; min-width:120px;">
+        <div class="cost-label">현재 회원 수</div>
+        <div class="cost-value" id="m-current-count" style="color:#4f46e5;">—</div>
+        <div class="cost-unit">명</div>
       </div>
-      <div class="cost-card" style="border-top:3px solid #10b981">
-        <div class="cost-label">오늘 추정 비용</div>
-        <div class="cost-value" id="c-cost" style="color:#059669">—</div>
-        <div class="cost-unit">USD</div>
+      <div class="cost-card" style="border-top:3px solid #10b981; flex:1; min-width:120px;">
+        <div class="cost-label">최대 허용 회원</div>
+        <div class="cost-value" id="m-max-count" style="color:#059669;">—</div>
+        <div class="cost-unit">명</div>
       </div>
-      <div class="cost-card" style="border-top:3px solid #6366f1">
-        <div class="cost-label">Supabase 총 rows</div>
-        <div class="cost-value" id="c-rows">—</div>
-        <div class="cost-unit">/ 500,000 무료 한도</div>
-      </div>
-      <div class="cost-card" style="border-top:3px solid #ec4899">
-        <div class="cost-label">7일 누적 비용</div>
-        <div class="cost-value" id="c-week">—</div>
-        <div class="cost-unit">USD</div>
+      <div class="cost-card" style="border-top:3px solid #f59e0b; flex:1; min-width:120px;">
+        <div class="cost-label">대기 신청자</div>
+        <div class="cost-value" id="m-waitlist-count" style="color:#d97706;">—</div>
+        <div class="cost-unit">명</div>
       </div>
     </div>
-    <div class="card" style="border-left-color:#f59e0b">
-      <h3>📈 7일 Gemini 호출 추이</h3>
-      <canvas id="cost-chart" height="180"></canvas>
+
+    <!-- 최대 회원 수 설정 -->
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap;">
+      <label style="font-size:.84rem; font-weight:700; color:#555; white-space:nowrap;">최대 회원 수 변경:</label>
+      <input id="m-max-input" type="number" min="1" max="9999"
+             style="width:90px; padding:8px 12px; border:1.5px solid #ddd; border-radius:8px; font-size:.9rem; font-family:inherit;"
+             placeholder="예: 100">
+      <button class="sm" style="background:#6366f1;" onclick="saveMaxMembers()">저장</button>
     </div>
-    <div class="card" style="border-left-color:#6366f1">
-      <h3>🗄️ Supabase 테이블별 row 수</h3>
-      <div id="c-row-detail">로드 중...</div>
+
+    <!-- 가입 허용 / 제한 토글 -->
+    <div style="display:flex; align-items:center; gap:12px; padding:14px; background:#f8fafc; border-radius:12px; border:1px solid #e5e7eb;">
+      <div style="flex:1;">
+        <div style="font-size:.88rem; font-weight:700; color:#222; margin-bottom:3px;">회원가입 상태</div>
+        <div style="font-size:.78rem; color:#6b7280;" id="signup-status-desc">현재 상태 확인 중...</div>
+      </div>
+      <div style="display:flex; gap:6px;">
+        <button class="sm" id="btn-signup-open"  style="background:#10b981;" onclick="setSignupStatus(true)">✅ 허용</button>
+        <button class="sm" id="btn-signup-close" style="background:#ef4444;" onclick="setSignupStatus(false)">🔒 제한</button>
+      </div>
     </div>
-    <div class="card" style="border-left-color:#e5e7eb">
-      <h3>📋 오늘 호출 유형별 내역</h3>
-      <div id="c-breakdown">로드 중...</div>
+
+    <!-- 대기 이메일 발송 -->
+    <div style="margin-top:14px; padding:14px; background:#fffbeb; border:1px solid #fde68a; border-radius:12px;">
+      <div style="font-size:.84rem; font-weight:700; color:#92400e; margin-bottom:8px;">📬 대기자 일괄 이메일 발송</div>
+      <div style="font-size:.78rem; color:#78350f; margin-bottom:10px;">가입이 열리면 대기 신청자에게 알림 이메일을 발송합니다. (미발송 대기자: <span id="m-unsent-count">—</span>명)</div>
+      <button class="sm" style="background:#f59e0b;" onclick="notifyWaitlist()">📨 대기자 알림 발송</button>
+      <span id="notify-result" style="font-size:.78rem; margin-left:10px; color:#059669; display:none;"></span>
     </div>
   </div>
 
+  <!-- 기존 비용 카드들 -->
+  <div class="cost-grid">
+    <div class="cost-card" style="border-top:3px solid #f59e0b">
+      <div class="cost-label">오늘 Gemini 호출</div>
+      <div class="cost-value" id="c-calls">—</div>
+      <div class="cost-unit">회</div>
+    </div>
+    <div class="cost-card" style="border-top:3px solid #10b981">
+      <div class="cost-label">오늘 추정 비용</div>
+      <div class="cost-value" id="c-cost" style="color:#059669">—</div>
+      <div class="cost-unit">USD</div>
+    </div>
+    <div class="cost-card" style="border-top:3px solid #6366f1">
+      <div class="cost-label">Supabase 총 rows</div>
+      <div class="cost-value" id="c-rows">—</div>
+      <div class="cost-unit">/ 500,000 무료 한도</div>
+    </div>
+    <div class="cost-card" style="border-top:3px solid #ec4899">
+      <div class="cost-label">7일 누적 비용</div>
+      <div class="cost-value" id="c-week">—</div>
+      <div class="cost-unit">USD</div>
+    </div>
+  </div>
+  <div class="card" style="border-left-color:#f59e0b">
+    <h3>📈 7일 Gemini 호출 추이</h3>
+    <canvas id="cost-chart" height="180"></canvas>
+  </div>
+  <div class="card" style="border-left-color:#6366f1">
+    <h3>🗄️ Supabase 테이블별 row 수</h3>
+    <div id="c-row-detail">로드 중...</div>
+  </div>
+  <div class="card" style="border-left-color:#e5e7eb">
+    <h3>📋 오늘 호출 유형별 내역</h3>
+    <div id="c-breakdown">로드 중...</div>
+  </div>
+</div>
 </div>
 
 <div id="toast"></div>
@@ -703,7 +757,117 @@ async function loadVoc() {
 }
 
 /* ── 💰 비용 탭 ── */
+async function loadMemberSettings() {
+  try {
+    // 현재 회원 수: auth.users 직접 조회 불가 → user_settings 행 수로 대체
+    const [countRes, maxRes, waitlistRes, unsentRes] = await Promise.all([
+      sc.from('user_settings').select('id', { count:'exact', head:true }),
+      sc.from('app_settings').select('value').eq('key','max_members').maybeSingle(),
+      sc.from('signup_waitlist').select('id', { count:'exact', head:true }),
+      sc.from('signup_waitlist').select('id', { count:'exact', head:true }).eq('notified', false),
+    ]);
+
+    document.getElementById('m-current-count').textContent = countRes.count ?? '—';
+    document.getElementById('m-max-count').textContent     = maxRes.data?.value ?? '제한없음';
+    document.getElementById('m-waitlist-count').textContent = waitlistRes.count ?? '0';
+    document.getElementById('m-unsent-count').textContent   = unsentRes.count ?? '0';
+
+    if (maxRes.data?.value) {
+      document.getElementById('m-max-input').value = maxRes.data.value;
+    }
+
+    // 가입 상태 표시
+    const openRes = await sc.from('app_settings').select('value').eq('key','signup_open').maybeSingle();
+    const isOpen  = openRes.data?.value === 'true' || openRes.data?.value === true;
+    updateSignupStatusUI(isOpen);
+
+  } catch(e) { console.error('회원 설정 로드 오류:', e); }
+}
+
+function updateSignupStatusUI(isOpen) {
+  const desc = document.getElementById('signup-status-desc');
+  const btnO = document.getElementById('btn-signup-open');
+  const btnC = document.getElementById('btn-signup-close');
+  if (isOpen) {
+    desc.textContent = '✅ 가입 허용 중 — 신규 회원이 자유롭게 가입할 수 있습니다.';
+    desc.style.color = '#059669';
+    btnO.style.opacity = '1'; btnO.style.fontWeight = '900';
+    btnC.style.opacity = '.5'; btnC.style.fontWeight = '700';
+  } else {
+    desc.textContent = '🔒 가입 제한 중 — 신규 가입 시 대기 신청 화면이 표시됩니다.';
+    desc.style.color = '#dc2626';
+    btnC.style.opacity = '1'; btnC.style.fontWeight = '900';
+    btnO.style.opacity = '.5'; btnO.style.fontWeight = '700';
+  }
+}
+
+/* ── 최대 회원 수 저장 ── */
+async function saveMaxMembers() {
+  const val = document.getElementById('m-max-input').value.trim();
+  if (!val || isNaN(val) || Number(val) < 1) return toast('❌ 올바른 숫자를 입력하세요');
+  try {
+    await sc.from('app_settings').upsert(
+      { key: 'max_members', value: String(val) },
+      { onConflict: 'key' }
+    );
+    document.getElementById('m-max-count').textContent = val;
+    toast(`✅ 최대 회원 수 ${val}명으로 저장됨`);
+  } catch(e) { toast('❌ 저장 실패: ' + e.message); }
+}
+
+/* ── 가입 허용 / 제한 토글 ── */
+async function setSignupStatus(open) {
+  try {
+    await sc.from('app_settings').upsert(
+      { key: 'signup_open', value: String(open) },
+      { onConflict: 'key' }
+    );
+    updateSignupStatusUI(open);
+    toast(open ? '✅ 회원가입 허용으로 변경됨' : '🔒 회원가입 제한으로 변경됨');
+  } catch(e) { toast('❌ 변경 실패: ' + e.message); }
+}
+
+/* ── 대기자 알림 발송 (Supabase Edge Function 또는 직접 이메일 발송) ── */
+async function notifyWaitlist() {
+  if (!confirm('미발송 대기자 전원에게 알림 이메일을 발송합니다. 계속하시겠습니까?')) return;
+  try {
+    // 미발송 대기자 목록 조회
+    const { data: list, error } = await sc
+      .from('signup_waitlist')
+      .select('id, email')
+      .eq('notified', false);
+    if (error) throw error;
+    if (!list?.length) { toast('📭 발송할 대기자가 없습니다'); return; }
+
+    // Resend를 통한 발송은 서버 사이드(Edge Function)에서 처리 권장
+    // 여기서는 notified 플래그를 true로 마킹하고, 실제 발송은 백엔드 트리거로 연동
+    const ids = list.map(r => r.id);
+    await sc.from('signup_waitlist')
+      .update({ notified: true, notified_at: new Date().toISOString() })
+      .in('id', ids);
+
+    // 발송 요청 로그 기록 (news_bot.py가 pickup해서 실제 이메일 발송)
+    await sc.from('action_logs').insert({
+      action_type: 'WAITLIST_NOTIFY',
+      target_word: 'SYSTEM',
+      details: `📬 대기자 ${list.length}명 이메일 발송 요청. 이메일: ${list.map(r=>r.email).join(', ')}`
+    });
+
+    document.getElementById('m-unsent-count').textContent = '0';
+    document.getElementById('m-waitlist-count').textContent = String(list.length);
+    const result = document.getElementById('notify-result');
+    result.textContent = `✅ ${list.length}명에게 발송 요청 완료!`;
+    result.style.display = 'inline';
+    setTimeout(() => result.style.display = 'none', 4000);
+    toast(`📨 대기자 ${list.length}명 발송 요청 완료`);
+    loadMemberSettings();
+  } catch(e) { toast('❌ 발송 실패: ' + e.message); }
+}
+
+/* ── 비용 탭 진입 시 회원 현황도 함께 로드 ── */
 async function loadCost() {
+  loadMemberSettings(); // 회원 현황 병렬 로드
+
   try {
     const todayFmt = new Date(new Date().getTime() + 9*60*60*1000).toISOString().slice(0,10);
     const { data: todayLogs } = await sc
@@ -711,14 +875,14 @@ async function loadCost() {
 
     const totalCalls = (todayLogs||[]).reduce((s,r) => s+(r.call_count||0), 0);
     const totalCost  = (todayLogs||[]).reduce((s,r) => s+(r.cost_usd||0),   0);
-    $id('c-calls').textContent = totalCalls.toLocaleString();
-    $id('c-cost').textContent  = `$${totalCost.toFixed(4)}`;
+    document.getElementById('c-calls').textContent = totalCalls.toLocaleString();
+    document.getElementById('c-cost').textContent  = `$${totalCost.toFixed(4)}`;
 
     const byType = {};
     (todayLogs||[]).forEach(r => { byType[r.call_type] = (byType[r.call_type]||0)+(r.call_count||0); });
     const typeIcon = { text:'📝', json:'📊', batch:'🗞️' };
-    $id('c-breakdown').innerHTML = Object.keys(byType).length === 0
-      ? '<span style="color:#aaa">오늘 데이터 없음 (첫 실행 후 표시됩니다)</span>'
+    document.getElementById('c-breakdown').innerHTML = Object.keys(byType).length === 0
+      ? '<span style="color:#aaa">오늘 데이터 없음</span>'
       : `<table style="width:100%;border-collapse:collapse">
           <tr style="background:#f8fafc;font-weight:700"><td style="padding:8px">유형</td><td style="padding:8px;text-align:right">호출 수</td></tr>
           ${Object.entries(byType).map(([k,v])=>`
@@ -732,7 +896,7 @@ async function loadCost() {
     const { data: weekLogs } = await sc
       .from('cost_log').select('log_date, call_count, cost_usd').gte('log_date', since7);
     const weekCost = (weekLogs||[]).reduce((s,r) => s+(r.cost_usd||0), 0);
-    $id('c-week').textContent = `$${weekCost.toFixed(3)}`;
+    document.getElementById('c-week').textContent = `$${weekCost.toFixed(3)}`;
 
     const days = Array.from({length:7}, (_,i) => {
       const d = new Date(new Date().getTime() + 9*60*60*1000 - (6-i)*86400*1000);
@@ -740,8 +904,8 @@ async function loadCost() {
     });
     const callByDay = {};
     (weekLogs||[]).forEach(r => { callByDay[r.log_date] = (callByDay[r.log_date]||0)+(r.call_count||0); });
-    const ctx = $id('cost-chart').getContext('2d');
-    if(costChartInstance) costChartInstance.destroy();
+    const ctx = document.getElementById('cost-chart').getContext('2d');
+    if (costChartInstance) costChartInstance.destroy();
     costChartInstance = new Chart(ctx, {
       type: 'bar',
       data: {
@@ -750,9 +914,7 @@ async function loadCost() {
           label: 'Gemini 호출 수',
           data: days.map(d => callByDay[d]||0),
           backgroundColor: 'rgba(245,158,11,0.7)',
-          borderColor: '#f59e0b',
-          borderWidth: 2,
-          borderRadius: 6,
+          borderColor: '#f59e0b', borderWidth: 2, borderRadius: 6,
         }]
       },
       options: {
@@ -764,14 +926,14 @@ async function loadCost() {
 
     const { data: sbStats } = await sc
       .from('supabase_stats').select('row_counts, total_rows').eq('stat_date', todayFmt).maybeSingle();
-    if(sbStats) {
+    if (sbStats) {
       const total = sbStats.total_rows || 0;
       const pct   = ((total/500000)*100).toFixed(1);
       const color = total > 400000 ? '#dc2626' : total > 250000 ? '#d97706' : '#16a34a';
-      $id('c-rows').textContent = total.toLocaleString();
-      $id('c-rows').style.color = color;
+      document.getElementById('c-rows').textContent = total.toLocaleString();
+      document.getElementById('c-rows').style.color = color;
       const counts = sbStats.row_counts || {};
-      $id('c-row-detail').innerHTML = `
+      document.getElementById('c-row-detail').innerHTML = `
         <div style="margin-bottom:10px">
           <div style="background:#f3f4f6;border-radius:8px;height:12px;overflow:hidden">
             <div style="background:${color};height:100%;width:${Math.min(pct,100)}%;border-radius:8px;transition:.5s"></div>
@@ -786,14 +948,15 @@ async function loadCost() {
             </tr>`).join('')}
         </table>`;
     } else {
-      $id('c-rows').textContent = '—';
-      $id('c-row-detail').innerHTML = '<span style="color:#aaa">오늘 통계 없음 (첫 실행 후 표시됩니다)</span>';
+      document.getElementById('c-rows').textContent = '—';
+      document.getElementById('c-row-detail').innerHTML = '<span style="color:#aaa">오늘 통계 없음</span>';
     }
   } catch(e) {
     console.error('loadCost 오류:', e);
-    $id('c-breakdown').innerHTML = `<span style="color:#f55">로드 실패: ${e.message}</span>`;
+    document.getElementById('c-breakdown').innerHTML = `<span style="color:#f55">로드 실패: ${e.message}</span>`;
   }
 }
+</script>
 
 /* ── XSS 방지 ── */
 function escHtml(s) {
