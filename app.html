@@ -15,8 +15,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .header-row { display:flex; justify-content:space-between; align-items:center; padding:14px 20px 10px; }
 .brand { font-size:14px; font-weight:800; color:#1e293b; }
 .collapse-btn { background:none; border:none; cursor:pointer; padding:8px 12px; border-radius:8px; color:#94a3b8; font-size:12px; font-weight:600; min-height:36px; }
-
-/* ── 마스터 전용 헤더 버튼 ── */
 .master-nav { display:flex; align-items:center; gap:6px; }
 .master-nav-btn { font-size:11px; font-weight:700; padding:5px 10px; border-radius:8px; cursor:pointer; min-height:30px; }
 .master-nav-btn.home { background:#f1f5f9; border:1px solid #e2e8f0; color:#475569; }
@@ -44,7 +42,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .date-row::-webkit-scrollbar { display:none; }
 .date-chip { flex-shrink:0; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; color:#94a3b8; background:#f8fafc; border:1px solid #e2e8f0; cursor:pointer; min-height:34px; display:flex; align-items:center; }
 .date-chip.active { background:#1e293b; color:#fff; border-color:#1e293b; }
-
 .agent-row { display:flex; gap:6px; padding:0 16px 10px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
 .agent-row::-webkit-scrollbar { display:none; }
 .agent-chip { flex-shrink:0; display:flex; align-items:center; gap:5px; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:700; color:#94a3b8; background:#f8fafc; border:1.5px solid #e2e8f0; cursor:pointer; min-height:34px; }
@@ -52,13 +49,11 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .agent-chip.active[data-a="STOCK"] { background:#ecfeff; color:#0891b2; border-color:#a5f3fc; }
 .agent-chip.active[data-a="PM"]    { background:#f5f3ff; color:#7c3aed; border-color:#ddd6fe; }
 .agent-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
-
 .kw-nav { display:flex; gap:6px; padding:0 16px 12px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; align-items:center; }
 .kw-nav::-webkit-scrollbar { display:none; }
 .kw-chip { flex-shrink:0; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; color:#94a3b8; background:#f8fafc; border:1px solid #e2e8f0; cursor:pointer; min-height:34px; display:flex; align-items:center; }
 .kw-chip.active { background:#1e293b; color:#fff; border-color:#1e293b; }
 .kw-edit-btn { flex-shrink:0; margin-left:4px; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600; border:1.5px dashed #94a3b8; color:#94a3b8; background:transparent; cursor:pointer; display:flex; align-items:center; gap:4px; min-height:36px; }
-
 .collapsible {}
 .top-bar.collapsed .collapsible { display:none; }
 .top-bar.collapsed .collapsed-bar { display:flex; }
@@ -75,7 +70,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .kw-section-header { display:flex; align-items:center; justify-content:space-between; padding:0 4px; }
 .kw-title { font-size:20px; font-weight:800; color:#0f172a; }
 .kw-meta { font-size:11px; color:#94a3b8; }
-
 .brief-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; overflow:hidden; }
 .brief-card[data-a="BA"]    { border-top:3px solid #2563eb; }
 .brief-card[data-a="STOCK"] { border-top:3px solid #0891b2; }
@@ -95,20 +89,7 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .brief-text { font-size:14px; color:#475569; line-height:1.75; }
 
 /* ── 봉투 버튼 ── */
-.secret-btn {
-  margin: 0 14px 16px;
-  border: 1.5px solid #e2e8f0;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  background: #fff;
-  border-radius: 12px;
-  padding: 12px 16px;
-  cursor: pointer;
-  transition: background .15s;
-  max-width: 280px;
-  min-height: 52px;
-}
+.secret-btn { margin:0 14px 16px; border:1.5px solid #e2e8f0; display:inline-flex; align-items:center; gap:10px; background:#fff; border-radius:12px; padding:12px 16px; cursor:pointer; transition:background .15s; max-width:280px; min-height:52px; }
 .secret-btn:active { background:#f8fafc; }
 .envelope-wrap { position:relative; width:32px; height:24px; flex-shrink:0; }
 .envelope-wrap svg { width:32px; height:24px; }
@@ -119,7 +100,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .secret-sub { font-size:11px; color:#94a3b8; }
 .secret-chevron { font-size:10px; color:#cbd5e1; transition:transform .3s; }
 .secret-btn.open .secret-chevron { transform:rotate(180deg); }
-
 .secret-panel { max-height:0; overflow:hidden; transition:max-height .4s ease; background:#f8fafc; border-top:1px solid #e2e8f0; }
 .secret-panel.open { max-height:700px; }
 .secret-inner { padding:18px; display:flex; flex-direction:column; gap:12px; }
@@ -134,49 +114,21 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .s-text { font-size:14px; color:#475569; line-height:1.75; }
 
 /* ── 산업군 인사이트 카드 ── */
-.industry-card {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border-radius: 16px;
-  padding: 18px;
-  color: #fff;
-  position: relative;
-  overflow: hidden;
-}
-.industry-card::before {
-  content: '';
-  position: absolute;
-  top: -30px; right: -30px;
-  width: 120px; height: 120px;
-  background: radial-gradient(circle, rgba(99,102,241,.25) 0%, transparent 70%);
-  pointer-events: none;
-}
-.industry-card-label {
-  font-size: 9px; font-weight: 700; letter-spacing: 2px;
-  color: #6366f1; margin-bottom: 8px; text-transform: uppercase;
-}
-.industry-card-title {
-  font-size: 13px; font-weight: 700; color: #a5b4fc;
-  margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
-}
+.industry-card { background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%); border-radius:16px; padding:18px; color:#fff; position:relative; overflow:hidden; }
+.industry-card::before { content:''; position:absolute; top:-30px; right:-30px; width:120px; height:120px; background:radial-gradient(circle,rgba(99,102,241,.25) 0%,transparent 70%); pointer-events:none; }
+.industry-card-label { font-size:9px; font-weight:700; letter-spacing:2px; color:#6366f1; margin-bottom:8px; text-transform:uppercase; }
+.industry-card-title { font-size:13px; font-weight:700; color:#a5b4fc; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
 .industry-trend-list { display:flex; flex-direction:column; gap:8px; }
 .industry-trend-item { display:flex; gap:10px; align-items:flex-start; }
 .industry-trend-dot { width:4px; height:4px; border-radius:50%; background:#6366f1; flex-shrink:0; margin-top:8px; }
 .industry-trend-text { font-size:13px; color:rgba(255,255,255,.75); line-height:1.65; }
 
 /* ── KW 추천 카드 ── */
-.kw-suggest-card {
-  background: #fff; border: 1px solid #e2e8f0;
-  border-left: 3px solid #10b981; border-radius: 16px; padding: 16px 18px;
-}
+.kw-suggest-card { background:#fff; border:1px solid #e2e8f0; border-left:3px solid #10b981; border-radius:16px; padding:16px 18px; }
 .kw-suggest-label { font-size:9px; font-weight:700; letter-spacing:2px; color:#10b981; margin-bottom:6px; text-transform:uppercase; }
 .kw-suggest-title { font-size:13px; font-weight:700; color:#334155; margin-bottom:12px; }
 .kw-suggest-chips { display:flex; flex-wrap:wrap; gap:8px; }
-.kw-suggest-chip {
-  display:inline-flex; align-items:center; gap:5px;
-  padding:7px 13px; background:#f0fdf4; border:1.5px solid #bbf7d0;
-  border-radius:20px; font-size:12px; font-weight:600; color:#065f46;
-  cursor:pointer; transition:all .15s; min-height:36px;
-}
+.kw-suggest-chip { display:inline-flex; align-items:center; gap:5px; padding:7px 13px; background:#f0fdf4; border:1.5px solid #bbf7d0; border-radius:20px; font-size:12px; font-weight:600; color:#065f46; cursor:pointer; transition:all .15s; min-height:36px; }
 .kw-suggest-chip:active { background:#dcfce7; transform:scale(.96); }
 .kw-suggest-chip.added { background:#1e293b; border-color:#1e293b; color:#fff; }
 
@@ -192,8 +144,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .hl-num { font-size:11px; font-weight:700; color:#cbd5e1; flex-shrink:0; padding-top:2px; }
 .hl-title { font-size:14px; font-weight:600; color:#334155; line-height:1.5; margin-bottom:3px; }
 .hl-summary { font-size:12px; color:#94a3b8; line-height:1.55; }
-
-/* YouTube 아이템 */
 .yt-item { padding:14px 18px; border-top:1px solid #f1f5f9; display:flex; gap:12px; align-items:flex-start; cursor:pointer; min-height:60px; }
 .yt-item:active { background:#f8fafc; }
 .yt-badge { font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px; flex-shrink:0; margin-top:3px; white-space:nowrap; }
@@ -216,28 +166,17 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .modal-title { font-size:17px; font-weight:700; color:#0f172a; }
 .modal-close { font-size:20px; color:#94a3b8; border:none; background:none; cursor:pointer; padding:8px; min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center; }
 .modal-notice { font-size:12px; color:#f59e0b; background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:10px 14px; margin-bottom:18px; display:flex; align-items:center; gap:6px; line-height:1.5; }
-
-/* ── ⑥ 피드백: 👍/👎 + 자유의견 ── */
 .form-label { font-size:13px; font-weight:600; color:#64748b; margin-bottom:8px; display:block; }
 .form-textarea { width:100%; border:1.5px solid #e2e8f0; border-radius:12px; padding:12px 16px; font-size:15px; color:#1e293b; margin-bottom:16px; outline:none; font-family:inherit; resize:none; height:110px; -webkit-appearance:none; }
 .form-textarea:focus { border-color:#2563eb; }
-
-/* 👍/👎 썸 버튼 */
 .thumb-row { display:flex; gap:12px; margin-bottom:20px; }
-.thumb-btn {
-  flex:1; padding:18px 12px; border-radius:16px;
-  border:2px solid #e2e8f0; background:#fff;
-  font-size:28px; cursor:pointer; transition:all .15s;
-  display:flex; flex-direction:column; align-items:center;
-  gap:6px; min-height:80px;
-}
+.thumb-btn { flex:1; padding:18px 12px; border-radius:16px; border:2px solid #e2e8f0; background:#fff; font-size:28px; cursor:pointer; transition:all .15s; display:flex; flex-direction:column; align-items:center; gap:6px; min-height:80px; }
 .thumb-btn span.thumb-label { font-size:12px; font-weight:700; color:#94a3b8; }
 .thumb-btn:active { transform:scale(.95); }
 .thumb-btn.selected-up   { border-color:#10b981; background:#f0fdf4; }
-.thumb-btn.selected-up span.thumb-label   { color:#10b981; }
+.thumb-btn.selected-up   span.thumb-label { color:#10b981; }
 .thumb-btn.selected-down { border-color:#ef4444; background:#fef2f2; }
 .thumb-btn.selected-down span.thumb-label { color:#ef4444; }
-
 .submit-btn { width:100%; background:#2563eb; color:#fff; border:none; border-radius:14px; padding:16px; font-size:15px; font-weight:700; cursor:pointer; min-height:52px; transition:background .15s; }
 .submit-btn:active { background:#1d4ed8; }
 .submit-btn:disabled { background:#94a3b8; cursor:default; }
@@ -318,7 +257,7 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 
 <button class="fab" onclick="openModal('feedback-modal')">💬 피드백</button>
 
-<!-- ⑥ 피드백 모달 (👍/👎 + 자유의견 형태) -->
+<!-- 피드백 모달 -->
 <div class="modal-overlay" id="feedback-modal" onclick="closeModal('feedback-modal',event)">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -328,24 +267,17 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
     </div>
     <div id="feedback-form-view">
       <div class="modal-notice">⚠️ 피드백은 AI 에이전트 개선에 직접 반영됩니다.</div>
-
-      <!-- 👍/👎 썸 버튼 -->
       <label class="form-label">만족도</label>
       <div class="thumb-row">
         <button class="thumb-btn" id="thumb-up" onclick="selectThumb('up')">
-          👍
-          <span class="thumb-label">도움이 됐어요</span>
+          👍<span class="thumb-label">도움이 됐어요</span>
         </button>
         <button class="thumb-btn" id="thumb-down" onclick="selectThumb('down')">
-          👎
-          <span class="thumb-label">아쉬웠어요</span>
+          👎<span class="thumb-label">아쉬웠어요</span>
         </button>
       </div>
-
-      <!-- 자유의견 (선택) -->
       <label class="form-label">자유 의견 <span style="font-weight:400;color:#94a3b8">(선택)</span></label>
       <textarea class="form-textarea" id="feedback-text" placeholder="어떤 점이 좋았나요? 개선할 점이 있다면 알려주세요. 에이전트 개선에 반영됩니다."></textarea>
-
       <button class="submit-btn" id="feedback-submit-btn" onclick="submitFeedback()">제출하기</button>
     </div>
     <div id="feedback-done-view" style="display:none;">
@@ -385,6 +317,13 @@ const sc = supabase.createClient(
 
 const MASTER_EMAIL = 'positivecha@gmail.com';
 
+/* ── 공통 상수 (에이전트 메타데이터 단일 정의) ── */
+const AGENT_META = {
+  BA:    { key:'ba_brief',         name:'비즈니스 분석', icon:'📊', color:'#2563eb' },
+  STOCK: { key:'securities_brief', name:'주식 브리핑',   icon:'📈', color:'#0891b2' },
+  PM:    { key:'pm_brief',         name:'기획 브리핑',   icon:'🎯', color:'#7c3aed' },
+};
+
 window.CURRENT_USER = { email:'', userName:'', id:'' };
 let curAgent     = 'BA';
 let curDate      = '';
@@ -392,28 +331,37 @@ let allDates     = [];
 let reportData   = null;
 let kwNames      = [];
 let userKeywords = [];
+let selectedThumb = null; // true(👍) | false(👎) | null
 
-// ⑥ 피드백: thumbs up/down (true/false/null)
-let selectedThumb = null;
+/* ── XSS 방지 (공통) ── */
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 
-const AGENT_KEY  = { BA:'ba_brief', STOCK:'securities_brief', PM:'pm_brief' };
-const AGENT_NAME = { BA:'비즈니스 분석', STOCK:'주식 브리핑', PM:'기획 브리핑' };
-const AGENT_ICON = { BA:'📊', STOCK:'📈', PM:'🎯' };
-
-/* ── ⑥ 피드백: 썸 선택 ── */
+/* ── 피드백: 👍/👎 선택 ── */
 function selectThumb(type) {
   selectedThumb = (type === 'up');
   document.getElementById('thumb-up').className   = 'thumb-btn' + (type==='up'   ? ' selected-up'   : '');
   document.getElementById('thumb-down').className = 'thumb-btn' + (type==='down' ? ' selected-down' : '');
 }
 
-/* ── ⑤ 키워드 추가 시 최대 5개 알럿 ── */
-async function addSuggestedKw(kw, el) {
+/* ── ⑤ 키워드 최대 5개 알럿 ── */
+function checkKwLimit(context) {
   if (userKeywords.length >= 5) {
-    // ⑤ 알럿 메시지
-    alert('키워드는 최대 5개까지 등록할 수 있습니다.\n키워드를 변경하려면 [✏️ 수정하기] 버튼을 클릭하세요.');
-    return;
+    if (context === 'suggest') {
+      alert('키워드는 최대 5개까지 등록할 수 있습니다.\n키워드를 변경하려면 [✏️ 수정하기] 버튼을 클릭하세요.');
+    } else {
+      alert('키워드는 최대 5개까지 등록할 수 있습니다.\n기존 키워드를 삭제한 후 다시 추가해주세요.');
+    }
+    return false;
   }
+  return true;
+}
+
+async function addSuggestedKw(kw, el) {
+  if (!checkKwLimit('suggest')) return;
   userKeywords.push(kw);
   await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
   el.classList.add('added');
@@ -421,15 +369,10 @@ async function addSuggestedKw(kw, el) {
   renderKwManage();
 }
 
-/* ── ⑤ 키워드 관리 모달의 추가 버튼도 동일하게 처리 ── */
 async function addKeyword() {
   const v = document.getElementById('kw-add-input').value.trim();
   if (!v) return;
-  if (userKeywords.length >= 5) {
-    alert('키워드는 최대 5개까지 등록할 수 있습니다.\n기존 키워드를 삭제한 후 다시 추가해주세요.');
-    document.getElementById('kw-add-input').value = '';
-    return;
-  }
+  if (!checkKwLimit('manage')) { document.getElementById('kw-add-input').value=''; return; }
   userKeywords.push(v);
   await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
   document.getElementById('kw-add-input').value = '';
@@ -442,20 +385,12 @@ function getSummary(b) {
   if (typeof b === 'object') return b.summary || '분석 중...';
   return b.split('\n').find(l => l.trim().length > 20)?.trim() || '분석 중...';
 }
-function getPoints(b) {
-  if (!b) return [];
-  if (typeof b === 'object') return b.points || [];
-  return [];
-}
-function getDeepLines(b) {
-  if (!b) return [];
-  if (typeof b === 'object') return b.deep || [];
-  return [];
-}
+function getPoints(b)    { return (typeof b === 'object' && b?.points) ? b.points : []; }
+function getDeepLines(b) { return (typeof b === 'object' && b?.deep)   ? b.deep   : []; }
 
 /* ── 봉투 SVG ── */
 function makeSVG(a) {
-  const c = { BA:'#2563eb', STOCK:'#0891b2', PM:'#7c3aed' }[a] || '#64748b';
+  const c = AGENT_META[a]?.color || '#64748b';
   return `<svg viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect x="1" y="5" width="30" height="18" rx="2.5" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.2"/>
     <path class="env-lid" d="M1 7 L16 16 L31 7 L31 5.5 Q31 4 29.5 4 L2.5 4 Q1 4 1 5.5 Z" fill="${c}" opacity="0.9"/>
@@ -472,53 +407,50 @@ function fmtNum(n) {
   return n >= 10000 ? `${Math.floor(n/10000)}만` : n.toLocaleString();
 }
 function buildYtItems(vids) {
-  if (!vids || !vids.length) return `<div class="yt-empty">수집된 YouTube 영상이 없습니다.</div>`;
+  if (!vids?.length) return `<div class="yt-empty">수집된 YouTube 영상이 없습니다.</div>`;
   return vids.map(v => `
-    <div class="yt-item" onclick="window.open('${v.url}','_blank')">
+    <div class="yt-item" onclick="window.open('${escHtml(v.url)}','_blank')">
       <span class="yt-badge ${v.is_expert?'expert':'normal'}">${v.is_expert?'⭐전문가':'일반'}</span>
       <div>
-        <div class="yt-title">${v.title}</div>
-        <div class="yt-meta">${v.channel} · 구독 ${fmtNum(v.subscriber_count)} · 조회 ${fmtNum(v.view_count)}</div>
+        <div class="yt-title">${escHtml(v.title)}</div>
+        <div class="yt-meta">${escHtml(v.channel)} · 구독 ${fmtNum(v.subscriber_count)} · 조회 ${fmtNum(v.view_count)}</div>
       </div>
     </div>`).join('');
 }
 
 /* ── 산업군 매핑 ── */
 const INDUSTRY_MAP = [
-  { keys:['삼성','반도체','메모리','HBM','파운드리','TSMC','SK하이닉스','엔비디아'], industry:'반도체', icon:'🔬', color:'#6366f1' },
-  { keys:['증시','주식','코스피','코스닥','나스닥','S&P','금리','연준','채권','ETF'], industry:'금융·증시', icon:'📈', color:'#0891b2' },
-  { keys:['AI','GPT','LLM','클로드','제미나이','딥러닝','머신러닝','생성형'], industry:'AI·소프트웨어', icon:'🤖', color:'#7c3aed' },
-  { keys:['바이오','신약','임상','제약','mRNA','K-바이오','삼성바이오'], industry:'바이오·헬스케어', icon:'🧬', color:'#059669' },
-  { keys:['전기차','배터리','2차전지','현대차','기아','테슬라','EV','자율주행'], industry:'모빌리티·전기차', icon:'🚗', color:'#d97706' },
-  { keys:['네이버','카카오','쿠팡','이커머스','플랫폼','IT','앱'], industry:'플랫폼·IT', icon:'🌐', color:'#2563eb' },
-  { keys:['엔터','하이브','SM','JYP','BTS','K팝','아이돌','드라마','OTT','넷플릭스'], industry:'엔터·미디어', icon:'🎬', color:'#e8472a' },
-  { keys:['부동산','아파트','분양','재건축','리츠','임대'], industry:'부동산', icon:'🏢', color:'#92400e' },
-  { keys:['원자력','에너지','태양광','풍력','ESG','탄소','수소'], industry:'에너지·ESG', icon:'⚡', color:'#65a30d' },
+  { keys:['삼성','반도체','메모리','HBM','파운드리','TSMC','SK하이닉스','엔비디아'], industry:'반도체',      icon:'🔬', color:'#6366f1' },
+  { keys:['증시','주식','코스피','코스닥','나스닥','S&P','금리','연준','채권','ETF'],  industry:'금융·증시',   icon:'📈', color:'#0891b2' },
+  { keys:['AI','GPT','LLM','클로드','제미나이','딥러닝','머신러닝','생성형'],          industry:'AI·소프트웨어',icon:'🤖', color:'#7c3aed' },
+  { keys:['바이오','신약','임상','제약','mRNA','K-바이오','삼성바이오'],               industry:'바이오·헬스케어',icon:'🧬',color:'#059669' },
+  { keys:['전기차','배터리','2차전지','현대차','기아','테슬라','EV','자율주행'],        industry:'모빌리티·전기차',icon:'🚗',color:'#d97706' },
+  { keys:['네이버','카카오','쿠팡','이커머스','플랫폼','IT','앱'],                     industry:'플랫폼·IT',   icon:'🌐', color:'#2563eb' },
+  { keys:['엔터','하이브','SM','JYP','BTS','K팝','아이돌','드라마','OTT','넷플릭스'],  industry:'엔터·미디어', icon:'🎬', color:'#e8472a' },
+  { keys:['부동산','아파트','분양','재건축','리츠','임대'],                            industry:'부동산',      icon:'🏢', color:'#92400e' },
+  { keys:['원자력','에너지','태양광','풍력','ESG','탄소','수소'],                      industry:'에너지·ESG',  icon:'⚡', color:'#65a30d' },
 ];
 const KW_EXPAND = {
-  '반도체':       ['HBM', 'AI반도체', '파운드리', 'SK하이닉스'],
-  '금융·증시':    ['연준금리', '환율달러', 'ETF투자', '채권시장'],
-  'AI·소프트웨어':['LLM활용', '생성형AI', 'AI에이전트', '클라우드'],
-  '바이오·헬스케어':['K-바이오', '임상3상', 'mRNA치료제', '디지털헬스'],
-  '모빌리티·전기차':['배터리소재', '자율주행', '전기차충전', '수소차'],
-  '플랫폼·IT':    ['SaaS', '핀테크', '슈퍼앱', '버티컬플랫폼'],
-  '엔터·미디어':  ['K팝IP', 'OTT전쟁', '버추얼아이돌', '팬덤비즈니스'],
-  '부동산':       ['리츠투자', 'PF위기', '분양시장', '임대주택'],
-  '에너지·ESG':   ['탄소배출권', 'SMR원전', '태양광', 'ESG경영'],
+  '반도체':        ['HBM','AI반도체','파운드리','SK하이닉스'],
+  '금융·증시':     ['연준금리','환율달러','ETF투자','채권시장'],
+  'AI·소프트웨어': ['LLM활용','생성형AI','AI에이전트','클라우드'],
+  '바이오·헬스케어':['K-바이오','임상3상','mRNA치료제','디지털헬스'],
+  '모빌리티·전기차':['배터리소재','자율주행','전기차충전','수소차'],
+  '플랫폼·IT':     ['SaaS','핀테크','슈퍼앱','버티컬플랫폼'],
+  '엔터·미디어':   ['K팝IP','OTT전쟁','버추얼아이돌','팬덤비즈니스'],
+  '부동산':        ['리츠투자','PF위기','분양시장','임대주택'],
+  '에너지·ESG':    ['탄소배출권','SMR원전','태양광','ESG경영'],
 };
 
 function detectIndustry(kw) {
   const kl = kw.toLowerCase();
-  for (const m of INDUSTRY_MAP) {
-    if (m.keys.some(k => kl.includes(k.toLowerCase()))) return m;
-  }
-  return null;
+  return INDUSTRY_MAP.find(m => m.keys.some(k => kl.includes(k.toLowerCase()))) || null;
 }
 
-function buildIndustryCard(kw, kwData, i) {
+function buildIndustryCard(kw, kwData) {
   const ind = detectIndustry(kw);
   if (!ind) return '';
-  const pts = [...getPoints(kwData.ba_brief), ...getPoints(kwData.securities_brief)].slice(0, 3);
+  const pts = [...getPoints(kwData.ba_brief), ...getPoints(kwData.securities_brief)].slice(0,3);
   if (!pts.length) return '';
   return `
     <div class="industry-card">
@@ -532,7 +464,7 @@ function buildIndustryCard(kw, kwData, i) {
         ${pts.map(p=>`
           <div class="industry-trend-item">
             <div class="industry-trend-dot" style="background:${ind.color}"></div>
-            <div class="industry-trend-text">${p}</div>
+            <div class="industry-trend-text">${escHtml(p)}</div>
           </div>`).join('')}
       </div>
     </div>`;
@@ -549,7 +481,7 @@ function buildKwSuggestCard(kw, kwData, i) {
     });
   });
   const sugs = [...new Set([...pool, ...extracted.slice(0,2)])]
-    .filter(s => !userKeywords.includes(s)).slice(0, 4);
+    .filter(s => !userKeywords.includes(s)).slice(0,4);
   if (!sugs.length) return '';
   return `
     <div class="kw-suggest-card">
@@ -558,98 +490,101 @@ function buildKwSuggestCard(kw, kwData, i) {
       <div class="kw-suggest-chips">
         ${sugs.map(s=>`
           <div class="kw-suggest-chip" id="sugchip-${i}-${s.replace(/\s/g,'_')}"
-               onclick="addSuggestedKw('${s}',this)">+ ${s}</div>`).join('')}
+               onclick="addSuggestedKw('${escHtml(s)}',this)">+ ${escHtml(s)}</div>`).join('')}
       </div>
     </div>`;
 }
 
 /* ── 탭 전환 ── */
 function switchTab(i, type) {
-  const np = document.getElementById(`panel-news-${i}`);
-  const yp = document.getElementById(`panel-yt-${i}`);
-  const nt = document.getElementById(`tab-news-${i}`);
-  const yt = document.getElementById(`tab-yt-${i}`);
-  if (type === 'news') {
-    np.style.display=''; yp.style.display='none';
-    nt.classList.add('active'); yt.classList.remove('active');
-  } else {
-    np.style.display='none'; yp.style.display='';
-    nt.classList.remove('active'); yt.classList.add('active');
-  }
+  const isNews = type === 'news';
+  document.getElementById(`panel-news-${i}`).style.display = isNews ? '' : 'none';
+  document.getElementById(`panel-yt-${i}`).style.display   = isNews ? 'none' : '';
+  document.getElementById(`tab-news-${i}`).classList.toggle('active', isNews);
+  document.getElementById(`tab-yt-${i}`).classList.toggle('active', !isNews);
+}
+
+/* ── 브리핑 카드 HTML 조각 생성 (switchAgent 재사용) ── */
+function buildCardInner(i, brief, userName) {
+  const a       = curAgent;
+  const meta    = AGENT_META[a];
+  const summary = getSummary(brief);
+  const points  = getPoints(brief);
+  const deep    = getDeepLines(brief);
+  return {
+    labelHtml: `● ${meta.name}`,
+    summaryHtml: escHtml(summary),
+    pointsHtml: points.map(p=>`
+      <div class="brief-point">
+        <div class="brief-dot" data-a="${a}"></div>
+        <div class="brief-text">${escHtml(p)}</div>
+      </div>`).join(''),
+    secretHtml: `
+      <div class="secret-agent-header">
+        <span class="secret-agent-badge" data-a="${a}">${meta.icon} ${meta.name}</span>
+        <span class="secret-agent-sub">심층 분석</span>
+      </div>
+      ${deep.length
+        ? deep.map(l=>`<div class="s-point"><div class="s-point-dot"></div><div class="s-text">${escHtml(l)}</div></div>`).join('')
+        : `<div class="s-text" style="color:#94a3b8">추가 분석 내용이 없습니다.</div>`}`,
+  };
 }
 
 /* ── 피드 렌더링 ── */
 function renderFeed() {
   if (!reportData || !kwNames.length) {
-    document.getElementById('feed-wrap').innerHTML =
-      '<div class="feed-state">오늘 브리핑 데이터가 없습니다.</div>';
+    document.getElementById('feed-wrap').innerHTML = '<div class="feed-state">오늘 브리핑 데이터가 없습니다.</div>';
     return;
   }
   const nav = document.getElementById('kw-nav');
   nav.innerHTML = kwNames.map((kw,i) =>
-    `<div class="kw-chip${i===0?' active':''}" id="nav-kw-${i}" onclick="scrollToKw('kw-${i}',this)"># ${kw}</div>`
+    `<div class="kw-chip${i===0?' active':''}" id="nav-kw-${i}" onclick="scrollToKw('kw-${i}',this)"># ${escHtml(kw)}</div>`
   ).join('') + `<button class="kw-edit-btn" onclick="openModal('kw-modal')">✏️ 수정하기</button>`;
 
   document.getElementById('dd-kw').innerHTML = kwNames.map((kw,i) =>
-    `<div class="c-dd-item${i===0?' active':''}" onclick="jumpKwDD(${i},event)"># ${kw}</div>`
+    `<div class="c-dd-item${i===0?' active':''}" onclick="jumpKwDD(${i},event)"># ${escHtml(kw)}</div>`
   ).join('');
   document.getElementById('chip-kw-txt').textContent = `# ${kwNames[0]}`;
 
   const feed = document.createElement('div');
   feed.className = 'feed';
+  const userName = window.CURRENT_USER.userName || '사용자';
 
   kwNames.forEach((kw, i) => {
     const kwData   = reportData[kw];
     if (!kwData) return;
-    const brief    = kwData[AGENT_KEY[curAgent]];
+    const brief    = kwData[AGENT_META[curAgent].key];
     const arts     = kwData.articles || [];
     const ytVideos = kwData.youtube_videos || [];
-    const summary  = getSummary(brief);
-    const points   = getPoints(brief);
-    const deep     = getDeepLines(brief);
-    const userName = window.CURRENT_USER.userName || '사용자';
+    const { labelHtml, summaryHtml, pointsHtml, secretHtml } = buildCardInner(i, brief, userName);
 
     const sec = document.createElement('div');
     sec.className = 'kw-section';
     sec.id = `kw-${i}`;
     sec.innerHTML = `
       <div class="kw-section-header">
-        <span class="kw-title"># ${kw}</span>
+        <span class="kw-title"># ${escHtml(kw)}</span>
         <span class="kw-meta">기사 ${arts.length}건 · YouTube ${ytVideos.length}개</span>
       </div>
       <div class="brief-card" id="card-${i}" data-a="${curAgent}">
         <div class="brief-header">
-          <div class="brief-agent-label" data-a="${curAgent}">● ${AGENT_NAME[curAgent]}</div>
-          <div class="brief-summary" id="summary-${i}">${summary}</div>
+          <div class="brief-agent-label" data-a="${curAgent}" id="alabel-${i}">${labelHtml}</div>
+          <div class="brief-summary" id="summary-${i}">${summaryHtml}</div>
         </div>
-        <div class="brief-points" id="points-${i}">
-          ${points.map(p=>`
-            <div class="brief-point">
-              <div class="brief-dot" data-a="${curAgent}"></div>
-              <div class="brief-text">${p}</div>
-            </div>`).join('')}
-        </div>
+        <div class="brief-points" id="points-${i}">${pointsHtml}</div>
         <button class="secret-btn" id="sbtn-${i}" onclick="toggleSecret(${i})">
           <div class="envelope-wrap">${makeSVG(curAgent)}</div>
           <div class="secret-text-wrap">
             <span class="secret-title">맞춤 브리핑 도착</span>
-            <span class="secret-sub">${userName}님을 위해 정리했어요.</span>
+            <span class="secret-sub">${escHtml(userName)}님을 위해 정리했어요.</span>
           </div>
           <span class="secret-chevron">▼</span>
         </button>
         <div class="secret-panel" id="s-${i}">
-          <div class="secret-inner">
-            <div class="secret-agent-header">
-              <span class="secret-agent-badge" data-a="${curAgent}">${AGENT_ICON[curAgent]} ${AGENT_NAME[curAgent]}</span>
-              <span class="secret-agent-sub">심층 분석</span>
-            </div>
-            ${deep.length
-              ? deep.map(l=>`<div class="s-point"><div class="s-point-dot"></div><div class="s-text">${l}</div></div>`).join('')
-              : `<div class="s-text" style="color:#94a3b8">추가 분석 내용이 없습니다.</div>`}
-          </div>
+          <div class="secret-inner" id="sinner-${i}">${secretHtml}</div>
         </div>
       </div>
-      ${buildIndustryCard(kw, kwData, i)}
+      ${buildIndustryCard(kw, kwData)}
       ${buildKwSuggestCard(kw, kwData, i)}
       <div class="headlines-card">
         <div class="content-tabs">
@@ -659,11 +594,11 @@ function renderFeed() {
         <div id="panel-news-${i}">
           <div class="hl-label">오늘의 헤드라인</div>
           ${arts.map((a,n)=>`
-            <div class="hl-item" onclick="window.open('${a.url}','_blank')">
+            <div class="hl-item" onclick="window.open('${escHtml(a.url)}','_blank')">
               <span class="hl-num">0${n+1}</span>
               <div>
-                <div class="hl-title">${a.title}</div>
-                <div class="hl-summary">${a.pm_summary||a.description||''}</div>
+                <div class="hl-title">${escHtml(a.title)}</div>
+                <div class="hl-summary">${escHtml(a.pm_summary||a.description||'')}</div>
               </div>
             </div>`).join('')}
         </div>
@@ -686,29 +621,17 @@ function switchAgent() {
   kwNames.forEach((kw, i) => {
     const kwData = reportData[kw];
     if (!kwData) return;
-    const brief  = kwData[AGENT_KEY[curAgent]];
-    const card   = document.getElementById(`card-${i}`);
+    const brief = kwData[AGENT_META[curAgent].key];
+    const card  = document.getElementById(`card-${i}`);
     if (!card) return;
+    const { labelHtml, summaryHtml, pointsHtml, secretHtml } = buildCardInner(i, brief);
     card.setAttribute('data-a', curAgent);
-    card.querySelector('.brief-agent-label').setAttribute('data-a', curAgent);
-    card.querySelector('.brief-agent-label').textContent = `● ${AGENT_NAME[curAgent]}`;
-    card.querySelector(`#summary-${i}`).textContent = getSummary(brief);
-    card.querySelector(`#points-${i}`).innerHTML = getPoints(brief).map(p=>`
-      <div class="brief-point">
-        <div class="brief-dot" data-a="${curAgent}"></div>
-        <div class="brief-text">${p}</div>
-      </div>`).join('');
+    document.getElementById(`alabel-${i}`).setAttribute('data-a', curAgent);
+    document.getElementById(`alabel-${i}`).textContent = `● ${AGENT_META[curAgent].name}`;
+    document.getElementById(`summary-${i}`).textContent = getSummary(brief);
+    document.getElementById(`points-${i}`).innerHTML = pointsHtml;
     card.querySelector('.envelope-wrap').innerHTML = makeSVG(curAgent);
-    const inner = card.querySelector('.secret-inner');
-    const deep  = getDeepLines(brief);
-    inner.innerHTML = `
-      <div class="secret-agent-header">
-        <span class="secret-agent-badge" data-a="${curAgent}">${AGENT_ICON[curAgent]} ${AGENT_NAME[curAgent]}</span>
-        <span class="secret-agent-sub">심층 분석</span>
-      </div>
-      ${deep.length
-        ? deep.map(l=>`<div class="s-point"><div class="s-point-dot"></div><div class="s-text">${l}</div></div>`).join('')
-        : `<div class="s-text" style="color:#94a3b8">추가 분석 내용이 없습니다.</div>`}`;
+    document.getElementById(`sinner-${i}`).innerHTML = secretHtml;
     card.style.animation = 'none'; card.offsetHeight; card.style.animation = 'fadeUp .2s ease';
   });
 }
@@ -717,7 +640,7 @@ function switchAgent() {
 async function loadDates(userId) {
   const { data } = await sc.from('reports').select('report_date')
     .eq('user_id', userId).order('report_date', { ascending: false });
-  if (!data || !data.length) return;
+  if (!data?.length) return;
   allDates = [...new Set(data.map(d => d.report_date))];
   curDate  = allDates[0];
   renderDateUI();
@@ -746,9 +669,8 @@ async function fetchReport(userId, date) {
     '<div class="feed-state"><div class="skeleton"></div><div class="skeleton" style="height:140px;opacity:.6"></div></div>';
   const { data } = await sc.from('reports').select('content')
     .eq('user_id', userId).eq('report_date', date).limit(1);
-  if (!data || !data.length || !data[0].content?.by_keyword) {
-    document.getElementById('feed-wrap').innerHTML =
-      `<div class="feed-state">📭 ${date} 브리핑 데이터가 없습니다.</div>`;
+  if (!data?.length || !data[0].content?.by_keyword) {
+    document.getElementById('feed-wrap').innerHTML = `<div class="feed-state">📭 ${date} 브리핑 데이터가 없습니다.</div>`;
     return;
   }
   reportData = data[0].content.by_keyword;
@@ -808,8 +730,8 @@ function jumpKwDD(i, e) {
 function renderKwManage() {
   document.getElementById('kw-manage-list').innerHTML = userKeywords.map(kw => `
     <div class="kw-manage-item">
-      <span class="kw-manage-name"># ${kw}</span>
-      <button class="kw-del-btn" onclick="removeKeyword('${kw}')">✕</button>
+      <span class="kw-manage-name"># ${escHtml(kw)}</span>
+      <button class="kw-del-btn" onclick="removeKeyword('${escHtml(kw)}')">✕</button>
     </div>`).join('');
 }
 
@@ -819,11 +741,10 @@ async function removeKeyword(kw) {
   renderKwManage();
 }
 
-/* ── ⑥ 피드백 제출 (is_positive 필드로 저장) ── */
+/* ── ② 피드백 제출 → report_feedback 테이블로 통일 ── */
 async function submitFeedback() {
   const text = document.getElementById('feedback-text').value.trim();
   const btn  = document.getElementById('feedback-submit-btn');
-  // 👍/👎 또는 자유의견 중 하나라도 있어야 제출 가능
   if (selectedThumb === null && !text) {
     alert('👍 또는 👎 중 하나를 선택하거나, 의견을 입력해주세요.');
     return;
@@ -833,7 +754,7 @@ async function submitFeedback() {
     await sc.from('report_feedback').insert({
       user_id:       window.CURRENT_USER.id,
       user_email:    window.CURRENT_USER.email,
-      is_positive:   selectedThumb,          // true / false / null
+      is_positive:   selectedThumb,
       feedback_text: text || null,
       report_date:   curDate,
       created_at:    new Date().toISOString()
@@ -872,8 +793,8 @@ function closeAllDD() { document.querySelectorAll('.c-dropdown').forEach(d => d.
 document.addEventListener('click', closeAllDD);
 
 function toggleTopBar() {
-  const bar = document.getElementById('topBar');
-  const btn = document.getElementById('collapseBtn');
+  const bar  = document.getElementById('topBar');
+  const btn  = document.getElementById('collapseBtn');
   const cBar = document.getElementById('collapsedBar');
   bar.classList.toggle('collapsed');
   const c = bar.classList.contains('collapsed');
@@ -927,25 +848,20 @@ function closeModal(id, e) {
 /* ── 초기화 ── */
 async function init() {
   try {
-    const { data: { session } } = await sc.auth.getSession();
+    const { data:{ session } } = await sc.auth.getSession();
     if (!session) { location.href = 'index.html'; return; }
 
-    const email    = session.user.email;
+    const { email, id: userId } = session.user;
     const userName = email.split('@')[0];
-    const userId   = session.user.id;
     window.CURRENT_USER = { email, userName, id: userId };
 
-    if (email === MASTER_EMAIL) {
-      document.getElementById('master-nav').style.display = 'flex';
-    }
+    if (email === MASTER_EMAIL) document.getElementById('master-nav').style.display = 'flex';
     document.getElementById('logout-btn').style.display = 'block';
 
-    const { data: uSettings } = await sc.from('user_settings').select('keywords')
-      .eq('id', userId).maybeSingle();
+    const { data: uSettings } = await sc.from('user_settings').select('keywords').eq('id', userId).maybeSingle();
     userKeywords = uSettings?.keywords || [];
 
     await loadDates(userId);
-
     if (allDates.length > 0) {
       await fetchReport(userId, allDates[0]);
     } else {
