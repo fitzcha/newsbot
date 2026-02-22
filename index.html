@@ -15,6 +15,9 @@ body{font-family:'Pretendard',sans-serif;background:#fff;color:var(--g900);-webk
 .nav-logo{font-size:.95rem;font-weight:800;letter-spacing:-.5px;cursor:pointer;}
 .nav-links{display:flex;gap:8px;align-items:center;}
 .nav-link{font-size:.8rem;font-weight:600;color:var(--g600);padding:6px 12px;border-radius:8px;cursor:pointer;border:none;background:none;font-family:inherit;}
+/* ③ 이용방법 보기 버튼 스타일 */
+.btn-how{font-size:.8rem;font-weight:700;color:var(--g600);padding:7px 14px;border-radius:20px;cursor:pointer;border:1.5px solid var(--g200);background:#fff;font-family:inherit;transition:.15s;}
+.btn-how:hover{background:var(--g100);}
 .btn-cta-sm{background:var(--g900);color:#fff;border:none;padding:7px 16px;border-radius:20px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit;}
 
 /* HERO */
@@ -106,6 +109,9 @@ footer{border-top:1px solid var(--g200);padding:24px 20px;text-align:center;font
 <nav class="nav">
   <span class="nav-logo">Fitz Intelligence</span>
   <div class="nav-links">
+    <!-- ③ 이용방법 보기 버튼 (④ 로그인 시 메인화면 바로가기 왼쪽에 위치) -->
+    <button class="btn-how" onclick="scrollTo({top:document.getElementById('how').offsetTop-60,behavior:'smooth'})">이용방법 보기</button>
+    <!-- ④ 로그인 전: 무료로 시작하기 / 로그인 후: 메인화면 바로가기 -->
     <button class="btn-cta-sm" id="nav-cta" onclick="handleStart()">무료로 시작하기</button>
   </div>
 </nav>
@@ -117,7 +123,6 @@ footer{border-top:1px solid var(--g200);padding:24px 20px;text-align:center;font
   <p>관심 키워드만 등록하면<br>AI 에이전트 8명이 매일 분석해 이메일로 보내드립니다</p>
   <div class="hero-btns">
     <button class="btn-main" id="main-cta" onclick="handleStart()">무료로 시작하기 →</button>
-    <button class="btn-sub" onclick="scrollTo({top:document.getElementById('how').offsetTop-60,behavior:'smooth'})">이용방법 보기</button>
   </div>
 </section>
 
@@ -302,6 +307,7 @@ footer{border-top:1px solid var(--g200);padding:24px 20px;text-align:center;font
   <div class="auth-modal">
     <h2>무료로 시작하기</h2>
     <input class="auth-input" type="email" id="email-input" placeholder="이메일 주소를 입력하세요">
+    <!-- ① 이메일 링크 클릭 시 newsbot-smoky.vercel.app/app.html 로 이동 -->
     <button class="auth-submit" onclick="sendMagicLink()">로그인 링크 받기</button>
     <div class="auth-close" onclick="document.getElementById('auth-overlay').style.display='none'">닫기</div>
   </div>
@@ -315,9 +321,10 @@ async function checkSession(){
   const{data:{session}}=await sc.auth.getSession();
   if(session){
     isLogged=true;
+    // ④ 로그인 시 버튼 텍스트: 메인화면 바로가기
     ['main-cta','nav-cta'].forEach(id=>{
       const b=document.getElementById(id);
-      if(b){b.textContent='대시보드로 바로가기 →';if(id==='main-cta')b.style.background='#111';}
+      if(b){b.textContent='메인화면 바로가기 →';if(id==='main-cta')b.style.background='#111';}
     });
   }
 }
@@ -328,7 +335,8 @@ function handleStart(){
 async function sendMagicLink(){
   const email=document.getElementById('email-input').value;
   if(!email)return alert('이메일을 입력해주세요.');
-  const{error}=await sc.auth.signInWithOtp({email,options:{emailRedirectTo:window.location.origin+'/app.html'}});
+  // ① 이메일 링크 클릭 시 newsbot-smoky.vercel.app/app.html 로 이동
+  const{error}=await sc.auth.signInWithOtp({email,options:{emailRedirectTo:'https://newsbot-smoky.vercel.app/app.html'}});
   if(error)alert('에러: '+error.message);
   else alert('로그인 링크가 이메일로 전송되었습니다!');
 }
