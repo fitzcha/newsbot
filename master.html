@@ -70,7 +70,7 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 .evo-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
 /* 펄스 */
-.pulse{animation:pulse 1.5s infinite}
+.pulse{animation:pulse 1.5s infe}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
 /* 다크 리포트 */
@@ -970,7 +970,7 @@ async function refreshAll() {
 }
 
 /* ── 초기화 ── */
-async function init() {
+async function () {
   startClock();
   const tok = getToken();
   if(tok) { $id('ghp-token').value = tok; updateTokenStatus(tok); }
@@ -988,7 +988,7 @@ async function init() {
     console.warn('세션 없음, 기본 모드 동작:', e.message);
   }
   startAutoApprovalTimer();
-  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadLogs(), loadVoc()]);
+  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadLogs(), loadVoc(),loadMemberSettings()]);
   loadAgentSelect(); // ⑦ 에이전트 선택 목록 동적 로드
 
   sc.channel('evo-updates')
@@ -1003,7 +1003,7 @@ async function init() {
     .subscribe();
 }
 
-init();
+();
 </script>
 </body>
 </html>
