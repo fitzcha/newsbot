@@ -49,11 +49,28 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 /* 상태 뱃지 */
 .s-tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.75rem;font-weight:700;margin-left:6px}
 .s-PENDING{background:#fff3cd;color:#856404}
+.s-PENDING_MASTER{background:#fff3cd;color:#856404}
 .s-CONFIRMED{background:#cce5ff;color:#004085}
 .s-DEVELOPING{background:#d4edda;color:#155724}
 .s-DEPLOYED{background:#d1ecf1;color:#0c5460}
+.s-COMPLETED{background:#d1ecf1;color:#0c5460}
 .s-APPROVED{background:#d4edda;color:#155724}
 .s-REJECTED{background:#f8d7da;color:#721c24}
+.s-FAILED,.s-BACKUP_FAILED,.s-SYNTAX_ERROR,.s-VALIDATION_ERROR,.s-DEPLOY_FAILED{background:#f8d7da;color:#721c24}
+
+/* 상태 필터 + 페이징 */
+.status-filter-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.status-chip{border:1px solid #e2e8f0;background:#fff;color:#64748b;border-radius:999px;padding:6px 11px;cursor:pointer;font-size:.8rem;font-weight:700}
+.status-chip .cnt{margin-left:5px;color:#94a3b8;font-weight:800}
+.status-chip.on{background:#111;color:#fff;border-color:#111}
+.status-chip.on .cnt{color:#d1d5db}
+.list-summary{font-size:.78rem;color:#94a3b8;margin:0 0 8px}
+.list-pager{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:10px}
+.list-pager .pinfo{font-size:.76rem;color:#64748b;min-width:90px;text-align:center}
+.list-pager .pbtn{padding:5px 11px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:.78rem;font-weight:700;color:#475569}
+.list-pager .pbtn:disabled{opacity:.4;cursor:default}
+.summary-box{background:#f8fafc}
+.role-brief{font-size:.8rem;color:#475569;margin:6px 0 8px}
 
 /* 포럼 */
 #forum-box{background:#0d1117;color:#50fa7b;padding:18px;border-radius:14px;font-family:'Courier New',monospace;height:320px;overflow-y:auto;font-size:.82rem;line-height:1.7}
@@ -236,6 +253,7 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
       <button class="btn" style="background:#111;color:#fff;border:none;width:100%" onclick="sendDirectOrder()">⚡ 즉시 하달 (바로 적용)</button>
     </div>
 
+    <div id="evo-status-filters" class="status-filter-row"></div>
     <div id="pending-evo-list"></div>
     <div id="live-agent-list"></div>
   </div>
@@ -248,6 +266,7 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
       <textarea id="d-task" rows="4" placeholder="요구사항을 상세히 작성하세요."></textarea>
       <button class="btn" style="background:var(--dev);color:#fff;border:none;width:100%" onclick="addDev()">📋 백로그 등록</button>
     </div>
+    <div id="dev-status-filters" class="status-filter-row"></div>
     <div id="dev-list"></div>
   </div>
 
@@ -403,6 +422,44 @@ const sc = supabase.createClient(CFG.url, CFG.key);
 let me = null, autoTimer = null, costChartInstance = null;
 let directiveMode = 'single';
 let allMembers = [];   // 회원 목록 캐시
+let evoPropsAll = [], evoStatusFilter = 'PENDING', evoPage = 1;
+let evoAgentsAll = [], evoAgentPage = 1;
+let devRowsAll = [], devStatusFilter = 'ALL', devPage = 1;
+const EVO_PAGE_SIZE = 6;
+const EVO_AGENT_PAGE_SIZE = 6;
+const DEV_PAGE_SIZE = 6;
+
+const STATUS_KO = {
+  ALL: '전체',
+  PENDING: '대기',
+  PENDING_MASTER: '대표승인대기',
+  CONFIRMED: '확정',
+  DEVELOPING: '배포중',
+  COMPLETED: '완료',
+  DEPLOYED: '배포완료',
+  APPROVED: '승인',
+  REJECTED: '반려',
+  FAILED: '실패',
+  BACKUP_FAILED: '백업실패',
+  SYNTAX_ERROR: '문법오류',
+  VALIDATION_ERROR: '검증오류',
+  DEPLOY_FAILED: '배포실패',
+};
+const EVO_STATUS_BASE = ['ALL','PENDING','APPROVED','REJECTED'];
+const DEV_STATUS_BASE = ['ALL','PENDING','PENDING_MASTER','CONFIRMED','DEVELOPING','COMPLETED','DEPLOYED','FAILED','REJECTED'];
+const ROLE_BRIEF = {
+  BA: '비즈니스 모델과 경쟁 구도를 해석합니다.',
+  STOCK: '시장 반응과 투자 시그널을 분석합니다.',
+  PM: '서비스 기획 우선순위와 실행 전략을 제안합니다.',
+  HR: '조직 운영과 인사/문화 관점을 점검합니다.',
+  DEV: '개발 구현과 배포 안정성을 관리합니다.',
+  QA: '품질 리스크를 사전 검증합니다.',
+  BRIEF: '핵심 브리핑을 짧고 명확하게 요약합니다.',
+  KW: '키워드 확장/정제를 통해 탐지 정확도를 높입니다.',
+  DATA: '데이터 수집 품질과 커버리지를 개선합니다.',
+  INFO: '외부 정보의 맥락과 신뢰도를 보강합니다.',
+  MASTER: '에이전트 운영을 총괄 조정합니다.',
+};
 
 /* ──────────────────────────────────────────
    유틸
@@ -419,6 +476,41 @@ function escHtml(s) {
 }
 function getSrKey() { return CFG.service_role || localStorage.getItem('sr_key') || ''; }
 function hasSrKey() { return !!getSrKey(); }
+function statusLabel(s) { return STATUS_KO[s] || s; }
+function summarizeText(raw, maxLen=130) {
+  const txt = String(raw || '')
+    .replace(/\[PROPOSAL\]|\[REASON\]|\[NEEDS_DEV\]/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if(!txt) return '요약 정보 없음';
+  if(txt.length <= maxLen) return txt;
+  const cut = txt.slice(0, maxLen);
+  const stop = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '), cut.lastIndexOf('다.'));
+  return (stop > 40 ? cut.slice(0, stop + 1) : cut) + '…';
+}
+function withExtraStatuses(base, counts) {
+  const extras = Object.keys(counts).filter(k => k !== 'ALL' && !base.includes(k));
+  return [...base, ...extras];
+}
+function buildStatusFilterHTML(order, active, counts, clickFn) {
+  return order.map(st => `
+    <button class="status-chip ${st===active?'on':''}" onclick="${clickFn}('${st}')">
+      ${statusLabel(st)} <span class="cnt">${counts[st] || 0}</span>
+    </button>
+  `).join('');
+}
+function buildPagerHTML(page, totalPages, totalItems, pageSize, prevFn, nextFn) {
+  if(totalPages <= 1) return '';
+  const from = totalItems === 0 ? 0 : ((page - 1) * pageSize + 1);
+  const to = Math.min(page * pageSize, totalItems);
+  return `
+    <div class="list-pager">
+      <button class="pbtn" onclick="${prevFn}()" ${page<=1?'disabled':''}>◀ 이전</button>
+      <span class="pinfo">${page}/${totalPages} · ${from}-${to}</span>
+      <button class="pbtn" onclick="${nextFn}()" ${page>=totalPages?'disabled':''}>다음 ▶</button>
+    </div>
+  `;
+}
 
 /* ──────────────────────────────────────────
    토큰 / SR 키 관리
@@ -802,41 +894,123 @@ async function applyDirective(role, newText, mode, existingInstruction) {
     proposal_reason: `마스터 직접 하달 (${mode==='append'?'추가':'대체'})`, status: 'APPROVED'
   }]);
 }
+function setEvoStatus(status) { evoStatusFilter = status; evoPage = 1; renderEvoProposalList(); }
+function evoPrevPage() { if(evoPage > 1) { evoPage--; renderEvoProposalList(); } }
+function evoNextPage() {
+  const totalPages = Math.max(1, Math.ceil(getEvoFilteredProps().length / EVO_PAGE_SIZE));
+  if(evoPage < totalPages) { evoPage++; renderEvoProposalList(); }
+}
+function agentPrevPage() { if(evoAgentPage > 1) { evoAgentPage--; renderLiveAgentList(); } }
+function agentNextPage() {
+  const totalPages = Math.max(1, Math.ceil((evoAgentsAll||[]).length / EVO_AGENT_PAGE_SIZE));
+  if(evoAgentPage < totalPages) { evoAgentPage++; renderLiveAgentList(); }
+}
+function getEvoFilteredProps() {
+  const rows = evoPropsAll || [];
+  if(evoStatusFilter === 'ALL') return rows;
+  return rows.filter(p => (p.status || 'PENDING') === evoStatusFilter);
+}
+function renderEvoStatusFilters() {
+  const counts = { ALL: (evoPropsAll || []).length };
+  (evoPropsAll || []).forEach(p => {
+    const st = (p.status || 'PENDING').toUpperCase();
+    counts[st] = (counts[st] || 0) + 1;
+  });
+  const order = withExtraStatuses(EVO_STATUS_BASE, counts);
+  render('evo-status-filters', buildStatusFilterHTML(order, evoStatusFilter, counts, 'setEvoStatus'));
+}
+function renderEvoProposalList() {
+  const filtered = getEvoFilteredProps();
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / EVO_PAGE_SIZE));
+  if(evoPage > totalPages) evoPage = totalPages;
+  if(evoPage < 1) evoPage = 1;
+  const start = (evoPage - 1) * EVO_PAGE_SIZE;
+  const rows = filtered.slice(start, start + EVO_PAGE_SIZE);
+
+  if(!totalItems) {
+    render('pending-evo-list', `<h3>📄 지능 발의 리스트</h3><div class="empty">선택한 상태의 안건이 없습니다.</div>`);
+    return;
+  }
+
+  render('pending-evo-list',
+    `<h3>📄 지능 발의 리스트</h3>
+     <div class="list-summary">총 ${totalItems}건 · 상태: ${statusLabel(evoStatusFilter)}</div>`
+    + rows.map(p => {
+      const st = (p.status || 'PENDING').toUpperCase();
+      const canDecide = st === 'PENDING';
+      const created = p.created_at ? p.created_at.slice(0,16).replace('T',' ') : '';
+      return `<div class="evo-card">
+        <div class="meta">🤖 ${p.agent_role} · ${created} · ${escHtml(p.proposal_reason || '에이전트 자율 제안')}
+          <span class="s-tag s-${st}">${statusLabel(st)}</span>
+        </div>
+        <div class="box summary-box"><b>핵심 요약</b><br>${escHtml(summarizeText(p.proposed_instruction, 160))}</div>
+        <details>
+          <summary style="cursor:pointer;font-size:.82rem;font-weight:700;color:#64748b">전체 제안 보기</summary>
+          <div class="box">${escHtml(p.proposed_instruction || '내용 없음')}</div>
+        </details>
+        ${canDecide ? `
+          <div class="evo-actions">
+            <button class="sm" style="background:var(--success)" onclick="decideEvo('${p.id}','${p.agent_role}','APPROVED')">✅ 승인</button>
+            <button class="sm" style="background:var(--admin)"   onclick="decideEvo('${p.id}','${p.agent_role}','REJECTED')">❌ 반려</button>
+          </div>
+        ` : ``}
+      </div>`;
+    }).join('')
+    + buildPagerHTML(evoPage, totalPages, totalItems, EVO_PAGE_SIZE, 'evoPrevPage', 'evoNextPage')
+  );
+}
+function renderLiveAgentList() {
+  const totalItems = (evoAgentsAll || []).length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / EVO_AGENT_PAGE_SIZE));
+  if(evoAgentPage > totalPages) evoAgentPage = totalPages;
+  if(evoAgentPage < 1) evoAgentPage = 1;
+  const start = (evoAgentPage - 1) * EVO_AGENT_PAGE_SIZE;
+  const rows = (evoAgentsAll || []).slice(start, start + EVO_AGENT_PAGE_SIZE);
+
+  render('live-agent-list',
+    `<h3>🚀 현재 가동 중인 에이전트 지침</h3>
+     <div class="list-summary">총 ${totalItems}명 에이전트</div>`
+    + (rows.length===0
+      ? `<div class="empty">에이전트 정보 없음</div>`
+      : rows.map(a => {
+          const role = a.agent_role || 'UNKNOWN';
+          const full = a.instruction || '지침 없음';
+          return `<div class="card" style="border-left-color:#bbb">
+            <strong>🤖 ${escHtml(role)}</strong>
+            <div class="role-brief">역할 요약: ${escHtml(ROLE_BRIEF[role] || '역할 설명이 등록되지 않았습니다.')}</div>
+            <div class="box summary-box"><b>핵심 지침 요약</b><br>${escHtml(summarizeText(full, 150))}</div>
+            <details>
+              <summary style="cursor:pointer;font-size:.82rem;font-weight:700;color:#64748b">지침 전체 보기</summary>
+              <div class="box">${escHtml(full)}</div>
+            </details>
+          </div>`;
+        }).join('')
+    )
+    + buildPagerHTML(evoAgentPage, totalPages, totalItems, EVO_AGENT_PAGE_SIZE, 'agentPrevPage', 'agentNextPage')
+  );
+}
 async function loadEvo() {
   try {
     const [agRes, prRes] = await Promise.all([
       sc.from('agents').select('agent_role, instruction').order('agent_role'),
-      sc.from('pending_approvals').select('id,agent_role,proposed_instruction,proposal_reason,created_at')
-        .eq('status','PENDING').order('created_at',{ascending:false})
+      sc.from('pending_approvals').select('id,agent_role,proposed_instruction,proposal_reason,created_at,status')
+        .order('created_at',{ascending:false}).limit(500)
     ]);
-    const agents=agRes.data||[], props=prRes.data||[];
-    $id('evo-cnt').style.display = props.length?'':'none';
-    if(props.length) $id('evo-cnt').textContent = props.length;
+    evoAgentsAll = agRes.data || [];
+    evoPropsAll  = (prRes.data || []).map(p => ({ ...p, status: (p.status || 'PENDING').toUpperCase() }));
+    const pendingCnt = evoPropsAll.filter(p => p.status === 'PENDING').length;
+    $id('evo-cnt').style.display = pendingCnt ? '' : 'none';
+    if(pendingCnt) $id('evo-cnt').textContent = pendingCnt;
 
-    render('pending-evo-list',
-      `<h3>📄 결재 대기 <span style="color:var(--admin)">(${props.length}건)</span></h3>`
-      + (props.length===0
-          ? `<div class="empty">✅ 대기 안건 없음</div>`
-          : props.map(p=>`<div class="evo-card">
-              <div class="meta">🤖 ${p.agent_role} · ${p.created_at?.slice(0,16)||''} · ${p.proposal_reason||'에이전트 자율 제안'}</div>
-              <strong>제안된 지침</strong>
-              <div class="box">${escHtml(p.proposed_instruction)}</div>
-              <div class="evo-actions">
-                <button class="sm" style="background:var(--success)" onclick="decideEvo('${p.id}','${p.agent_role}','APPROVED')">✅ 승인</button>
-                <button class="sm" style="background:var(--admin)"   onclick="decideEvo('${p.id}','${p.agent_role}','REJECTED')">❌ 반려</button>
-              </div></div>`).join('')
-      )
-    );
-    render('live-agent-list',
-      `<h3>🚀 현재 가동 중인 에이전트 지침</h3>`
-      + (agents.length===0
-          ? `<div class="empty">에이전트 정보 없음</div>`
-          : agents.map(a=>`<div class="card" style="border-left-color:#bbb">
-              <strong>🤖 ${a.agent_role}</strong>
-              <div class="box">${escHtml(a.instruction||'지침 없음')}</div></div>`).join('')
-      )
-    );
-  } catch(e) { render('pending-evo-list',`<div class="card">⚠️ 로드 실패: ${e.message}</div>`); }
+    renderEvoStatusFilters();
+    renderEvoProposalList();
+    renderLiveAgentList();
+  } catch(e) {
+    render('evo-status-filters', '');
+    render('pending-evo-list', `<div class="card">⚠️ 로드 실패: ${e.message}</div>`);
+    render('live-agent-list', `<div class="card">⚠️ 로드 실패: ${e.message}</div>`);
+  }
 }
 async function decideEvo(id, role, status) {
   try {
@@ -853,32 +1027,100 @@ async function decideEvo(id, role, status) {
 /* ══════════════════════════════════════════
    개발 탭
    ══════════════════════════════════════════ */
+function setDevStatus(status) { devStatusFilter = status; devPage = 1; renderDevList(); }
+function devPrevPage() { if(devPage > 1) { devPage--; renderDevList(); } }
+function devNextPage() {
+  const totalPages = Math.max(1, Math.ceil(getFilteredDevRows().length / DEV_PAGE_SIZE));
+  if(devPage < totalPages) { devPage++; renderDevList(); }
+}
+function getFilteredDevRows() {
+  const rows = devRowsAll || [];
+  if(devStatusFilter === 'ALL') return rows;
+  return rows.filter(r => (r.status || 'PENDING') === devStatusFilter);
+}
+function renderDevStatusFilters() {
+  const counts = { ALL: (devRowsAll || []).length };
+  (devRowsAll || []).forEach(r => {
+    const st = (r.status || 'PENDING').toUpperCase();
+    counts[st] = (counts[st] || 0) + 1;
+  });
+  const order = withExtraStatuses(DEV_STATUS_BASE, counts);
+  render('dev-status-filters', buildStatusFilterHTML(order, devStatusFilter, counts, 'setDevStatus'));
+}
+function renderDevList() {
+  const filtered = getFilteredDevRows();
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / DEV_PAGE_SIZE));
+  if(devPage > totalPages) devPage = totalPages;
+  if(devPage < 1) devPage = 1;
+  const start = (devPage - 1) * DEV_PAGE_SIZE;
+  const rows = filtered.slice(start, start + DEV_PAGE_SIZE);
+
+  if(!totalItems) {
+    render('dev-list', `<h3>📋 개발 백로그 리스트</h3><div class="empty">선택한 상태의 안건이 없습니다.</div>`);
+    return;
+  }
+
+  render('dev-list',
+    `<h3>📋 개발 백로그 리스트</h3>
+     <div class="list-summary">총 ${totalItems}건 · 상태: ${statusLabel(devStatusFilter)}</div>`
+    + rows.map(b => {
+      const st = (b.status || 'PENDING').toUpperCase();
+      const created = b.created_at ? new Date(b.created_at).toLocaleString('ko-KR') : '';
+      let btns = '';
+      if(st === 'PENDING' || st === 'PENDING_MASTER') {
+        btns = `
+          <button class="sm" style="background:var(--primary)" onclick="upDev('${b.id}','CONFIRMED')">✅ 개발 확정</button>
+          <button class="sm" style="background:var(--admin)" onclick="rejectDev('${b.id}')">❌ 마스터 반려</button>
+        `;
+      } else if(st === 'CONFIRMED') {
+        btns = `
+          <button class="sm" style="background:var(--dev)" onclick="triggerDev('${b.id}')">🚀 배포 시작</button>
+          <button class="sm" style="background:var(--admin)" onclick="rejectDev('${b.id}')">❌ 마스터 반려</button>
+        `;
+      } else if(st === 'DEVELOPING') {
+        btns = `<span class="pulse" style="color:var(--dev);font-weight:700">⏳ AI 배포 중...</span>`;
+      } else if(['FAILED','DEPLOY_FAILED','VALIDATION_ERROR','SYNTAX_ERROR','BACKUP_FAILED'].includes(st)) {
+        btns = `
+          <button class="sm" style="background:#475569" onclick="upDev('${b.id}','CONFIRMED')">🔁 재시도 준비</button>
+          <button class="sm" style="background:var(--admin)" onclick="rejectDev('${b.id}')">❌ 마스터 반려</button>
+        `;
+      } else if(st === 'REJECTED') {
+        btns = `<button class="sm" style="background:#475569" onclick="upDev('${b.id}','PENDING')">↩️ 재오픈</button>`;
+      } else {
+        btns = `<span style="color:var(--success);font-weight:700">✅ ${statusLabel(st)}</span>`;
+      }
+
+      return `<div class="card" style="border-left-color:var(--dev)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
+          <div><strong>${escHtml(b.title || '무제')}</strong><span class="s-tag s-${st}">${statusLabel(st)}</span></div>
+          <small style="color:#aaa">${created}</small>
+        </div>
+        <div class="box summary-box"><b>요약</b><br>${escHtml(summarizeText(b.task_detail || '', 150))}</div>
+        <details>
+          <summary style="cursor:pointer;font-size:.82rem;font-weight:700;color:#64748b">요구사항 전체 보기</summary>
+          <div class="box">${escHtml(b.task_detail || '')}</div>
+        </details>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">${btns}</div>
+      </div>`;
+    }).join('')
+    + buildPagerHTML(devPage, totalPages, totalItems, DEV_PAGE_SIZE, 'devPrevPage', 'devNextPage')
+  );
+}
 async function loadDev() {
   try {
-    const { data } = await sc.from('dev_backlog').select('*').order('created_at',{ascending:false});
-    const pending=(data||[]).filter(b=>b.status==='PENDING').length;
-    $id('dev-cnt').style.display=pending?'':'none';
-    if(pending) $id('dev-cnt').textContent=pending;
-    render('dev-list', (data||[]).length===0
-      ? `<div class="empty">등록된 백로그 없음</div>`
-      : (data||[]).map(b=>{
-          const created=b.created_at?new Date(b.created_at).toLocaleString('ko-KR'):'';
-          let btns='';
-          if(b.status==='PENDING')     btns=`<button class="sm" style="background:var(--primary)" onclick="upDev('${b.id}','CONFIRMED')">✅ 개발 확정</button>`;
-          else if(b.status==='CONFIRMED') btns=`<button class="sm" style="background:var(--dev)" onclick="triggerDev('${b.id}')">🚀 배포 시작</button>`;
-          else if(b.status==='DEVELOPING') btns=`<span class="pulse" style="color:var(--dev);font-weight:700">⏳ AI 배포 중...</span>`;
-          else btns=`<span style="color:var(--success);font-weight:700">✅ 배포 완료</span>`;
-          return `<div class="card" style="border-left-color:var(--dev)">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
-              <div><strong>${escHtml(b.title||'무제')}</strong><span class="s-tag s-${b.status}">${b.status}</span></div>
-              <small style="color:#aaa">${created}</small>
-            </div>
-            <div class="box">${escHtml(b.task_detail||'')}</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">${btns}</div>
-          </div>`;
-        }).join('')
-    );
-  } catch(e) { render('dev-list',`<div class="card">⚠️ 로드 실패: ${e.message}</div>`); }
+    const { data, error } = await sc.from('dev_backlog').select('*').order('created_at',{ascending:false});
+    if(error) throw error;
+    devRowsAll = (data || []).map(d => ({ ...d, status: (d.status || 'PENDING').toUpperCase() }));
+    const openCnt = devRowsAll.filter(b => ['PENDING','PENDING_MASTER','CONFIRMED','DEVELOPING'].includes(b.status)).length;
+    $id('dev-cnt').style.display = openCnt ? '' : 'none';
+    if(openCnt) $id('dev-cnt').textContent = openCnt;
+    renderDevStatusFilters();
+    renderDevList();
+  } catch(e) {
+    render('dev-status-filters', '');
+    render('dev-list',`<div class="card">⚠️ 로드 실패: ${e.message}</div>`);
+  }
 }
 async function addDev() {
   const title=$id('d-title').value.trim(), task=$id('d-task').value.trim();
@@ -889,9 +1131,18 @@ async function addDev() {
     toast('📋 개발 안건 등록 완료'); loadDev();
   } catch(e) { toast('❌ 등록 실패: '+e.message); }
 }
+async function rejectDev(id) {
+  if(!confirm('해당 개발 안건을 마스터 반려 처리할까요?')) return;
+  await upDev(id, 'REJECTED');
+}
 async function upDev(id, status) {
-  await sc.from('dev_backlog').update({status}).eq('id',id);
-  toast('✅ 상태 업데이트 완료'); loadDev();
+  try {
+    await sc.from('dev_backlog').update({status}).eq('id',id);
+    toast(`✅ 상태 업데이트: ${statusLabel(status)}`);
+    loadDev();
+  } catch(e) {
+    toast('❌ 상태 업데이트 실패: ' + e.message);
+  }
 }
 async function triggerDev(id) {
   const token=getToken();
