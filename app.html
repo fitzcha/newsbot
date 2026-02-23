@@ -37,55 +37,22 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .c-dd-item:active, .c-dd-item.active { background:#f8fafc; color:#1e293b; }
 .c-dd-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; background:#94a3b8; }
 
-/* ── ★ 필터 행 레이아웃 (레이블 + 칩 열 정렬) ── */
-.filter-grid {
-  display: grid;
-  /* 레이블 고정 너비 60px + 칩 영역 */
-  grid-template-columns: 60px 1fr;
-  row-gap: 0;
-  padding: 6px 16px 4px;
-}
-.filter-label {
-  display: flex;
-  align-items: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: #94a3b8;
-  letter-spacing: .5px;
-  padding: 6px 0;
-  white-space: nowrap;
-  min-height: 34px;
-}
-.filter-chips {
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding: 6px 0;
-  align-items: center;
-}
-.filter-chips::-webkit-scrollbar { display: none; }
-
-/* 날짜 칩 */
+/* ── 필터 행 레이아웃 ── */
+.filter-grid { display:grid; grid-template-columns:60px 1fr; row-gap:0; padding:6px 16px 4px; }
+.filter-label { display:flex; align-items:center; font-size:10px; font-weight:700; color:#94a3b8; letter-spacing:.5px; padding:6px 0; white-space:nowrap; min-height:34px; }
+.filter-chips { display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:6px 0; align-items:center; }
+.filter-chips::-webkit-scrollbar { display:none; }
 .date-chip { flex-shrink:0; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; color:#94a3b8; background:#f8fafc; border:1px solid #e2e8f0; cursor:pointer; min-height:34px; display:flex; align-items:center; }
 .date-chip.active { background:#1e293b; color:#fff; border-color:#1e293b; }
-
-/* 에이전트 칩 */
 .agent-chip { flex-shrink:0; display:flex; align-items:center; gap:5px; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:700; color:#94a3b8; background:#f8fafc; border:1.5px solid #e2e8f0; cursor:pointer; min-height:34px; }
 .agent-chip.active[data-a="BA"]    { background:#eff6ff; color:#2563eb; border-color:#bfdbfe; }
 .agent-chip.active[data-a="STOCK"] { background:#ecfeff; color:#0891b2; border-color:#a5f3fc; }
 .agent-chip.active[data-a="PM"]    { background:#f5f3ff; color:#7c3aed; border-color:#ddd6fe; }
 .agent-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
-
-/* 키워드 칩 */
 .kw-chip { flex-shrink:0; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; color:#94a3b8; background:#f8fafc; border:1px solid #e2e8f0; cursor:pointer; min-height:34px; display:flex; align-items:center; }
 .kw-chip.active { background:#1e293b; color:#fff; border-color:#1e293b; }
 .kw-edit-btn { flex-shrink:0; margin-left:4px; padding:6px 12px; border-radius:20px; font-size:12px; font-weight:600; border:1.5px dashed #94a3b8; color:#94a3b8; background:transparent; cursor:pointer; display:flex; align-items:center; gap:4px; min-height:36px; }
-
-/* 필터 그리드 마지막 행 하단 패딩 */
-.filter-grid-bottom { padding-bottom: 10px; }
-
+.filter-grid-bottom { padding-bottom:10px; }
 .collapsible {}
 .top-bar.collapsed .collapsible { display:none; }
 .top-bar.collapsed .collapsed-bar { display:flex; }
@@ -95,6 +62,14 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .feed-state { padding:60px 20px; text-align:center; color:#94a3b8; font-size:14px; }
 .skeleton { background:#f1f5f9; border-radius:14px; height:180px; margin-bottom:28px; animation:pulse 1.5s ease-in-out infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+/* ── 온보딩 ── */
+.onboarding-wrap { padding:80px 20px; text-align:center; }
+.onboarding-emoji { font-size:56px; margin-bottom:20px; }
+.onboarding-title { font-size:22px; font-weight:800; color:#0f172a; margin-bottom:10px; letter-spacing:-.5px; }
+.onboarding-sub { font-size:14px; color:#64748b; line-height:1.7; margin-bottom:32px; }
+.onboarding-btn { display:inline-flex; align-items:center; gap:8px; background:#1e293b; color:#fff; border:none; border-radius:14px; padding:16px 28px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; }
+.onboarding-btn:active { opacity:.85; }
 
 /* ── 피드 ── */
 .feed { padding:16px; display:flex; flex-direction:column; gap:24px; padding-bottom:100px; }
@@ -248,7 +223,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
     </div>
   </div>
 
-  <!-- 접힌 상태 바 (기존 유지) -->
   <div class="collapsed-bar hidden" id="collapsedBar">
     <div class="c-chip date-c" id="chip-date" onclick="toggleDD('dd-date',event)">
       <span id="chip-date-txt">불러오는 중...</span><span class="arrow">▼</span>
@@ -270,14 +244,11 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
     </div>
   </div>
 
-  <!-- ★ 새 필터 그리드 (레이블 + 칩 열 정렬) -->
   <div class="collapsible">
-    <!-- 날짜 행 -->
     <div class="filter-grid">
       <div class="filter-label">날짜</div>
       <div class="filter-chips" id="date-row"></div>
     </div>
-    <!-- 브리핑 행 -->
     <div class="filter-grid">
       <div class="filter-label">브리핑</div>
       <div class="filter-chips">
@@ -286,7 +257,6 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
         <div class="agent-chip"        data-a="PM"    onclick="selectAgent('PM','기획',this)"><span class="agent-dot"></span>기획</div>
       </div>
     </div>
-    <!-- 키워드 행 -->
     <div class="filter-grid filter-grid-bottom">
       <div class="filter-label">키워드</div>
       <div class="filter-chips" id="kw-nav"></div>
@@ -370,26 +340,47 @@ const AGENT_META = {
 };
 
 window.CURRENT_USER = { email:'', userName:'', id:'' };
-let curAgent     = 'BA';
-let curDate      = '';
-let allDates     = [];
-let reportData   = null;
-let kwNames      = [];
-let userKeywords = [];
+let curAgent      = 'BA';
+let curDate       = '';
+let allDates      = [];
+let reportData    = null;
+let kwNames       = [];
+let userKeywords  = [];
 let selectedThumb = null;
 
+/* ── XSS 방지 ── */
 function escHtml(s) {
   return String(s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/* ── 온보딩 화면 ── */
+function showOnboarding(userName) {
+  document.getElementById('feed-wrap').innerHTML = `
+    <div class="onboarding-wrap">
+      <div class="onboarding-emoji">👋</div>
+      <div class="onboarding-title">환영합니다, ${escHtml(userName)}님!</div>
+      <div class="onboarding-sub">
+        관심 키워드를 등록하면<br>
+        AI 에이전트가 매일 아침 9시에<br>
+        맞춤 브리핑을 보내드립니다.
+      </div>
+      <button class="onboarding-btn" onclick="openModal('kw-modal')">
+        🔑 키워드 등록하기
+      </button>
+    </div>`;
+  openModal('kw-modal');
+}
+
+/* ── 피드백 ── */
 function selectThumb(type) {
   selectedThumb = (type === 'up');
   document.getElementById('thumb-up').className   = 'thumb-btn' + (type==='up'   ? ' selected-up'   : '');
   document.getElementById('thumb-down').className = 'thumb-btn' + (type==='down' ? ' selected-down' : '');
 }
 
+/* ── 키워드 한도 체크 ── */
 function checkKwLimit(context) {
   if (userKeywords.length >= 5) {
     if (context === 'suggest') {
@@ -421,6 +412,7 @@ async function addKeyword() {
   renderKwManage();
 }
 
+/* ── 브리프 파싱 ── */
 function getSummary(b) {
   if (!b) return '분석 중...';
   if (typeof b === 'object') return b.summary || '분석 중...';
@@ -429,6 +421,7 @@ function getSummary(b) {
 function getPoints(b)    { return (typeof b === 'object' && b?.points) ? b.points : []; }
 function getDeepLines(b) { return (typeof b === 'object' && b?.deep)   ? b.deep   : []; }
 
+/* ── 봉투 SVG ── */
 function makeSVG(a) {
   const c = AGENT_META[a]?.color || '#64748b';
   return `<svg viewBox="0 0 32 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -441,6 +434,7 @@ function makeSVG(a) {
   </svg>`;
 }
 
+/* ── YouTube 헬퍼 ── */
 function fmtNum(n) {
   if (!n) return '0';
   return n >= 10000 ? `${Math.floor(n/10000)}만` : n.toLocaleString();
@@ -457,27 +451,19 @@ function buildYtItems(vids) {
     </div>`).join('');
 }
 
+/* ── 산업군 ── */
 let INDUSTRY_MAP = [];
-
 async function loadIndustryMap() {
   try {
-    const { data, error } = await sc
-      .from('industry_map')
+    const { data, error } = await sc.from('industry_map')
       .select('industry, icon, color, keywords, expand_kws')
-      .eq('is_active', true)
-      .order('sort_order');
+      .eq('is_active', true).order('sort_order');
     if (error) throw error;
-    INDUSTRY_MAP = (data || []).map(r => ({
-      industry:   r.industry,
-      icon:       r.icon,
-      color:      r.color,
-      keys:       r.keywords,
-      expand_kws: r.expand_kws,
+    INDUSTRY_MAP = (data||[]).map(r => ({
+      industry: r.industry, icon: r.icon, color: r.color,
+      keys: r.keywords, expand_kws: r.expand_kws,
     }));
-  } catch (e) {
-    console.warn('industry_map 로드 실패:', e.message);
-    INDUSTRY_MAP = [];
-  }
+  } catch(e) { console.warn('industry_map 로드 실패:', e.message); INDUSTRY_MAP = []; }
 }
 
 function detectIndustry(kw) {
@@ -509,7 +495,7 @@ function buildIndustryCard(kw, kwData) {
 }
 
 function buildKwSuggestCard(kw, kwData, i) {
-  const ind  = detectIndustry(kw);
+  const ind = detectIndustry(kw);
   const pool = ind?.expand_kws || [];
   const extracted = [];
   (kwData.articles||[]).forEach(a => {
@@ -533,6 +519,7 @@ function buildKwSuggestCard(kw, kwData, i) {
     </div>`;
 }
 
+/* ── 탭 전환 ── */
 function switchTab(i, type) {
   const isNews = type === 'news';
   document.getElementById(`panel-news-${i}`).style.display = isNews ? '' : 'none';
@@ -541,16 +528,15 @@ function switchTab(i, type) {
   document.getElementById(`tab-yt-${i}`).classList.toggle('active', !isNews);
 }
 
-function buildCardInner(i, brief, userName) {
-  const a       = curAgent;
-  const meta    = AGENT_META[a];
-  const summary = getSummary(brief);
-  const points  = getPoints(brief);
-  const deep    = getDeepLines(brief);
+function buildCardInner(i, brief) {
+  const a      = curAgent;
+  const meta   = AGENT_META[a];
+  const points = getPoints(brief);
+  const deep   = getDeepLines(brief);
   return {
-    labelHtml: `● ${meta.name}`,
-    summaryHtml: escHtml(summary),
-    pointsHtml: points.map(p=>`
+    labelHtml:   `● ${meta.name}`,
+    summaryHtml: escHtml(getSummary(brief)),
+    pointsHtml:  points.map(p=>`
       <div class="brief-point">
         <div class="brief-dot" data-a="${a}"></div>
         <div class="brief-text">${escHtml(p)}</div>
@@ -566,6 +552,7 @@ function buildCardInner(i, brief, userName) {
   };
 }
 
+/* ── 피드 렌더링 ── */
 function renderFeed() {
   if (!reportData || !kwNames.length) {
     document.getElementById('feed-wrap').innerHTML = '<div class="feed-state">오늘 브리핑 데이터가 없습니다.</div>';
@@ -591,7 +578,7 @@ function renderFeed() {
     const brief    = kwData[AGENT_META[curAgent].key];
     const arts     = kwData.articles || [];
     const ytVideos = kwData.youtube_videos || [];
-    const { labelHtml, summaryHtml, pointsHtml, secretHtml } = buildCardInner(i, brief, userName);
+    const { labelHtml, summaryHtml, pointsHtml, secretHtml } = buildCardInner(i, brief);
 
     const sec = document.createElement('div');
     sec.className = 'kw-section';
@@ -650,6 +637,7 @@ function renderFeed() {
   bindScroll();
 }
 
+/* ── 에이전트 전환 ── */
 function switchAgent() {
   if (!reportData) return;
   kwNames.forEach((kw, i) => {
@@ -670,6 +658,7 @@ function switchAgent() {
   });
 }
 
+/* ── 날짜 ── */
 async function loadDates(userId) {
   const { data } = await sc.from('reports').select('report_date')
     .eq('user_id', userId).order('report_date', { ascending: false });
@@ -731,6 +720,7 @@ async function selectDateDD(date, e) {
   else { curDate = date; await fetchReport(window.CURRENT_USER.id, date); }
 }
 
+/* ── 에이전트 ── */
 function selectAgent(key, label, el) {
   curAgent = key;
   document.querySelectorAll('.agent-chip').forEach(c => c.classList.remove('active'));
@@ -749,6 +739,7 @@ function selectAgentDD(key, label, e) {
   selectAgent(key, label, document.querySelector(`.agent-chip[data-a="${key}"]`));
 }
 
+/* ── 키워드 DD ── */
 function jumpKwDD(i, e) {
   e.stopPropagation(); closeAllDD();
   document.getElementById('chip-kw-txt').textContent = `# ${kwNames[i]}`;
@@ -757,6 +748,7 @@ function jumpKwDD(i, e) {
   if (navChip) scrollToKw(`kw-${i}`, navChip);
 }
 
+/* ── 키워드 관리 ── */
 function renderKwManage() {
   document.getElementById('kw-manage-list').innerHTML = userKeywords.map(kw => `
     <div class="kw-manage-item">
@@ -771,6 +763,7 @@ async function removeKeyword(kw) {
   renderKwManage();
 }
 
+/* ── 피드백 ── */
 async function submitFeedback() {
   const text = document.getElementById('feedback-text').value.trim();
   const btn  = document.getElementById('feedback-submit-btn');
@@ -804,11 +797,13 @@ function resetFeedback() {
   document.getElementById('feedback-form-view').style.display = 'block';
 }
 
+/* ── 로그아웃 ── */
 async function logout() {
   await sc.auth.signOut();
   location.href = 'index.html';
 }
 
+/* ── DD / 접기 / 스크롤 ── */
 function toggleDD(id, e) {
   e.stopPropagation();
   const el = document.getElementById(id);
@@ -859,6 +854,7 @@ function toggleSecret(i) {
   document.getElementById(`sbtn-${i}`).classList.toggle('open');
 }
 
+/* ── 모달 ── */
 function openModal(id) {
   document.getElementById(id).classList.add('open');
   if (id === 'feedback-modal') {
@@ -871,6 +867,7 @@ function closeModal(id, e) {
     document.getElementById(id).classList.remove('open');
 }
 
+/* ── 초기화 ── */
 async function init() {
   try {
     const { data:{ session } } = await sc.auth.getSession();
@@ -889,6 +886,12 @@ async function init() {
     ]);
     userKeywords = uSettingsRes?.data?.keywords || [];
 
+    // ── 키워드 없는 신규 유저 → 온보딩 화면 표시
+    if (userKeywords.length === 0) {
+      showOnboarding(userName);
+      return;
+    }
+
     await loadDates(userId);
     if (allDates.length > 0) {
       await fetchReport(userId, allDates[0]);
@@ -896,7 +899,7 @@ async function init() {
       document.getElementById('feed-wrap').innerHTML =
         '<div class="feed-state">아직 발송된 브리핑이 없습니다.<br>내일 오전 9시에 첫 브리핑이 도착합니다.</div>';
     }
-  } catch (err) {
+  } catch(err) {
     console.error('초기화 오류:', err);
     window.CURRENT_USER = { email:'', userName:'사용자', id:'' };
   }
