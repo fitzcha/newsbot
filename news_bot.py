@@ -25,7 +25,7 @@ GMAIL_PASS = os.environ.get("GMAIL_APP_PASSWORD")
 supabase: Client = create_client(SB_URL, SB_KEY)
 google_genai     = genai.Client(api_key=GEMINI_KEY)
 
-DASHBOARD_URL = "https://fitzcha.github.io/newsbot/app.html"
+DASHBOARD_URL = "https://newsbot-smoky.vercel.app/app.html"
 
 YT_SEARCH_URL  = "https://www.googleapis.com/youtube/v3/search"
 YT_VIDEO_URL   = "https://www.googleapis.com/youtube/v3/videos"
@@ -701,7 +701,7 @@ def _build_email_html(report, yt_videos=None):
           <tr>
             <td style="padding:28px 32px; text-align:center;">
               <p style="margin:0 0 16px 0; font-size:18px; font-weight:700; color:#fff;">오늘의 전체 인사이트 확인하기</p>
-              <a href="{DASHBOARD_URL}" style="display:inline-block; background:#e8472a; color:#fff; font-size:14px; font-weight:700; padding:14px 32px; border-radius:10px; text-decoration:none; letter-spacing:.5px;">📊 대시보드 바로가기 →</a>
+              <a href="{DASHBOARD_URL}" style="display:inline-block; background:#e8472a; color:#fff; font-size:14px; font-weight:700; padding:14px 32px; border-radius:10px; text-decoration:none; letter-spacing:.5px;">📊 메인 바로가기 →</a>
             </td>
           </tr>
         </table>"""
