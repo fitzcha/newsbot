@@ -2009,6 +2009,941 @@
     "email_sent": true
   },
   {
+    "id": 128,
+    "user_id": "475fa8fa-505b-4f97-b486-4c9e39edc7f2",
+    "report_date": "2026-02-23",
+    "content": {
+      "by_keyword": {
+        "Ai": {
+          "articles": [
+            {
+              "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxNUlhGemFkUG8xcld3Tl9mb1JreUhkY2VzTVBBeFAydDBpNVNFbVVKSHBiaGFJakRDZG9aZjRBazByVE9Da0pjUXRudkFqMXpKaXhjbTE4QXFzR2JnNUFlSmR5eGVETUcxMV85SkFaVzNIazdsbDdZdFN4c3JNR0tweGdNelNHbGJpUTJr?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "This economic idea transfixed Wall Street and Washington. It may be a mirage. - The Washington Post",
+              "impact": "**상황:** 경제 이론이 월가와 워싱턴을 사로잡았으나 실현 불가능할 수 있다는 뉴스 보도.",
+              "keyword": "Ai",
+              "publisher": {
+                "href": "https://www.washingtonpost.com",
+                "title": "The Washington Post"
+              },
+              "pm_summary": "**SITUATION:** 워싱턴포스트에서 월가와 워싱턴을 사로잡은 경제 아이디어가 환상일 수 있다고 보도.",
+              "description": "This economic idea transfixed Wall Street and Washington. It may be a mirage.  The Washington Post",
+              "published date": "Mon, 23 Feb 2026 13:01:45 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE5LemdRLWV3S21fYl9FNDh4dzVxckFGeUFzTEFQd1RJUFo0WmtfdEhMaG9IQXpFRlNzVzRhby1ReWtKNmpJemliUllWT0gxcW1oQnhjcmFrc2lFRzJFVnRQaEJlMlRxa29UVnRmVE8tcFpfMzI5OEFj?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "AI's \"centaur phase\" consumes Silicon Valley - Axios",
+              "impact": "**상황:** AI의 \"켄타우로스 단계\"가 실리콘 밸리를 휩쓸고 있음.",
+              "keyword": "Ai",
+              "publisher": {
+                "href": "https://www.axios.com",
+                "title": "Axios"
+              },
+              "pm_summary": "**S:** AI \"켄타우로스 단계\"가 실리콘밸리 화두로 떠오름.",
+              "description": "AI's \"centaur phase\" consumes Silicon Valley  Axios",
+              "published date": "Mon, 23 Feb 2026 10:03:28 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxNQXZiNkpfRmNNWDU3VFE1VnF6ODdTLXdBZjRFZ040cXFaRTgzRDZqMVZZUklRaVk3RWdEV3lWQ3ZPYXlZWjlqS0FrY3AxS25vcjNmYklpcmVXUTRtN3hTYzRjN1hrMG5GVGxxQWl6dktvUWhDV0plQ2t5UTZ0cTZrTDY0eTVzNWwxUVdYRmgtUQ?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "Islanders warned over 'rapid advance' of AI images - Yahoo",
+              "impact": "**Situation:** AI 이미지의 빠른 발전으로 Islanders에게 경고가 내려짐.",
+              "keyword": "Ai",
+              "publisher": {
+                "href": "https://www.yahoo.com",
+                "title": "Yahoo"
+              },
+              "pm_summary": "**S:** AI 이미지 기술의 급속한 발전으로 인한 잠재적 위험 경고",
+              "description": "Islanders warned over 'rapid advance' of AI images  Yahoo",
+              "published date": "Mon, 23 Feb 2026 13:15:55 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE40Szh6eEVXajluSmo3U2VlZkN3bkFWa2o3UW51bXVaRmZLMlRXX3BacDYyMXNNZjlwbHVNVEs3N2l5X3RYbjlHYkYwYzMtRFNNZFRaOWRTLUtGQy03SllpSmRlQ2VMMHlwZ3ZNLXpXZw?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "AI Is Upending Marketing on Two Fronts - Harvard Business Review",
+              "impact": "**상황:** AI가 마케팅을 양면으로 혁신 중.",
+              "keyword": "Ai",
+              "publisher": {
+                "href": "https://hbr.org",
+                "title": "Harvard Business Review"
+              },
+              "pm_summary": "**S:** AI가 마케팅을 혁신 중.",
+              "description": "AI Is Upending Marketing on Two Fronts  Harvard Business Review",
+              "published date": "Mon, 23 Feb 2026 13:49:41 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxNRkw4Z2xHZTRnTUl1cWg2TGVxNHFvQXZNR29zRVprczdHOFNpQ2lsdmVIbzU0em81Nk5mM0hDN1VFMW1zeTJfRGp3LUpxa01kQThtejJkZ3E3R1VuRzZDUVp4MTBuenpkMWZKRTVYRHVqRWpQZ0xpb3E3czhyRVBDaDllUE55SEw4VnVVNFFBZE1PVHpOV0JHZE1aQ0EtS3JiYTlvajltSXo4akFuYmpHUzlJMnBsUDVNdjNIeVRLbnRhN2FUNHVHYWMta2Q?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "From Protection To Preparation: The AI Pivot Every School And College Should Make - Forbes",
+              "impact": "**상황:** Forbes, \"학교와 대학의 AI 전환\" 기사 발표.",
+              "keyword": "Ai",
+              "publisher": {
+                "href": "https://www.forbes.com",
+                "title": "Forbes"
+              },
+              "pm_summary": "**S:** 교육 기관, AI 활용 방어에서 준비로 전환 필요.",
+              "description": "From Protection To Preparation: The AI Pivot Every School And College Should Make  Forbes",
+              "published date": "Mon, 23 Feb 2026 13:55:56 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQbHltZXowcDlzOG10LVotQ3Q5VEw2R2RvOTVpMWtsTGlBVFo0N05pdWJQUTBpeHk1WllEcWFvQ2VuMVZKLXN0ZThFa0ctYnEyT0tKV0p2NjM2ZEdOZFYzS1p4dWRfLW1FUjVXTUQ0dGd4UkxKVnB3OVoyckp5Znotc2QzZExHdk92SGFpOEx4WEhvMTdtUHp6VEhBSzJoOUlCaDF4dmNXZzhBUjJqY20zSnFRQkJHanJM0gG-AUFVX3lxTE5Ca0Njbmw0VEU3azU4Q1Q1RmpYQjM2WURTZm9ON2VjMHlrSUNJRkt0OHpqN2VhR3U5SEZsTGVyM2Z0RjhPeGVkeFBtNHRtTGxybmNWd2xWQkFzZTNXQk9RV0RLZGQwVzZmMTJod1BlTDE3ZFd6VzlpR1JQQzdac3ZvS2lpeXo2cnVWa1FvcThnTXNfM3VidmFMQVJsSDhlZF81TWhUcWUxR0JNcG9rcFpkeWJNU3pKeWR4NTRrRmc?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "Trump unveils ‘Tech Corps’ to promote American AI abroad - CNBC",
+              "impact": "**S:** 트럼프, 해외 AI 기술 지원 'Tech Corps' 발표.",
+              "keyword": "Ai",
+              "publisher": {
+                "href": "https://www.cnbc.com",
+                "title": "CNBC"
+              },
+              "pm_summary": "**S:** 트럼프, 미국 AI 해외 홍보 위한 '테크 코어' 발표 (CNBC)",
+              "description": "Trump unveils ‘Tech Corps’ to promote American AI abroad  CNBC",
+              "published date": "Mon, 23 Feb 2026 02:43:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE8tczZkWElNZE9OcDgxTm9ZRW1HTUNuT21FZWdNazhMcXJwNE5NYnV6UDM4N3BUcmV2YUlObjBJbUVDY2dBVF9hNjlZMlpIc0lYOGFYcmkwSlVibGljMWtrZEhLYkhMTktod1BTMk82a19NTHRDekE?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "People Loved the Dot-Com Boom. The A.I. Boom, Not So Much. - The New York Times",
+              "impact": "**상황:** 닷컴 버블과는 달리 AI 붐에 대한 대중의 반응이 미지근함.",
+              "keyword": "Ai",
+              "publisher": {
+                "href": "https://www.nytimes.com",
+                "title": "The New York Times"
+              },
+              "pm_summary": "**상황:** AI 붐에 대한 대중의 반응이 닷컴 붐 때만큼 긍정적이지 않음.",
+              "description": "People Loved the Dot-Com Boom. The A.I. Boom, Not So Much.  The New York Times",
+              "published date": "Sat, 21 Feb 2026 10:00:09 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE9GRUFvbDROczJIUGQ2QS1zU0xYUlR1U3FjMGlTYlNQVnlBcGk3QzF5V0F3S2ZNWWNHaTVaWUR5YXJvUjFnYjY5aG5wbFowVDI0U2MyU0tzUEhwWUNjTThoUktNOUJESll3NXk2MC1Qb1I?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "Can AI liberate us from the tyranny of email? - Financial Times",
+              "impact": "**상황:** 이메일 과부하 문제 심각",
+              "keyword": "Ai",
+              "publisher": {
+                "href": "https://www.ft.com",
+                "title": "Financial Times"
+              },
+              "pm_summary": "**S:** 이메일 과다 사용으로 인한 업무 비효율 문제 심각.",
+              "description": "Can AI liberate us from the tyranny of email?  Financial Times",
+              "published date": "Mon, 23 Feb 2026 05:00:04 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTFBxcUlfZEhrSmRwOEFxSG1ldUNfeFlQM0NSTWJJYVZnc2JCa1JFWl9UX3N2dExWVlhvcEhHemJJSjJZNnNyT0hfbGx0SWREUFkxTE04UGFxN3ZjWG01OTNMa2c2VEFvbm00dC13M0o3U1B2clRPYkN30gF8QVVfeXFMUE40SUpJTkFVcThscEFVSXRLX21vY1labGdJX1dkM05qUWtjbTVWOG1NZHAycE5zeU56UGJJS3VLM2RFdnRpR0VtOEI0ejVlbjVYNk1MV3c4SjlUc2l2TWpDckhOdVZnbVNhbE9rQ2s0QzVBME9FR3JRN3F1Ng?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "When AI becomes a paintbrush, is it art? - CBS News",
+              "impact": "**S:** AI가 그림을 그리는 시대 도래.",
+              "keyword": "Ai",
+              "publisher": {
+                "href": "https://www.cbsnews.com",
+                "title": "CBS News"
+              },
+              "pm_summary": "**S:** AI가 그림 도구가 될 때 예술의 정의에 대한 논쟁 발생.",
+              "description": "When AI becomes a paintbrush, is it art?  CBS News",
+              "published date": "Mon, 23 Feb 2026 00:00:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTE9vOHBrSk0zMEdQeXktMGNmWHZXUWswS1pCRmhrRFVSTlBTVVpqMXdKNjl3NDk0UEtkZzh2cjNTcVNOMFRYUjRTZ0htTF8yU2FidFhCY0tua0hDT0hSWEdYdVlnNC1rdFQ0cmhtTW1zY0NzS3lXNjNEMElB?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "If AI makes human labor obsolete, who decides who gets to eat? - The Guardian",
+              "impact": "**상황:** AI 발전으로 인간 노동력 대체 가능성 증대.",
+              "keyword": "Ai",
+              "publisher": {
+                "href": "https://www.theguardian.com",
+                "title": "The Guardian"
+              },
+              "pm_summary": "**S:** AI 발전으로 인간 노동력 대체 가능성 증대, 식량 분배 문제 발생 우려.",
+              "description": "If AI makes human labor obsolete, who decides who gets to eat?  The Guardian",
+              "published date": "Mon, 23 Feb 2026 11:00:00 GMT"
+            }
+          ],
+          "ba_brief": {
+            "deep": [
+              "워싱턴 포스트는 AI 경제적 영향에 대한 과장된 기대를 경계하며, 기술 낙관론에 대한 비판적 시각을 제시함",
+              "하버드 비즈니스 리뷰는 AI가 마케팅 전략 및 실행 방식에 미치는 근본적인 변화를 분석하고, 새로운 마케팅 환경에 대한 적응 필요성을 강조함",
+              "유튜브 분석 결과, AI 기술을 활용한 애니메이션 채널이 높은 조회수를 기록하며, 엔터테인먼트 분야에서의 AI 활용 가능성을 보여줌",
+              "AI 기술 발전에 따른 윤리적 문제 (노동 대체, 공정한 분배 등)에 대한 심도 깊은 논의가 필요하며, 관련 정책 및 규제 마련의 중요성이 부각됨"
+            ],
+            "points": [
+              "AI 기술이 월가와 워싱턴에서 환상으로 여겨질 수 있다는 회의론과 실리콘 밸리 중심의 발전 현황이 공존함",
+              "AI 이미지가 급속도로 확산되며 발생하는 문제점과 함께, 마케팅 및 교육 분야에서 AI의 혁신적인 활용이 강조됨",
+              "AI 기술이 일자리 감소 및 분배 문제와 같은 사회적 이슈를 야기하고 있으며, 예술 분야에서도 새로운 논쟁을 불러일으킴"
+            ],
+            "summary": "AI 기술 발전의 양면성과 시장 영향력 확대, 마케팅 혁신, 교육 변화, 윤리적 쟁점 심화 및 관련 비즈니스 모델 분석 필요"
+          },
+          "pm_brief": {
+            "deep": [
+              "워싱턴 포스트: AI 경제적 효과의 지속 가능성에 대한 의문 제기",
+              "악시오스: AI와 인간 협업 모델인 '켄타우로스' 단계 집중 분석",
+              "하버드 비즈니스 리뷰: AI가 마케팅에 미치는 양면적 영향 (기회와 위협) 분석",
+              "판다 포: AI 기반 제품 디자인 및 친환경 소재 활용 트렌드 (신발 디자인 사례)"
+            ],
+            "points": [
+              "AI 경제 효과에 대한 회의적 시각 증가, 실리콘밸리 '켄타우로스' 모델 주목",
+              "마케팅, 교육 분야에서 AI 활용 확산 및 변화 가속화 (AI 이미지 악용 주의)",
+              "유튜브 내 AI 활용 콘텐츠 다양 (애니메이션, 제품 디자인, 수공예 등)"
+            ],
+            "summary": "AI 관련 뉴스 및 유튜브 트렌드 분석: 경제적 불확실성, 마케팅 변화, 교육 혁신, 콘텐츠 다양성 포착"
+          },
+          "youtube_videos": [
+            {
+              "url": "https://www.youtube.com/watch?v=kwBkUKTnghM",
+              "title": "Dadaji KaMango Tree #shorts#shortsfeed#shortvideo#short#shortsvideo#mango #ai#dadaji#cartoon #ai",
+              "channel": "Kahani aai",
+              "keyword": "Ai",
+              "video_id": "kwBkUKTnghM",
+              "is_expert": false,
+              "published": "2026-02-23",
+              "channel_id": "UCupyWJjP609CqHzN0KEvg5A",
+              "order_type": "최신",
+              "view_count": 213,
+              "subscriber_count": 87
+            },
+            {
+              "url": "https://www.youtube.com/watch?v=x4pqP7BD7Rk",
+              "title": "dog beautiful dance 😂😂😂 #trending#viral#ai#cartoon#shorts #video",
+              "channel": "cartoon by vishal",
+              "keyword": "Ai",
+              "video_id": "x4pqP7BD7Rk",
+              "is_expert": false,
+              "published": "2026-02-23",
+              "channel_id": "UCnIcAn-_dNWzuKPuLbHSXDA",
+              "order_type": "최신",
+              "view_count": 590,
+              "subscriber_count": 150
+            },
+            {
+              "url": "https://www.youtube.com/watch?v=ePcBjaG5Wgs",
+              "title": "Japan’s AI-Designed Boys&#39; Shoe Pod: Green Material-Injection in Water👟🧪",
+              "channel": "Panda Paw",
+              "keyword": "Ai",
+              "video_id": "ePcBjaG5Wgs",
+              "is_expert": true,
+              "published": "2026-02-16",
+              "channel_id": "UCoFTT7ofNaBd8oHf0lLvfGw",
+              "order_type": "인기",
+              "view_count": 32963213,
+              "subscriber_count": 127000
+            },
+            {
+              "url": "https://www.youtube.com/watch?v=JvekpDwLvTo",
+              "title": "Handmade Imaging tractor Surprise Moment for Cute Dog 🐶🚜🙏#ai #dog #craft",
+              "channel": "kuldeeptrendai",
+              "keyword": "Ai",
+              "video_id": "JvekpDwLvTo",
+              "is_expert": false,
+              "published": "2026-02-16",
+              "channel_id": "UCkom84fp92rAxFV7fOMU-nA",
+              "order_type": "인기",
+              "view_count": 25498527,
+              "subscriber_count": 19300
+            }
+          ],
+          "securities_brief": {
+            "deep": [
+              "AI 기술의 빠른 발전 속도에 비해 사회적 준비는 미흡하며, 일자리 감소 및 소득 불균형 심화 우려.",
+              "AI 이미지의 확산은 허위 정보 유포 및 저작권 침해 문제 야기 가능성 존재.",
+              "AI 기술을 활용한 마케팅 전략은 더욱 정교해지고 개인화될 것이며, 소비자 데이터 보호 중요성 증대.",
+              "유튜브에서는 AI를 활용한 애니메이션, 공예, 디자인 등 다양한 콘텐츠가 인기를 얻고 있으며, 창작 방식 변화 예고."
+            ],
+            "points": [
+              "AI 기술 발전은 경제적 기회와 동시에 일자리 감소 및 윤리적 문제 야기 가능성 내포.",
+              "AI는 마케팅, 교육, 엔터테인먼트 등 다양한 분야에서 혁신을 촉진하고 있으며, 특히 유튜브 채널에서 AI 활용 콘텐츠의 인기 급증.",
+              "AI 기술의 사회적 영향에 대한 논의 필요하며, 기술 경쟁 심화 속 미국 주도의 AI 기술 육성 전략 부상."
+            ],
+            "summary": "AI 관련 뉴스/유튜브 분석: 기술 발전의 양면성과 마케팅 혁신, 교육 변화 필요성, 엔터테인먼트 활용 증가."
+          }
+        },
+        "트럼프": {
+          "articles": [
+            {
+              "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPQ0k4enBaalZOTDBMaXp4VTl5Q2pwUjVRQnpXSHY3eXpDc3N6T1FXa2RfMDVPcjB0UEM4TjFtUy1Pbzg5dGQ1R1JCN29nMGZWUFhpZUpsUWxkVEVtR3Q5dVAzbzdQbEFrNEZiODBOSnJfMU96ZWlJQkJ3Qm1VWVVPMUlsV2TSAZgBQVVfeXFMTS04dkEtNnpKX0Z0NnJGUlNLX2JNbzJkZUgtcnU5Zzg0dnVhLWhZMl9ZQ1l5RUhmSU8zSTJzNXhtN2dydTFqUkRhekFKNk9NMlN3WHExSlZBZWVGVUo2dDBwTDJtSll1UEVfNFJxaER5dnN5Q3o0QVV5N0FNaVN0UE9YaEpQd191Xy04ZUVBYlgwSDZSSVZySE4?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "관세전쟁 리셋, 트럼프 “전세계에 15%” - 조선일보",
+              "impact": "**상황:** 트럼프 전 대통령, 전 세계 15% 관세 부과 추진 (관세 전쟁 리셋)",
+              "keyword": "트럼프",
+              "publisher": {
+                "href": "https://www.chosun.com",
+                "title": "조선일보"
+              },
+              "pm_summary": "**S:** 트럼프, 전 세계에 15% 관세 부과 계획 발표 (관세 전쟁 심화 우려)",
+              "description": "관세전쟁 리셋, 트럼프 “전세계에 15%”  조선일보꼬이는 트럼프 15% 관세…되레 중국 수혜, 우방만 ‘타격’  한겨레트럼프발 관세 2차전...\"안보·투자 투트랙 방어 필요\"  YTN",
+              "published date": "Sun, 22 Feb 2026 15:55:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxOQTdkdlN4NEYxcUlVZU5SSkhLNnQxZDlOYmgwaG5GTUhTM2JEUXlURDdhbllIekVJeEtuRzVZLUp5MFd2c0pEMEJHU3N6YThBNUlpN01hX3puUG91TWdHb0hCU044MzFGdFF6NVNWNkRRX0NMUXJZVHNmZm1DaVUzNFZfQUjSAZgBQVVfeXFMTVJiZW5ueFZtZVRmV3pKNTdMazA2VVQ2eW9rVEl6eHVFWXlzX25qM0IySUY4RzRZd1RoWDJwSk4tRWR3X2s0bUs3YmdpQ29fWFFFd2hBeHNVM1ZBMHV6YWJKM1dfb1I2eWJXck5qNUdWajA5UWJRSTJhMFYtZVM1ZWY4bUtyV3YwVVR3NEgzMUNwakMzbkpUU0s?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "美비밀경호국 “트럼프 사저 무단 침입한 20대 남성 사살” - 조선일보",
+              "impact": "**Situation:** 트럼프 사저에 20대 남성 무단 침입, 美 비밀경호국 사살.",
+              "keyword": "트럼프",
+              "publisher": {
+                "href": "https://www.chosun.com",
+                "title": "조선일보"
+              },
+              "pm_summary": "**S:** 트럼프 사저에 20대 남성 무단 침입 발생.",
+              "description": "美비밀경호국 “트럼프 사저 무단 침입한 20대 남성 사살”  조선일보",
+              "published date": "Sun, 22 Feb 2026 14:06:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE1Mc0ItRHY2ckYzZFBrMmx2RXBwZ014aG5uSm1iSGpaNGNqVGhEQmpFRWRZRDZBaTBqTlNoS2F5UFVZcTFyY2VLLS1wNGZBUlk?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "트럼프 '그린란드 야욕'에 화들짝…\"아이슬란드, EU 가입 속도\" - v.daum.net",
+              "impact": "**Situation:** 트럼프의 그린란드 관심 표명.",
+              "keyword": "트럼프",
+              "publisher": {
+                "href": "https://v.daum.net",
+                "title": "v.daum.net"
+              },
+              "pm_summary": "**상황:** 트럼프 전 대통령의 그린란드 구매 시도에 아이슬란드가 EU 가입을 서두르는 상황 발생.",
+              "description": "트럼프 '그린란드 야욕'에 화들짝…\"아이슬란드, EU 가입 속도\"  v.daum.net",
+              "published date": "Mon, 23 Feb 2026 13:30:02 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE5PdENKOERnWE0xSUhDcVR1UG12Z0dNQl9LNFlqV3FIbGZPYUFEZm9hWTRxaW5rRVRFVGY1OWdLRDNmWTRDNGFCZ0xiLXNXU0p0WVgyZU9wSkxaUHfSAWBBVV95cUxPMEV0SElRVVRnWXBYWUVmZndvd0NXVkk0MXRaS3FlM1lKSnZlaW9HMjVhSFJ6Q2N4bTVhWEJkT0VLNlpiNzBMTm1FTzkzY2RwT0ZpTWhKaUtUa0RqeWl3b0M?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "트럼프 '그린란드 야욕'에 화들짝…\"아이슬란드, EU 가입 속도\" - 연합뉴스",
+              "impact": "**상황:** 트럼프의 그린란드 인수 시도 가능성.",
+              "keyword": "트럼프",
+              "publisher": {
+                "href": "https://www.yna.co.kr",
+                "title": "연합뉴스"
+              },
+              "pm_summary": "**S:** 트럼프의 그린란드 구매 시도",
+              "description": "트럼프 '그린란드 야욕'에 화들짝…\"아이슬란드, EU 가입 속도\"  연합뉴스",
+              "published date": "Mon, 23 Feb 2026 10:40:38 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTE1OMHhSY0pSMEZILVJ1V3lKVDFiUjNpX25QU29nZTB6ZDM4Vmctb0Jyd2pXNVBUaXlaWWEwdm15UnVrSjRFSjVNbW5mZ0VYWE44WGFNOGtlUTJ2c3BJTjhXMzJOYVItTmY1UXJYVWRRY2FfZkU?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "아이슬란드, EU 가입 재추진 속도…트럼프 '그린란드 야욕'에 화들짝 - 마켓인",
+              "impact": "**상황:** 아이슬란드가 EU 가입 재추진.",
+              "keyword": "트럼프",
+              "publisher": {
+                "href": "https://marketin.edaily.co.kr",
+                "title": "마켓인"
+              },
+              "pm_summary": "**S:** 아이슬란드가 EU 가입 재추진.",
+              "description": "아이슬란드, EU 가입 재추진 속도…트럼프 '그린란드 야욕'에 화들짝  마켓인",
+              "published date": "Mon, 23 Feb 2026 11:27:46 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTFBDZlU2RFRjTmxqR25WYWVSaENzYUVZc1dHZjU5TDBHb1VLUzlrakx6YkpfeEVfTVVQdzQzSXhkUXVNa1RUYWl5c1hjd0xiUndkeFlNVmlpVXd0OFFlS3hRVWsyLU9kM2szZERMbdIBcEFVX3lxTE81cWp5SGllYlZndVRkUW9jWl9qVFNfaGZkblJ4b2tSZlR4SVR2S1Z6eGs4VEFXWnNYX3N6dGhYbE8xbXNmWF9IbzhFeTE2V1RiS2NEX25FM0hYM3NnV3A2cUZLWHhxUERSWEdYbnlHbFo?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "트럼프 2기 기후·에너지 정책 기조…韓 에너지전환에 변수 되나 - 전기신문",
+              "impact": "**S:** 트럼프 2기, 기후/에너지 정책 변화 예상.",
+              "keyword": "트럼프",
+              "publisher": {
+                "href": "https://www.electimes.com",
+                "title": "전기신문"
+              },
+              "pm_summary": "**S:** 트럼프 2기 기후·에너지 정책 변화 예상",
+              "description": "트럼프 2기 기후·에너지 정책 기조…韓 에너지전환에 변수 되나  전기신문",
+              "published date": "Mon, 23 Feb 2026 02:42:27 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE00WEFLd2NaOERZZlA5T3UxbTE0TDJBckJBcTI5V3lDNnBINlFqRlFKVVB1alVQdGlPU2dVTTJOcmkxVG9kQUZQVVRpZ1dYczdXVFRvUFctMzB1a0HSAWBBVV95cUxQX0swdkR5YkhlN0p5a2lIakRtY1JJeUUtV0ZrTnNuUXJKUzZVdEx2OHVtR2hfOGlMbUxNU2d1aHVWd0d2Vk5oZGpGVnZYZEd4eFo1THRDUHg2UV9DWTdnXzA?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "'이란 정권교체' 결심했나…\"트럼프, 대규모 공격 가능성 언급\" - 연합뉴스",
+              "impact": "**Situation:** 이란 정권 교체 가능성 시사 (트럼프, 대규모 공격 언급)",
+              "keyword": "트럼프",
+              "publisher": {
+                "href": "https://www.yna.co.kr",
+                "title": "연합뉴스"
+              },
+              "pm_summary": "**상황:** 트럼프 전 대통령이 이란에 대한 대규모 공격 가능성을 언급하며 이란 정권 교체 가능성이 부각됨.",
+              "description": "'이란 정권교체' 결심했나…\"트럼프, 대규모 공격 가능성 언급\"  연합뉴스",
+              "published date": "Mon, 23 Feb 2026 06:00:29 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxNNDZVbk1PRWh6QTNuSlJJMzFLZUpSc1R6QjNFam5kYll0N2VJYWNLeXpKaUhUVXk5S245V0kzdkNCOVlhUGVaWkFPdVg0X1VlNmoyUkI5MGttc1U0em85YXk2RVcxQXp1ME9oWWJMcGZpcEYwaGpVYXp1M084OXA4NC1PeHBKOVdkMDB4NjgtN2JhQUhwdWFSMzFVLUlRUdIBsgFBVV95cUxPSWdnNkpEU3lrQmt3c2FJTUROR2dLU2hkMVFrR2VLWXV2akg1OTZfdFF6Qi1SNlYwaXVkdVdJLUp2ZWhBbGJMY1dQdkJKOXB1RmttQ013ZnBVNUJhY2JIUXpOM01FbkFET1RmYXJhMVJYWGRtOU5ZSFRFaHhOQXowS3FOcmZsQkxNOUd4Mi1PcVkyc2daZGplRHZmeXEwTWZEamNZbFpleXVkNHhPTmxCNG13?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "핵협상 앞두고 마두로처럼?…“트럼프, 이란 하메네이 축출 작전 가능성 언급” - 조선일보",
+              "impact": "**상황:** 미국 트럼프, 이란 하메네이 축출 작전 가능성 언급 (핵협상 앞둔 시점)",
+              "keyword": "트럼프",
+              "publisher": {
+                "href": "https://www.chosun.com",
+                "title": "조선일보"
+              },
+              "pm_summary": "**S:** 트럼프, 이란 최고지도자 축출 작전 가능성 언급 (핵협상 앞두고 긴장 고조).",
+              "description": "핵협상 앞두고 마두로처럼?…“트럼프, 이란 하메네이 축출 작전 가능성 언급”  조선일보",
+              "published date": "Mon, 23 Feb 2026 07:43:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE9rZUpBOVBUX2RaWW5US055cFhyaWhHb3A1RVVZemFlVHZOekpmak03WnJycjZxdjZyNW9paDh6dGI4djBkNXYxRkJRYTdYZXhJU3gwWGoxWG9Oem1DLXc3eWc5ZGM2bVJDOWh3YWlMYVVqVVE5QWfSAYMBQVVfeXFMTnlyNVhCS1VjdTluVlJ3OHhQNjJGVlpFa2dGMlhGeVBsZDZGdmFUTjBhX2lxMllheVlBZVRod0t0YkJfelduRWJNekJnLW1tb2Y0dU5KbFN3MUZoQjBYVkhHOUZ3Rjk5dktOX3pzbVZzMERveG9VNlBqY2EzZms5RkEtaUk?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "\"대체 왜 항복 안 해?\"...트럼프 위협에도 꼿꼿한 이란 [지금이뉴스] - YTN",
+              "impact": "**상황:** 트럼프의 위협에도 이란이 굴복하지 않음.",
+              "keyword": "트럼프",
+              "publisher": {
+                "href": "https://m.ytn.co.kr",
+                "title": "YTN"
+              },
+              "pm_summary": "**Situation:** 트럼프가 이란에 위협을 가함.",
+              "description": "\"대체 왜 항복 안 해?\"...트럼프 위협에도 꼿꼿한 이란 [지금이뉴스]  YTN",
+              "published date": "Mon, 23 Feb 2026 04:54:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTE8tVzVuUXN5WUJOVzdLZFBOTHJRaXBEV3FkbmNFaER2aWZaaE1ZU0pQM3dtS0RXaGp2dnZVLTQtVElGcGVIaUdfTWhmSThMQXFpbEtkM3VFTnlCUzBNY0o2c3E1WXk4a0NZeWNrbThrbmxKZjA?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "트럼프, 넷플릭스에 오바마 측근 해임 요구…워너 딜 변수 되나 - 마켓인",
+              "impact": "**상황:** 트럼프가 넷플릭스에 오바마 측근 해임 요구.",
+              "keyword": "트럼프",
+              "publisher": {
+                "href": "https://marketin.edaily.co.kr",
+                "title": "마켓인"
+              },
+              "pm_summary": "**S:** 트럼프, 넷플릭스에 오바마 측근 해임 요구",
+              "description": "트럼프, 넷플릭스에 오바마 측근 해임 요구…워너 딜 변수 되나  마켓인",
+              "published date": "Mon, 23 Feb 2026 05:29:36 GMT"
+            }
+          ],
+          "ba_brief": {
+            "deep": [
+              "트럼프 2기 기후·에너지 정책 기조 변화는 한국의 에너지 전환 정책에 변수로 작용할 수 있으며, 관련 산업에 대한 면밀한 분석이 필요함.",
+              "트럼프 행정부의 이란 정권 교체 시도 가능성은 중동 지역 불안정을 심화시키고, 국제 유가 급등 등 경제적 파장을 야기할 수 있음.",
+              "트럼프의 넷플릭스 경영 개입 시도는 워너 브라더스와의 합병 등 미디어 산업 전반에 걸쳐 불확실성을 증폭시킬 수 있으며, 관련 기업 투자에 신중해야 함.",
+              "풍자, 비판 등 트럼프 관련 해외 유튜브 콘텐츠의 높은 조회수는 정치적 양극화 심화와 함께 여론 형성에 미치는 영향력이 크다는 점을 시사함."
+            ],
+            "points": [
+              "트럼프의 '관세 전쟁' 재개 가능성이 국내 이재명 대표에게 기회 요인이 될 수 있다는 분석이 제기됨.",
+              "트럼프 사저 침입 사건과 관련, 극단적 지지 성향이 사회 문제로 이어질 가능성이 제기되고, 관련 유튜브 콘텐츠 조회수가 높음.",
+              "트럼프의 '그린란드 야욕' 발언이 아이슬란드의 EU 가입 재추진에 영향을 미치고, 유럽 정치 지형 변화를 가속화할 수 있음."
+            ],
+            "summary": "트럼프 관련 뉴스 및 유튜브 콘텐츠 분석 결과, 국내외 정치·경제적 영향과 함께 관련 콘텐츠의 특징 및 파급력을 파악해야 함."
+          },
+          "pm_brief": {
+            "deep": [
+              "트럼프의 '전 세계 15% 관세' 정책은 국내 산업에 큰 영향을 미칠 수 있으므로, 관련 데이터 분석 및 시뮬레이션 제공 서비스 필요.",
+              "美비밀경호국의 강경 대응은 트럼프 지지층 내 극단적 성향을 보여주는 사례. 사용자의 정치적 성향 기반 맞춤형 콘텐츠 제공 시 고려.",
+              "트럼프의 '그린란드 야욕' 관련 아이슬란드의 EU 가입 재추진은 유럽 정치 지형 변화 가능성을 시사. 관련 정보를 신속하게 제공하는 서비스 고려.",
+              "CNN의 '트럼프 관세 불법 판결' 유튜브 영상은 높은 조회수를 기록. 사용자 참여를 유도하는 댓글 및 토론 기능 강화 필요."
+            ],
+            "points": [
+              "트럼프의 관세 정책 재개 가능성이 높아짐. 이재명 지사의 발언을 통해 관세 이슈를 국내 기회로 활용하는 방안 모색 필요.",
+              "트럼프 사저 침입 사건 발생. 지지층 내부의 극단주의적 성향과 보안 문제에 대한 서비스 개선 필요.",
+              "트럼프의 외교 정책(그린란드 야욕, 이란 공격 가능성)이 주변국 및 국제 정세에 미치는 영향 분석 및 서비스 연계 고려."
+            ],
+            "summary": "트럼프 관련 뉴스 분석: 관세, 외교, 국내 이슈 및 유튜브 반응 분석을 통한 서비스 기획 인사이트 도출"
+          },
+          "youtube_videos": [
+            {
+              "url": "https://www.youtube.com/watch?v=IDUtgRK0qNI",
+              "title": "관세 2라운드, 이재명 ‘기회’로 바꾸나 #이재명 #트럼프 #관세 #글로벌리더십 #shorts",
+              "channel": "뉴스토마토",
+              "keyword": "트럼프",
+              "video_id": "IDUtgRK0qNI",
+              "is_expert": true,
+              "published": "2026-02-23",
+              "channel_id": "UCYUGo6ZfQZCTMrK9rMDijNQ",
+              "order_type": "최신",
+              "view_count": 634,
+              "subscriber_count": 1090000
+            },
+            {
+              "url": "https://www.youtube.com/watch?v=4UtFw550qYw",
+              "title": "&#39;트럼프 마러라고&#39; 무장 침입 20대 男 사살…&quot;親트럼프 가정 출신&quot; [뉴스9]",
+              "channel": "뉴스TVCHOSUN",
+              "keyword": "트럼프",
+              "video_id": "4UtFw550qYw",
+              "is_expert": true,
+              "published": "2026-02-23",
+              "channel_id": "UCWlV3Lz_55UaX4JsMj-z__Q",
+              "order_type": "최신",
+              "view_count": 409,
+              "subscriber_count": 3040000
+            },
+            {
+              "url": "https://www.youtube.com/watch?v=-PqO9u39mrI",
+              "title": "Trump RUTHLESSLY MOCKED by GERMANY During Carnival — MUST SEE Floats",
+              "channel": "MeidasTouch",
+              "keyword": "트럼프",
+              "video_id": "-PqO9u39mrI",
+              "is_expert": true,
+              "published": "2026-02-17",
+              "channel_id": "UC9r9HYFxEQOBXSopFS61ZWg",
+              "order_type": "인기",
+              "view_count": 4385807,
+              "subscriber_count": 5990000
+            },
+            {
+              "url": "https://www.youtube.com/watch?v=B4PmR-bPMFk",
+              "title": "Supreme Court rules Trump&#39;s tariffs illegal",
+              "channel": "CNN",
+              "keyword": "트럼프",
+              "video_id": "B4PmR-bPMFk",
+              "is_expert": true,
+              "published": "2026-02-20",
+              "channel_id": "UCupvZG-5ko_eiXAupbDfxWw",
+              "order_type": "인기",
+              "view_count": 1652328,
+              "subscriber_count": 19200000
+            }
+          ],
+          "securities_brief": {
+            "deep": [
+              "트럼프의 정책 방향은 한국의 에너지 전환 정책에 변수로 작용할 수 있으며, 관련 산업의 투자 전략 수정이 필요하다.",
+              "이란 관련 발언은 지정학적 리스크를 증가시켜 국제 유가 상승 및 에너지 관련주 투자 심리에 영향을 줄 수 있다.",
+              "CNN 유튜브 콘텐츠에서 트럼프 관세 관련 소송 패배는 단기적으로 관련 기업의 불확실성을 해소할 수 있으나, 장기적인 정책 변화 가능성에 주목해야 한다.",
+              "이재명 대표가 트럼프 관세 정책을 기회로 활용할 수 있다는 분석은 대외 경제 정책 변화에 따른 국내 기업의 전략적 대응 중요성을 시사한다."
+            ],
+            "points": [
+              "트럼프의 '전 세계 15% 관세' 발언은 글로벌 무역 긴장감을 고조시키며 관련 기업 주가에 즉각적인 영향을 줄 수 있다.",
+              "트럼프 사저 침입 사건은 사회 불안 심리를 자극, 방산 관련주에 단기적인 상승 요인으로 작용할 가능성이 있다.",
+              "트럼프의 외교 정책(그린란드, 이란) 관련 발언은 해당 국가와 관련된 에너지, 건설, 외교 관련주에 변동성을 유발할 수 있다."
+            ],
+            "summary": "트럼프 관련 뉴스 및 유튜브 분석: 관세, 외교, 국내 이슈 혼재. 시장 변동성 확대 및 투자 전략 재점검 필요."
+          }
+        },
+        "미국증시": {
+          "articles": [
+            {
+              "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE5LaVFxdkxJZTVMR0s4Ui1nRXdIeURmTVJtbTB4RW1EN0pCX0xlOUtLTC1FaXhVcGJzSUtpcWY2TlhYN2dLcmotQ2lJNldKMkZNb0hPNy1n?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "\"美증시 떠나자\" 108조 이탈…자금 재배치 최대 수혜국은 韓 - 중앙일보",
+              "impact": "**S:** 미국 증시 자금 이탈 (108조) 발생.",
+              "keyword": "미국증시",
+              "publisher": {
+                "href": "https://www.joongang.co.kr",
+                "title": "중앙일보"
+              },
+              "pm_summary": "**S:** 미국 증시 자금 이탈, 108조 원 규모.",
+              "description": "\"美증시 떠나자\" 108조 이탈…자금 재배치 최대 수혜국은 韓  중앙일보",
+              "published date": "Sun, 22 Feb 2026 06:42:27 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxOZGpjUUN3QjhfQ0ZmVTdJemttY1NwVHI4WTRWbld5VF8tODlBQmtyUnFPdXdraGdKZ3ZqY1dydndnUDBIZVE1UVhhUUxhc0N0VU44NzB1dXd0X0VMV3AzRF9VWndUTU1zZWUzamZ5bkFXLVl4aVZGTkhPX21hd09GSjZicXdZcGlkcFVtaHB30gGiAUFVX3lxTFBYTnBveE5ZajJvU3JCbVRuQmFRSXJuS1lpWDRXWVFrSFJlTUN4bEJQLThpSkE5d1NYY3d2cDhXLXJ4N3BZalpjX19fS2JoSXRPdW1XeWZiRnREb1hSSy1YZFlYLTZsaWF0VldZN1VkZGlDQzByT3dFX3pnUzQwTGJJNmxaZVhOOE5PNG1WQUxQQ2owdU4za3ZCM3ZiT2w0UFZ5dw?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "美 증시 3% 떨어지는 동안 11%오른 韓 증시 - 조선일보",
+              "impact": "**상황:** 미국 증시 급락 속 한국 증시 급등.",
+              "keyword": "미국증시",
+              "publisher": {
+                "href": "https://www.chosun.com",
+                "title": "조선일보"
+              },
+              "pm_summary": "**S:** 미국 증시 폭락에도 한국 증시 급등.",
+              "description": "美 증시 3% 떨어지는 동안 11%오른 韓 증시  조선일보",
+              "published date": "Sun, 22 Feb 2026 23:49:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE4tRkRrUzN2MUlqZ0RzdFc2M3pzeGFPOVZBTjh5Qk02ZmkyOVZaMzVCaEdZTXQ0aGJCcThsSnpCNlRnOE5GVEszVndJbzdYeVUtLWx3dTlwN2R1VVVNOTlsaGRsU1VwSmFTeTBmY3JMQmU?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "트럼프 관세 혼란에 미국 증시 선물 하락, 엔비디아 실적 대기 - Investing.com 한국어",
+              "impact": "**상황:** 트럼프 관세 발언으로 시장 불안, 엔비디아 실적 발표 대기.",
+              "keyword": "미국증시",
+              "publisher": {
+                "href": "https://kr.investing.com",
+                "title": "Investing.com 한국어"
+              },
+              "pm_summary": "**S:** 트럼프 관세 혼란 + 엔비디아 실적 발표 대기",
+              "description": "트럼프 관세 혼란에 미국 증시 선물 하락, 엔비디아 실적 대기  Investing.com 한국어",
+              "published date": "Mon, 23 Feb 2026 00:35:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFAzeUMzRXU5cDFrVFVVWVE2bW14bFpISWhYRVJ4VWhpZHA4M2dQVEpmdDFwdUpUcXkxbDlIai0xVlBjaWk4dnBJV2NKZmhXb2JMclgzaEVmY0FUMWI2alZEdnlLSzlhSk9s?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "증시도 벼락거지 공포...\"설마\" 하던 서학개미도 움직였다 - mt.co.kr",
+              "impact": "**상황:** 해외 주식 투자자들이 손실을 우려해 움직임.",
+              "keyword": "미국증시",
+              "publisher": {
+                "href": "https://www.mt.co.kr",
+                "title": "mt.co.kr"
+              },
+              "pm_summary": "**S:** 해외 주식 투자자들이 증시 하락에 불안감을 느껴 대응에 나섬",
+              "description": "증시도 벼락거지 공포...\"설마\" 하던 서학개미도 움직였다  mt.co.kr",
+              "published date": "Mon, 23 Feb 2026 07:22:56 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE1XNEdCLU1JLVNZSGR2TDdkLUVOelJTMjVBNE02MktEUmNtR2NITUpZYUFray1Pa09pbnJBb2VHb3JrbGtvOGc?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "\"요즘 재미없는 미국 증시, 그래도 미국이 답인 이유\" - v.daum.net",
+              "impact": "**상황:** 미국 증시가 지루하다는 평가 존재.",
+              "keyword": "미국증시",
+              "publisher": {
+                "href": "https://v.daum.net",
+                "title": "v.daum.net"
+              },
+              "pm_summary": "**S:** 미국 증시 재미없다는 뉴스 보도.",
+              "description": "\"요즘 재미없는 미국 증시, 그래도 미국이 답인 이유\"  v.daum.net",
+              "published date": "Wed, 18 Feb 2026 21:10:02 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE9Hck9IMUNyY0dVSWlVQ2lpUkVQOWhxU2J2d3pra2lVNjRDS2NhRF9Ma1BRNVQya2Z4ZmdXTDFfdzJ3ZFZNNTBSNFBUOV9jVlNCcDVYMjZKZmlwSlMtREtIWWcxSktlMS16TjFXTFhIcFbSAXRBVV95cUxNWGlYUEF3dzZ4UlppVkxmcVFwTXlqenlSWXIyemhVcW56YnZBNWhVbUUxcnJyaEdocTdvUElRcFhGcHM2a1lVZkpVVWdQVmo1VTQ3dHdfT09ENUlqUmpHcHhWWUZkUVBSZ21Sa3ZUVmttbHRoTQ?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "AI 공포로 흔들리는 미국증시 그래도 국내증시는 안전할까 - 연합인포맥스",
+              "impact": "**S:** 미국 증시가 AI 공포로 하락",
+              "keyword": "미국증시",
+              "publisher": {
+                "href": "https://news.einfomax.co.kr",
+                "title": "연합인포맥스"
+              },
+              "pm_summary": "**S:** 미국 증시 불안정 (AI 공포)",
+              "description": "AI 공포로 흔들리는 미국증시 그래도 국내증시는 안전할까  연합인포맥스",
+              "published date": "Thu, 19 Feb 2026 23:28:52 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE9Udy12ZWlTeG5yemRWdGpKUU0tNl8tNDZOdXppdm9yUDVySHpORDNzaFRnWld3bFFqUGxYaFl1R1dmNFZBdmtXaFpLbkZ4NjVPcm1fcnRBR2dmT3NpQmJoRVZRREY?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "'美증시 횡보 속 에너지 섹터 강세'…키움운용, '미국원유에너지기업 ETF' 연초 이후 24.33% 상승 - CNB뉴스",
+              "impact": "**제안:**",
+              "keyword": "미국증시",
+              "publisher": {
+                "href": "https://weekly.cnbnews.com",
+                "title": "CNB뉴스"
+              },
+              "pm_summary": "**상황:** 美 증시 횡보 속 에너지 섹터 강세.",
+              "description": "'美증시 횡보 속 에너지 섹터 강세'…키움운용, '미국원유에너지기업 ETF' 연초 이후 24.33% 상승  CNB뉴스",
+              "published date": "Mon, 23 Feb 2026 08:16:25 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE82N2J1alY2SEh6Mno4Vlp1d1JpQVB0QWxOZnk1VFh1aHZKZnUzN2h4VThaa3pxTEU1dEtjWkFkczBBQmNEcnFUdXFJMlVNTE9NWmxKNDlZejhZQVphYVZrR2FvaktUcl9jSUNpOA?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "[오늘의 경제] 탈미국 자금 이동 “한국 증시 반사이익 시작되나” - 위클리서울",
+              "impact": "**S:** 탈미국 자금 이동 가능성 제기.",
+              "keyword": "미국증시",
+              "publisher": {
+                "href": "http://www.weeklyseoul.net",
+                "title": "위클리서울"
+              },
+              "pm_summary": "**S (상황):** 탈미국 자금 이동 가능성 발생",
+              "description": "[오늘의 경제] 탈미국 자금 이동 “한국 증시 반사이익 시작되나”  위클리서울",
+              "published date": "Mon, 23 Feb 2026 06:57:16 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE4tQ3Vxc1gzTTRtdEZEamxkcW05b2Y5MllHUmJvUlVvV2cwcG8xTlNsajQ3Tzg1RFp2QkdvM2RoT0FzbVhYSVNxdlhrQlp6bTJWcGxPeExpMEFZNnl0TjlPcGVwZHFaT0tFbk9xb191QdIBc0FVX3lxTE5UM2JxSzA2NDdNVEcxblMwOWNNU1VSeHRyY2diaFMtaWZVN0J2cVlSSk1VZUNUOUlOTl95S2Q0Yy1aeFluNzZ0cEowMVhaVEtEN1RTWDlMUVhZTHpvWjZoUkR3S3NpWkVrdTJRMFo2bklfdjQ?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "미국증시 마감 60분전..4대지수 '혼조', 엔비디아 '상승', 불루아울 '뚝' - 초이스경제",
+              "impact": "**상황:** 미국 증시 마감 60분 전, 4대 지수 혼조, 엔비디아 상승, 블루아울 하락.",
+              "keyword": "미국증시",
+              "publisher": {
+                "href": "http://www.choicenews.co.kr",
+                "title": "초이스경제"
+              },
+              "pm_summary": "**상황:** 미국 증시 마감 60분 전, 4대 지수 혼조세, 엔비디아 상승, 불루아울 급락.",
+              "description": "미국증시 마감 60분전..4대지수 '혼조', 엔비디아 '상승', 불루아울 '뚝'  초이스경제",
+              "published date": "Fri, 20 Feb 2026 20:28:37 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9kaGdvYXY4V3hldGUyYjlQRy1tRkpyM0U4MzJ5ZmhYOVFGcU54QWhWMGIzSTRKSERVYXdNZjhtZUVnZDRERGcxenJTbEtqelU5NDhn?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "\"난 좀 다른 서학개미\"…'미국+α' 분산투자했더니 통했다 - 네이트",
+              "impact": "**S:** 서학개미, 미국 외 분산 투자로 수익 발생.",
+              "keyword": "미국증시",
+              "publisher": {
+                "href": "https://news.nate.com",
+                "title": "네이트"
+              },
+              "pm_summary": "**S:** 서학개미들이 미국 외 다른 해외 자산으로 분산투자하여 수익을 올리고 있음.",
+              "description": "\"난 좀 다른 서학개미\"…'미국+α' 분산투자했더니 통했다  네이트",
+              "published date": "Mon, 23 Feb 2026 12:31:00 GMT"
+            }
+          ],
+          "ba_brief": {
+            "deep": [
+              "트럼프 관세 정책 혼란, AI 공포 등 미국 증시 불안정성이 국내 증시에 미치는 영향 분석 필요",
+              "미국 LNG 물량 증가 관련 동성화인텍 투자 분석, S&P500·나스닥 핵심 정보 제공 채널 활용 권장",
+              "KNN NEWS, YTN 등 전문가 채널은 높은 조회수를 기록하며 미국 증시 관련 이슈에 대한 대중적 관심 입증",
+              "미국 증시 관련 유튜브 채널은 정보 제공 방식과 전문성에 따라 구독자 및 조회수 편차 큼"
+            ],
+            "points": [
+              "미국 증시 부진 속 108조 원 자금 이탈, 한국 증시가 반사이익 수혜국으로 부상하며 증시 상승 견인",
+              "미국 증시 횡보에도 에너지 섹터 강세, 특히 키움운용 미국원유에너지기업 ETF 높은 상승률 기록",
+              "서학개미 투자자들은 미국 외 투자 분산 전략을 통해 수익을 얻고 있으며, 탈미국 현상 가속화"
+            ],
+            "summary": "미국 증시 변동 속 탈미국 자금 이동과 국내 증시 반등, 투자 전략 분산 필요성 및 유튜브 채널 분석"
+          },
+          "pm_brief": {
+            "deep": [
+              "미국 증시 횡보 또는 하락 시, 분산 투자 전략 유효. '미국+α' 투자 포트폴리오 구성 고려.",
+              "유튜브 채널(KNN NEWS, YTN)의 미국 증시 관련 인사이트 활용. 전문가 채널 정보 습득.",
+              "LNG 물량 증가 관련 동성화인텍 투자 구간 변화 가능성. 관련 정보 지속적 업데이트 필요.",
+              "미국 정치/경제 이슈가 증시에 미치는 영향 분석. 거시 경제 변수 고려한 투자 전략 수립."
+            ],
+            "points": [
+              "미국 증시 자금 이탈, 한국 증시 일부 수혜 가능성 존재. 투자자들의 자금 재배치 움직임.",
+              "트럼프 관세, 엔비디아 실적 등 미국 증시 변동 요인 상존. 투자 심리 불안정 야기.",
+              "에너지 섹터 강세 속 미국 원유에너지기업 ETF 상승. 특정 섹터 집중 투자 기회."
+            ],
+            "summary": "미국 증시 변동성 속 자금 이동 포착, 한국 증시 반사이익 및 분산 투자 전략 기회. 유튜브 정보 활용 필요."
+          },
+          "youtube_videos": [
+            {
+              "url": "https://www.youtube.com/watch?v=gNG0Aj3nurw",
+              "title": "미국 LNG 물량 폭증… 동성화인텍 구간 바뀐다?",
+              "channel": "쩐의흐름",
+              "keyword": "미국증시",
+              "video_id": "gNG0Aj3nurw",
+              "is_expert": false,
+              "published": "2026-02-23",
+              "channel_id": "UCEtv0RS0F65o95NisgrgPiA",
+              "order_type": "최신",
+              "view_count": 270,
+              "subscriber_count": 17
+            },
+            {
+              "url": "https://www.youtube.com/watch?v=_LArI9HWTDk",
+              "title": "미국 주식 아직도 몰라? 40초면 이해 끝 01🔥 S&amp;P500·나스닥 핵심만!",
+              "channel": "배움과 휴식(Learn & Relax)",
+              "keyword": "미국증시",
+              "video_id": "_LArI9HWTDk",
+              "is_expert": false,
+              "published": "2026-02-23",
+              "channel_id": "UCo_wN5R0s5bo6NJMObqLI6Q",
+              "order_type": "최신",
+              "view_count": 2,
+              "subscriber_count": 154
+            },
+            {
+              "url": "https://www.youtube.com/watch?v=ctTIfsV9u-o",
+              "title": "올림픽 신기록 금메달 세리머니 지퍼 한 번에 14억 대박 터졌다 / KNN",
+              "channel": "KNN NEWS",
+              "keyword": "미국증시",
+              "video_id": "ctTIfsV9u-o",
+              "is_expert": true,
+              "published": "2026-02-17",
+              "channel_id": "UC1ifSsWUG241rRfK0ezYCgA",
+              "order_type": "인기",
+              "view_count": 1242978,
+              "subscriber_count": 1130000
+            },
+            {
+              "url": "https://www.youtube.com/watch?v=u2jVWcFj8kM",
+              "title": "[이슈픽] 미국, 카리브해서 또다시 공격...누적 사망자 133명 &#39;아수라장&#39; / YTN",
+              "channel": " YTN",
+              "keyword": "미국증시",
+              "video_id": "u2jVWcFj8kM",
+              "is_expert": true,
+              "published": "2026-02-16",
+              "channel_id": "UChlgI3UHCOnwUGzWzbJ3H5w",
+              "order_type": "인기",
+              "view_count": 935057,
+              "subscriber_count": 5280000
+            }
+          ],
+          "securities_brief": {
+            "deep": [
+              "트럼프 관세 정책과 엔비디아 실적 발표가 미국 증시에 영향을 미치고 있으며, 투자 심리가 위축될 수 있음.",
+              "미국 LNG 물량 증가 관련주에 대한 관심이 필요하며, S&P500 및 나스닥 핵심 지표를 주시해야 함.",
+              "미국 증시 불안정 속에서 국내 증시 안전성에 대한 다양한 의견이 존재함.",
+              "카리브해 이슈 등 지정학적 리스크가 증시에 미치는 영향에 대한 분석이 필요함."
+            ],
+            "points": [
+              "미국 증시에서 자금 이탈이 발생하며, 한국 증시가 수혜를 입을 가능성이 제기됨.",
+              "미국 증시의 횡보 속에서 에너지 섹터가 강세를 보이며 관련 ETF 수익률이 상승함.",
+              "서학개미 투자자들은 미국 외 다른 시장으로 분산 투자를 통해 수익을 얻고 있음."
+            ],
+            "summary": "미국 증시 횡보 속 자금 이탈, 한국 증시 반사이익 기대 및 에너지 섹터 강세, 분산투자 전략 부상"
+          }
+        },
+        "2026 증시전망": {
+          "articles": [
+            {
+              "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQd1hHZll2QXJBRjI1YmVQS0tBb3hnV2Jkdy04SWNOaUE2NnVFMUJSRHhyWXB5aVJreHlnNVdJMWtxWVNMWnFJOVMwejZHbHEwZG81UkQ4VVVzanZiMHNoeG1hSFBzaFQyTVA5U2tneTdIVHVuQUozSGsyYm1oZW05VEZiV1dmTHZE0gGcAUFVX3lxTE85SEtiaFVKOFMxaWRnejVSOTZKdVJpNzZfRy1XVVROSm5nQlV4ZHhuY0M2MExtcmRNMFpaTGpVZ3lTWkF4dGctYm9uZkt1elZaOFpyY2VYUzZCRnFWRjVEU2xqMDBMdDQ1Wkg1bmJzZ3gzcXhmSUZweVJHSGpGdjJTTjViUFZackV0Q3U4WFNVWlBhQmEyN2NnMThoXw?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "[주간증시전망] 6000 바라보는 코스피… 26일 엔비디아 실적 발표 - 조선비즈 - Chosunbiz",
+              "impact": "**상황:** 코스피 6000 전망 및 엔비디아 실적 발표 예정",
+              "keyword": "2026 증시전망",
+              "publisher": {
+                "href": "https://biz.chosun.com",
+                "title": "Chosunbiz"
+              },
+              "pm_summary": "**상황:** 코스피 6000 전망 속 26일 엔비디아 실적 발표 예정.",
+              "description": "[주간증시전망] 6000 바라보는 코스피… 26일 엔비디아 실적 발표 - 조선비즈  Chosunbiz",
+              "published date": "Sat, 21 Feb 2026 21:00:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFB5c05MeWdnZndVM1dlQlNSajVMZXZtMW42MEd5SWxnUkJZOUVZM25mUE1IT3ljbXFCOE9UbU95aXppT0UwWDRtLUlvOWRFM00td2xjaHNn?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "국내 주식 투자 시작하나요? 2026년 증시 전망 분석 및 상황별 투자 전략 체크리스트 ✅ - 뉴닉",
+              "impact": "**S:** 2026년 국내 주식 투자 시작 여부에 대한 관심 증가.",
+              "keyword": "2026 증시전망",
+              "publisher": {
+                "href": "https://newneek.co",
+                "title": "뉴닉"
+              },
+              "pm_summary": "**S (상황):** 2026년 국내 증시 전망에 대한 투자 전략 문의",
+              "description": "국내 주식 투자 시작하나요? 2026년 증시 전망 분석 및 상황별 투자 전략 체크리스트 ✅  뉴닉",
+              "published date": "Fri, 06 Feb 2026 08:00:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFB0dXo4aFRoYUFESGtNZ0U0bEs0ZERNQ1NOeW5WczVmTmJxUjloOWgwMG5CaVNCMkN3Wk8tWERVNERGNzJqVFJQRWNOTTN5SWtXNldRSmNmd1ZKQVdiZjdZay1SY19ILV9sM1Jv?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "2026년 한국 주식시장 여건 및 전망 - KDI 경제교육·정보센터",
+              "impact": "**제안:**",
+              "keyword": "2026 증시전망",
+              "publisher": {
+                "href": "https://eiec.kdi.re.kr",
+                "title": "KDI 경제교육·정보센터"
+              },
+              "pm_summary": "**Situation:** 2026년 한국 주식시장 여건 및 전망 불확실.",
+              "description": "2026년 한국 주식시장 여건 및 전망  KDI 경제교육·정보센터",
+              "published date": "Fri, 16 Jan 2026 08:00:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxQOFNRSEFTakNpMVVKeDFTSmRxWjcyR0ZpN3JCTGo4TjI3Mmhob2V0SVFQR0pVcDN6OTQ5VTh2dzhrNzlSVUVZRS1NOXFTS0lYRDFPTm40RjRlVm1pVDZmYmg5YW1JbWRoMlMzZENDRU9LV013YkJSTC1HYTg5WVJLNDBn?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "2026년 2월 9일(월) 주간 미국 증시 전망 - 네이버 프리미엄콘텐츠",
+              "impact": "**상황:** 2026년 2월 9일 주간 미국 증시 전망 뉴스 발표.",
+              "keyword": "2026 증시전망",
+              "publisher": {
+                "href": "https://contents.premium.naver.com",
+                "title": "네이버 프리미엄콘텐츠"
+              },
+              "pm_summary": "**S:** 2026년 2월 9일 주간 미국 증시 전망 뉴스 분석 필요.",
+              "description": "2026년 2월 9일(월) 주간 미국 증시 전망  네이버 프리미엄콘텐츠",
+              "published date": "Mon, 09 Feb 2026 08:00:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxNRVF6T1p6SEF0YWxwc29JXzlqQ2gtWUVfVTU0OWVlTU5sUnM4TVdXOF82OUJYeWdiSzBSS1FHVFpDWGdhVGJYci1URDRRNndNdlo1bHJwLW9oX1dlamNfWFFlV3FKMmVFZjRhUlBQenRta0RWaVdiRzlDek04X0ptTGc4bE9sYjk2?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "AI 4년차, 2026년 증시 전망은...“반도체보다 ‘이것’ 없어서 못 판다” - 글로벌이코노믹",
+              "impact": "**상황:** 2026년 증시에서 AI 관련 특정 품목 부족 심화 전망.",
+              "keyword": "2026 증시전망",
+              "publisher": {
+                "href": "https://www.g-enews.com",
+                "title": "글로벌이코노믹"
+              },
+              "pm_summary": "**S:** 2026년 AI 시대, 반도체 외 특정 요소 부족으로 증시 불확실성 증대.",
+              "description": "AI 4년차, 2026년 증시 전망은...“반도체보다 ‘이것’ 없어서 못 판다”  글로벌이코노믹",
+              "published date": "Mon, 05 Jan 2026 08:00:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE56OW12ZEdmUE9TWjFtQ3ZXeXZNNmd1eFJDYTV4U3A1cC0tcFhIMVRpWGZ0dldDcHBja0gwVDZxMHljM0VYcjFOVWhxb0NJRU16X09fSDM4TEtXc2FZVmhZ?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "[이재훈의 심층리포트 13] 2026 주식시장 대전망 - ceomagazine.co.kr",
+              "impact": "**Situation:** 2026년 주식시장 대전망 관련 뉴스 기사(ceomagazine.co.kr) 확인.",
+              "keyword": "2026 증시전망",
+              "publisher": {
+                "href": "https://www.ceomagazine.co.kr",
+                "title": "ceomagazine.co.kr"
+              },
+              "pm_summary": "**Situation:** 2026년 주식시장 전망에 대한 뉴스 기사(\"이재훈의 심층리포트 13\")가 발표됨.",
+              "description": "[이재훈의 심층리포트 13] 2026 주식시장 대전망  ceomagazine.co.kr",
+              "published date": "Fri, 19 Dec 2025 08:00:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiW0FVX3lxTE9OQjNjbEloampoRzFoUUktVFdtb3lIRDNZemhtRWNUUDlTVWVsTjZWcGZlOFg1LVRaUXRpRzJ3aHhUR3Fjd3pNTFV5U3FUd2FUNUpKbkVzV1FzemM?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "[2026 증시전망]① 정책·유동성 업고 붉은말처럼…\"코스피 최대 5,500 가능\" - 연합뉴스",
+              "impact": "**S:** 정책 및 유동성 호재로 코스피 상승 기대감 증가.",
+              "keyword": "2026 증시전망",
+              "publisher": {
+                "href": "https://www.yna.co.kr",
+                "title": "연합뉴스"
+              },
+              "pm_summary": "**Situation:** 2026년 코스피 최대 5,500 가능 전망 보도.",
+              "description": "[2026 증시전망]① 정책·유동성 업고 붉은말처럼…\"코스피 최대 5,500 가능\"  연합뉴스",
+              "published date": "Wed, 31 Dec 2025 08:00:00 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE1vbTJQdXF4cEc5cVVQWmxPaHBoZTZjZEk2UkFta2NObi11VmN4bWZuUE92azVsZnBJWlRPdGNCWWdkWTZkenR0clh4R3Vfd3p3MnROdmRFaVJsX1BkMzJMcWxZaHl5dURRamZjVWJDYzVtMGZk?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "유안타증권 MEGA센터잠실지점, 25일 ‘2026년 증시 전망’ 개최 - 파이낸셜포스트",
+              "impact": "**상황:** 유안타증권 MEGA센터잠실지점에서 2026년 증시 전망 발표 예정.",
+              "keyword": "2026 증시전망",
+              "publisher": {
+                "href": "https://www.financialpost.co.kr",
+                "title": "파이낸셜포스트"
+              },
+              "pm_summary": "**S:** 유안타증권 잠실지점에서 2026년 증시 전망 강연 개최.",
+              "description": "유안타증권 MEGA센터잠실지점, 25일 ‘2026년 증시 전망’ 개최  파이낸셜포스트",
+              "published date": "Thu, 19 Feb 2026 05:40:56 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBaTkstWTc5b0Fsd2lUbm50bTZvQXBOWEdUemY2dU9CdmJPM1BjS3BsM3RBZ1VISGpoYTZhYzhoakxpR0d0V0syVl9yOFVaWEVuN1RZNDlTa01sOUhCRWhqdGd6S0FiaE9J?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "[설 이후 증시] 신중호 LS증권 리서치센터장 \"2026년 N자형 흐름. 주도주 중심 낙관적 시장\" - 팍스경제TV",
+              "impact": "**상황:** LS증권 리서치센터장, 2026년 증시 N자형 흐름 전망, 주도주 중심 낙관적 시장 예상.",
+              "keyword": "2026 증시전망",
+              "publisher": {
+                "href": "https://www.paxetv.com",
+                "title": "팍스경제TV"
+              },
+              "pm_summary": "**상황:** 2026년 설 이후 증시 전망 불확실.",
+              "description": "[설 이후 증시] 신중호 LS증권 리서치센터장 \"2026년 N자형 흐름. 주도주 중심 낙관적 시장\"  팍스경제TV",
+              "published date": "Tue, 17 Feb 2026 15:13:37 GMT"
+            },
+            {
+              "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBGMFRMZDIwRGhRc1Rta1pzdzdGNmRUYmdHUHBaSm9UakMxakxWNTJYc2lEQnJrcmZJRnFvZFZpUzZQYmRUNzFHcEx6RklkcnFZV2VMWHpDR01aeHQ3Y0lLMzc2aWY5Ui15cER1MnV4SQ?oc=5&hl=en-US&gl=US&ceid=US:en",
+              "title": "유안타증권 MEGA센터잠실지점, 25일 ‘2026년 증시 전망’ 투자설명회 개최 - 이코노미사이언스",
+              "impact": "**S:** 유안타증권 잠실지점에서 2026년 증시 전망 설명회 개최.",
+              "keyword": "2026 증시전망",
+              "publisher": {
+                "href": "https://www.e-science.co.kr",
+                "title": "이코노미사이언스"
+              },
+              "pm_summary": "**상황:** 유안타증권 잠실지점, 2026년 증시 전망 설명회 개최.",
+              "description": "유안타증권 MEGA센터잠실지점, 25일 ‘2026년 증시 전망’ 투자설명회 개최  이코노미사이언스",
+              "published date": "Thu, 19 Feb 2026 01:29:51 GMT"
+            }
+          ],
+          "ba_brief": {
+            "deep": [
+              "LS증권, 2026년 N자형 흐름 예측 및 주도주 중심 낙관론 제시. 시장 변화에 따른 주도주 선별 전략 중요.",
+              "미국 증시 변동성이 국내 증시에 미치는 영향 분석 필요. 금리, 인플레이션 등 글로벌 경제 지표 지속적 확인.",
+              "AI 반도체 수급 불균형 심화 가능성 존재. 관련 산업 투자 시, 공급망 및 기술 경쟁력 면밀히 검토.",
+              "개인 투자자 대상 유튜브 채널 활용 증가. 정보 접근성 향상 vs 검증되지 않은 정보 확산 우려 공존."
+            ],
+            "points": [
+              "코스피 최대 5,500 전망 등 긍정적 예측 존재하나, 거시 경제 상황 및 정책 변화에 따른 변동성 대비 필요.",
+              "AI 시대, 반도체 외 유리기판 등 핵심 소재 중요성 부각. 관련 기술 및 기업 투자 전략 모색 필요.",
+              "유튜브 채널, 개인 투자자 대상 2026년 증시 전망 및 추천 종목 정보 제공. 정보 신뢰성 검증 및 투자 주의."
+            ],
+            "summary": "2026년 증시, 정책 및 유동성 기반 낙관론과 미국 증시 변동성, AI 반도체 수급 불균형 등 리스크 요인이 혼재된 상황."
+          },
+          "pm_brief": {
+            "deep": [
+              "정책 및 유동성 확대가 2026년 증시 상승 요인으로 작용할 가능성 높음.",
+              "AI 반도체 분야 외 로봇, 유리 기판 등 신기술 관련 종목 투자 확대 예상.",
+              "유튜브 정보 과잉 속 옥석 가리기 중요. 전문가 채널 정보 선별 필요.",
+              "투자 설명회 및 리서치 보고서 활용, 객관적 데이터 기반 투자 의사 결정 권장."
+            ],
+            "points": [
+              "코스피 최대 5,500 전망, N자형 흐름 예상. 주도주 중심 낙관적 시장 전망.",
+              "AI 성장 지속, 반도체 수요 증가. 로봇 및 유리 기판 관련 종목 관심 증가.",
+              "개인 투자자, 유튜브 기반 정보 습득 활발. 전문가 채널 활용 증가 추세."
+            ],
+            "summary": "2026년 증시, 정책/유동성 기반 상승 전망 우세. AI, 반도체, 로봇, 유리 기판 주목. 개인 투자자 투자 심리 개선 및 전문가 채널 활용 증가 추세."
+          },
+          "youtube_videos": [
+            {
+              "url": "https://www.youtube.com/watch?v=RCuqES2TuQs",
+              "title": "&quot;엘앤에프 주가전망&quot;&quot;상한가 추천주&quot; &quot;이제부터 딱 3가지만 보세요.2026년 당신의 계좌를 바꿔줄 지금부터 300% 폭등하는 로봇배터리 대장주!&quot;",
+              "channel": "야근남주식TV",
+              "keyword": "2026 증시전망",
+              "video_id": "RCuqES2TuQs",
+              "is_expert": false,
+              "published": "2026-02-23",
+              "channel_id": "UCfWLhxxri0KDT5JpusaC1-g",
+              "order_type": "최신",
+              "view_count": 978,
+              "subscriber_count": 1940
+            },
+            {
+              "url": "https://www.youtube.com/watch?v=YQvO9ZaRu6w",
+              "title": "&quot;주식 추천주&quot;&quot;태성 주가전망&quot; &quot;잃지 않는 매매의 핵심! 2026년 상반기 반드시 담아야 할 텐베거 나오는 유리기판 3가지 종목&quot;",
+              "channel": "고수의 주식 일기",
+              "keyword": "2026 증시전망",
+              "video_id": "YQvO9ZaRu6w",
+              "is_expert": true,
+              "published": "2026-02-23",
+              "channel_id": "UCHwZl7X7oWm2wPXoh-f8KNg",
+              "order_type": "최신",
+              "view_count": 18,
+              "subscriber_count": 288000
+            },
+            {
+              "url": "https://www.youtube.com/watch?v=sX7xE5C95S4",
+              "title": "2월에 파는 사람들, 후회합니다! 아직 큰돈은 안 들어왔습니다",
+              "channel": "좋은미래만들기",
+              "keyword": "2026 증시전망",
+              "video_id": "sX7xE5C95S4",
+              "is_expert": false,
+              "published": "2026-02-17",
+              "channel_id": "UCcc-b4iEJz8k3reJo6N9pGg",
+              "order_type": "인기",
+              "view_count": 580669,
+              "subscriber_count": 92100
+            },
+            {
+              "url": "https://www.youtube.com/watch?v=mAKOTR0cNrA",
+              "title": "딥시크 오늘 발표하면 미국증시 위험합니다",
+              "channel": "전인구경제연구소",
+              "keyword": "2026 증시전망",
+              "video_id": "mAKOTR0cNrA",
+              "is_expert": true,
+              "published": "2026-02-17",
+              "channel_id": "UCznImSIaxZR7fdLCICLdgaQ",
+              "order_type": "인기",
+              "view_count": 183287,
+              "subscriber_count": 1250000
+            }
+          ],
+          "securities_brief": {
+            "deep": [
+              "엔비디아 실적 발표에 따른 시장 영향력 확대 전망.",
+              "미국 증시 변동성 주의, 딥시크 발표 등 경제 지표 변수 존재.",
+              "LS증권, 주도주 중심 낙관적 시장 전망.",
+              "조선비즈, 코스피 6000 전망 제시."
+            ],
+            "points": [
+              "코스피, 정책 및 유동성 힘입어 최대 5,500까지 상승 가능성 존재, N자형 흐름 예상.",
+              "AI 시대, 반도체 외 유리기판 관련주 주목, 텐베거 가능성 내포.",
+              "로봇배터리 성장 잠재력 주목, 2026년 계좌를 바꿀 대장주 가능성 존재."
+            ],
+            "summary": "2026년 증시, 정책·유동성 기반 코스피 5,500 전망과 AI, 유리기판, 로봇배터리 등 특정 산업군 주목 필요"
+          }
+        }
+      },
+      "hr_proposal": "## 제안: 미래 인재 확보를 위한 선제적 채용 전략 강화\n\n*   **Situation:** 2026년 증시 전망, AI 기술 발전, 트럼프 리스크 등 불확실성이 커지면서 미래 인재 확보 경쟁 심화 예상.\n*   **Behavior:**\n    *   미래 핵심 기술(AI, 에너지 등) 관련 인재 Pool 확보 위한 선제적 채용 프로그램 도입 (인턴십, 산학협력 강화).\n    *   급변하는 경영 환경에 대한 적응력과 문제 해결 능력을 갖춘 인재 선발 위한 채용 프로세스 개선 (역량 기반 면접 강화).\n*   **Impact:** 우수 인재 확보를 통해 불확실한 미래 환경에 대한 조직 경쟁력 강화."
+    },
+    "created_at": "2026-02-23T14:04:27.659118+00:00",
+    "qa_score": 95,
+    "qa_feedback": null,
+    "agent_versions": {},
+    "email_sent": true
+  },
+  {
     "id": 123,
     "user_id": "594fe03f-1f38-45d9-9019-d6a9649d6fce",
     "report_date": "2026-02-23",
