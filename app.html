@@ -448,6 +448,13 @@ function escHtml(s) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
     .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function escJsStr(s) {
+  return String(s)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '');
+}
 
 /* ── 온보딩 화면 ── */
 function showOnboarding(userName) {
@@ -490,10 +497,18 @@ function checkKwLimit(context) {
 async function addSuggestedKw(kw, el) {
   if (!checkKwLimit('suggest')) return;
   userKeywords.push(kw);
-  await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
-  el.classList.add('added');
-  el.textContent = '✓ ' + kw;
-  renderKwManage();
+  try {
+    const { error } = await sc.from('user_settings')
+      .upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
+    if (error) throw error;
+    el.classList.add('added');
+    el.textContent = '✓ ' + kw;
+    renderKwManage();
+  } catch (e) {
+    userKeywords = userKeywords.filter(k => k !== kw);
+    alert('키워드 저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+    console.error('addSuggestedKw 오류:', e);
+  }
 }
 
 async function addKeyword() {
@@ -501,9 +516,17 @@ async function addKeyword() {
   if (!v) return;
   if (!checkKwLimit('manage')) { document.getElementById('kw-add-input').value=''; return; }
   userKeywords.push(v);
-  await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
-  document.getElementById('kw-add-input').value = '';
-  renderKwManage();
+  try {
+    const { error } = await sc.from('user_settings')
+      .upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
+    if (error) throw error;
+    document.getElementById('kw-add-input').value = '';
+    renderKwManage();
+  } catch (e) {
+    userKeywords = userKeywords.filter(k => k !== v);
+    alert('키워드 저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+    console.error('addKeyword 오류:', e);
+  }
 }
 
 /* ── 브리프 파싱 ── */
@@ -536,7 +559,7 @@ function fmtNum(n) {
 function buildYtItems(vids) {
   if (!vids?.length) return `<div class="yt-empty">수집된 YouTube 영상이 없습니다.</div>`;
   return vids.map(v => `
-    <div class="yt-item" onclick="window.open('${escHtml(v.url)}','_blank')">
+    <div class="yt-item" onclick="window.open('${escJsStr(v.url)}','_blank')">
       <span class="yt-badge ${v.is_expert?'expert':'normal'}">${v.is_expert?'⭐전문가':'일반'}</span>
       <div>
         <div class="yt-title">${escHtml(v.title)}</div>
@@ -608,7 +631,7 @@ function buildKwSuggestCard(kw, kwData, i) {
       <div class="kw-suggest-chips">
         ${sugs.map(s=>`
           <div class="kw-suggest-chip" id="sugchip-${i}-${s.replace(/\s/g,'_')}"
-               onclick="addSuggestedKw('${escHtml(s)}',this)">+ ${escHtml(s)}</div>`).join('')}
+               onclick="addSuggestedKw('${escJsStr(s)}',this)">+ ${escHtml(s)}</div>`).join('')}
       </div>
     </div>`;
 }
@@ -710,7 +733,7 @@ function renderFeed() {
         <div id="panel-news-${i}">
           <div class="hl-label">오늘의 헤드라인</div>
           ${arts.map((a,n)=>`
-            <div class="hl-item" onclick="window.open('${escHtml(a.url)}','_blank')">
+            <div class="hl-item" onclick="window.open('${escJsStr(a.url)}','_blank')">
               <span class="hl-num">0${n+1}</span>
               <div>
                 <div class="hl-title">${escHtml(a.title)}</div>
@@ -847,14 +870,23 @@ function renderKwManage() {
   document.getElementById('kw-manage-list').innerHTML = userKeywords.map(kw => `
     <div class="kw-manage-item">
       <span class="kw-manage-name"># ${escHtml(kw)}</span>
-      <button class="kw-del-btn" onclick="removeKeyword('${escHtml(kw)}')">✕</button>
+      <button class="kw-del-btn" onclick="removeKeyword('${escJsStr(kw)}')">✕</button>
     </div>`).join('');
 }
 
 async function removeKeyword(kw) {
+  const prev = [...userKeywords];
   userKeywords = userKeywords.filter(k => k !== kw);
-  await sc.from('user_settings').upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
-  renderKwManage();
+  try {
+    const { error } = await sc.from('user_settings')
+      .upsert({ id: window.CURRENT_USER.id, keywords: userKeywords });
+    if (error) throw error;
+    renderKwManage();
+  } catch (e) {
+    userKeywords = prev;
+    alert('키워드 삭제 중 오류가 발생했습니다. 다시 시도해주세요.');
+    console.error('removeKeyword 오류:', e);
+  }
 }
 
 /* ── 피드백 ── */
@@ -996,6 +1028,8 @@ async function init() {
   } catch(err) {
     console.error('초기화 오류:', err);
     window.CURRENT_USER = { email:'', userName:'사용자', id:'' };
+    document.getElementById('feed-wrap').innerHTML =
+      '<div class="feed-state">세션 초기화 중 오류가 발생했습니다.<br>잠시 후 다시 로그인해주세요.</div>';
   }
 }
 

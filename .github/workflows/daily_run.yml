@@ -4,8 +4,8 @@ on:
   schedule:
     # 1. 한국 시간 오전 06:00 (KST) = UTC 21:00 전날 - 산업군 모니터링
     - cron: '0 21 * * *'
-   # 2. 한국 시간 오전 09:00 (KST) = UTC 22:30 전날 - 정기 브리핑 및 데이터 동기화
-    - cron: '30 22 * * *'
+    # 2. 한국 시간 오전 09:00 (KST) = UTC 00:00 - 정기 브리핑 및 데이터 동기화
+    - cron: '0 0 * * *'
     # 3. 한국 시간 밤 23:30 (KST) = UTC 14:30 - 지능 자동 승인 및 마감 작업
     - cron: '30 14 * * *'
   workflow_dispatch:
@@ -19,6 +19,10 @@ on:
         required: false
         default: ''
 
+concurrency:
+  group: daily-news-bot-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   execute-bot:
     runs-on: ubuntu-latest
@@ -31,6 +35,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          ref: ${{ github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -82,16 +87,18 @@ jobs:
           echo "🚀 실행 타입: $CRON_TYPE"
           python news_bot.py
 
-      - name: Final Git Sync
+      - name: Final Data Sync (safe)
         run: |
           git config --global user.name "Fitz Intelligence Bot"
           git config --global user.email "positivecha@gmail.com"
-          git add .
-          if ! git diff --cached --quiet; then
-            git commit -m "🤖 [System Evolution] $(date +'%Y-%m-%d %H:%M') KST - ${{ env.CRON_TYPE }}"
-            git push origin main
+          if [ -f data.json ]; then
+            git add data.json
+          fi
+          if ! git diff --cached --quiet -- data.json; then
+            git commit -m "📊 [Workflow Sync] $(date +'%Y-%m-%d %H:%M') KST - ${{ env.CRON_TYPE }}"
+            git push origin HEAD:${GITHUB_REF_NAME:-main}
           else
-            echo "No file changes detected to push."
+            echo "No data.json changes detected to push."
           fi
 
       - name: Notify Sovereign HQ (Success)
