@@ -1,6 +1,100 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
+<head >
+  <script>
+(function() {
+  var ua = navigator.userAgent || '';
+  var isKakao    = /KAKAOTALK/i.test(ua);
+  var isNaver    = /NAVER/i.test(ua);
+  var isInsta    = /Instagram/i.test(ua);
+  var isFacebook = /FBAN|FBAV/i.test(ua);
+  var isInApp    = isKakao || isNaver || isInsta || isFacebook;
+
+  if (!isInApp) return; // 일반 브라우저면 그냥 통과
+
+  var currentUrl = location.href;
+  var isAndroid  = /Android/i.test(ua);
+  var isIOS      = /iPhone|iPad|iPod/i.test(ua);
+
+  if (isAndroid) {
+    // Android: intent 스킴으로 Chrome 강제 실행
+    var intentUrl = 'intent://' + currentUrl.replace(/^https?:\/\//, '')
+      + '#Intent;scheme=https;package=com.android.chrome;end';
+    location.href = intentUrl;
+
+    // intent 실패 시 (Chrome 미설치) 안내 페이지로 fallback
+    setTimeout(function() {
+      showGuide('Android');
+    }, 1500);
+
+  } else if (isIOS) {
+    // iOS: 카카오톡은 window.open으로 Safari 강제 불가 → 안내 페이지 표시
+    showGuide('iOS');
+  } else {
+    showGuide('');
+  }
+
+  function showGuide(os) {
+    function render() {
+      document.body.innerHTML = `
+        <div style="
+          display:flex; flex-direction:column; align-items:center; justify-content:center;
+          min-height:100vh; padding:32px 24px; background:#f8fafc;
+          font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+          text-align:center; box-sizing:border-box;
+        ">
+          <div style="font-size:52px; margin-bottom:20px">🌐</div>
+          <h2 style="font-size:20px; font-weight:800; color:#0f172a; margin:0 0 12px">
+            외부 브라우저에서 열어주세요
+          </h2>
+          <p style="font-size:14px; color:#64748b; line-height:1.7; margin:0 0 28px">
+            카카오톡 내에서는 로그인이 정상 작동하지 않습니다.<br>
+            아래 버튼을 눌러 <b>Safari</b> 또는 <b>Chrome</b>에서 열어주세요.
+          </p>
+
+          ${os === 'iOS' ? `
+          <!-- iOS: 우하단 ··· 메뉴 안내 -->
+          <div style="
+            background:#fff; border:1px solid #e2e8f0; border-radius:16px;
+            padding:20px 24px; max-width:320px; width:100%; margin-bottom:20px;
+            box-shadow:0 2px 12px rgba(0,0,0,.06);
+          ">
+            <div style="font-size:13px; font-weight:700; color:#475569; margin-bottom:12px">
+              📱 iPhone 사용자
+            </div>
+            <ol style="font-size:13px; color:#475569; text-align:left; margin:0; padding-left:18px; line-height:2">
+              <li>화면 하단 오른쪽 <b>···</b> 버튼 탭</li>
+              <li><b>기본 브라우저로 열기</b> 선택</li>
+            </ol>
+          </div>
+          ` : ''}
+
+          <!-- URL 복사 버튼 (공통) -->
+          <button onclick="
+            navigator.clipboard.writeText('${currentUrl}')
+              .then(function(){ this.textContent='✅ 복사 완료!'; }.bind(this))
+              .catch(function(){ this.textContent='❌ 복사 실패'; }.bind(this));
+          " style="
+            background:#2563eb; color:#fff; border:none; border-radius:14px;
+            padding:16px 32px; font-size:15px; font-weight:700; cursor:pointer;
+            width:100%; max-width:320px; margin-bottom:12px;
+          ">🔗 링크 복사하기</button>
+
+          <p style="font-size:12px; color:#94a3b8">
+            복사 후 Safari 또는 Chrome 주소창에 붙여넣기 해주세요
+          </p>
+        </div>
+      `;
+    }
+    // DOMContentLoaded가 이미 발생했을 수도 있으므로 분기 처리
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', render);
+    } else {
+      render();
+    }
+  }
+})();
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Fitz Intelligence</title>
