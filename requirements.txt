@@ -2,3 +2,4 @@ google-genai
 gnews
 supabase
 resend
+playwright

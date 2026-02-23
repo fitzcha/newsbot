@@ -54,8 +54,11 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 .s-DEVELOPING{background:#d4edda;color:#155724}
 .s-DEPLOYED{background:#d1ecf1;color:#0c5460}
 .s-COMPLETED{background:#d1ecf1;color:#0c5460}
+.s-RUNNING{background:#e0f2fe;color:#075985}
+.s-SUCCEEDED{background:#dcfce7;color:#166534}
 .s-APPROVED{background:#d4edda;color:#155724}
 .s-REJECTED{background:#f8d7da;color:#721c24}
+.s-UNKNOWN{background:#e5e7eb;color:#374151}
 .s-FAILED,.s-BACKUP_FAILED,.s-SYNTAX_ERROR,.s-VALIDATION_ERROR,.s-DEPLOY_FAILED{background:#f8d7da;color:#721c24}
 
 /* 상태 필터 + 페이징 */
@@ -71,6 +74,11 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 .list-pager .pbtn:disabled{opacity:.4;cursor:default}
 .summary-box{background:#f8fafc}
 .role-brief{font-size:.8rem;color:#475569;margin:6px 0 8px}
+.ledger-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.ledger-table th{background:#f8fafc;padding:9px 10px;text-align:left;font-weight:700;color:#64748b;font-size:.75rem;border-bottom:1px solid #e2e8f0}
+.ledger-table td{padding:9px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.ledger-table tr:last-child td{border-bottom:none}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;font-size:.75rem}
 
 /* 포럼 */
 #forum-box{background:#0d1117;color:#50fa7b;padding:18px;border-radius:14px;font-family:'Courier New',monospace;height:320px;overflow-y:auto;font-size:.82rem;line-height:1.7}
@@ -268,6 +276,11 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
     </div>
     <div id="dev-status-filters" class="status-filter-row"></div>
     <div id="dev-list"></div>
+    <div class="card" style="border-left-color:#111">
+      <h3>🧾 릴리즈 이력</h3>
+      <div id="release-ledger-status-filters" class="status-filter-row"></div>
+      <div id="release-ledger-box"><div class="empty">릴리즈 이력 로드 중...</div></div>
+    </div>
   </div>
 
   <!-- ④ 회원 관리 탭 (신규) -->
@@ -425,9 +438,11 @@ let allMembers = [];   // 회원 목록 캐시
 let evoPropsAll = [], evoStatusFilter = 'PENDING', evoPage = 1;
 let evoAgentsAll = [], evoAgentPage = 1;
 let devRowsAll = [], devStatusFilter = 'ALL', devPage = 1;
+let releaseLedgerAll = [], releaseStatusFilter = 'ALL', releasePage = 1;
 const EVO_PAGE_SIZE = 6;
 const EVO_AGENT_PAGE_SIZE = 6;
 const DEV_PAGE_SIZE = 6;
+const RELEASE_PAGE_SIZE = 8;
 
 const STATUS_KO = {
   ALL: '전체',
@@ -437,6 +452,9 @@ const STATUS_KO = {
   DEVELOPING: '배포중',
   COMPLETED: '완료',
   DEPLOYED: '배포완료',
+  RUNNING: '진행중',
+  SUCCEEDED: '성공',
+  UNKNOWN: '알수없음',
   APPROVED: '승인',
   REJECTED: '반려',
   FAILED: '실패',
@@ -447,6 +465,7 @@ const STATUS_KO = {
 };
 const EVO_STATUS_BASE = ['ALL','PENDING','APPROVED','REJECTED'];
 const DEV_STATUS_BASE = ['ALL','PENDING','PENDING_MASTER','CONFIRMED','DEVELOPING','COMPLETED','DEPLOYED','FAILED','REJECTED'];
+const RELEASE_STATUS_BASE = ['ALL','RUNNING','SUCCEEDED','FAILED','UNKNOWN'];
 const ROLE_BRIEF = {
   BA: '비즈니스 모델과 경쟁 구도를 해석합니다.',
   STOCK: '시장 반응과 투자 시그널을 분석합니다.',
@@ -511,6 +530,11 @@ function buildPagerHTML(page, totalPages, totalItems, pageSize, prevFn, nextFn) 
     </div>
   `;
 }
+function shortSha(v) {
+  const s = String(v || '').trim();
+  if(!s) return '-';
+  return s.slice(0, 8);
+}
 
 /* ──────────────────────────────────────────
    토큰 / SR 키 관리
@@ -555,6 +579,7 @@ function tab(t) {
   });
   if(t === 'cost')   loadCost();
   if(t === 'member') loadMemberSettings();
+  if(t === 'dev')    loadReleaseLedger();
 }
 
 /* ──────────────────────────────────────────
@@ -1161,6 +1186,127 @@ async function triggerDev(id) {
 }
 
 /* ══════════════════════════════════════════
+   릴리즈 이력
+   ══════════════════════════════════════════ */
+function setReleaseStatus(status) { releaseStatusFilter = status; releasePage = 1; renderReleaseLedger(); }
+function releasePrevPage() { if(releasePage > 1) { releasePage--; renderReleaseLedger(); } }
+function releaseNextPage() {
+  const totalPages = Math.max(1, Math.ceil(getFilteredReleaseRows().length / RELEASE_PAGE_SIZE));
+  if(releasePage < totalPages) { releasePage++; renderReleaseLedger(); }
+}
+function getFilteredReleaseRows() {
+  const rows = releaseLedgerAll || [];
+  if(releaseStatusFilter === 'ALL') return rows;
+  return rows.filter(r => (r.status || 'UNKNOWN') === releaseStatusFilter);
+}
+function renderReleaseStatusFilters() {
+  const counts = { ALL: (releaseLedgerAll || []).length };
+  (releaseLedgerAll || []).forEach(r => {
+    const st = (r.status || 'UNKNOWN').toUpperCase();
+    counts[st] = (counts[st] || 0) + 1;
+  });
+  const order = withExtraStatuses(RELEASE_STATUS_BASE, counts);
+  render('release-ledger-status-filters', buildStatusFilterHTML(order, releaseStatusFilter, counts, 'setReleaseStatus'));
+}
+function renderReleaseLedger() {
+  const filtered = getFilteredReleaseRows();
+  const totalItems = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / RELEASE_PAGE_SIZE));
+  if(releasePage > totalPages) releasePage = totalPages;
+  if(releasePage < 1) releasePage = 1;
+  const start = (releasePage - 1) * RELEASE_PAGE_SIZE;
+  const rows = filtered.slice(start, start + RELEASE_PAGE_SIZE);
+
+  if(!rows.length) {
+    render('release-ledger-box', '<div class="empty">릴리즈 이력 데이터가 없습니다.</div>');
+    return;
+  }
+
+  const tableRows = rows.map(r => {
+    const status = (r.status || 'UNKNOWN').toUpperCase();
+    const at = (r.released_at || r.executed_at || '').toString().slice(0,19).replace('T',' ') || '-';
+    const runId = r.run_id || '-';
+    const branch = r.branch || '-';
+    const sha = shortSha(r.commit_sha || r.sha || '');
+    const backlog = r.backlog_id || '-';
+    const kind = r.release_type || r.action_type || 'N/A';
+    const memo = summarizeText(r.note || r.details || '', 80);
+    return `<tr>
+      <td><span class="mono">${at}</span></td>
+      <td><span class="s-tag s-${status}">${statusLabel(status)}</span></td>
+      <td>${escHtml(kind)}</td>
+      <td class="mono">${escHtml(branch)}</td>
+      <td class="mono">${escHtml(sha)}</td>
+      <td class="mono">${escHtml(String(backlog))}</td>
+      <td class="mono">${escHtml(String(runId))}</td>
+      <td>${escHtml(memo || '-')}</td>
+    </tr>`;
+  }).join('');
+
+  render('release-ledger-box',
+    `<div class="list-summary">총 ${totalItems}건 · 상태: ${statusLabel(releaseStatusFilter)}</div>
+     <div class="member-table-wrap">
+       <table class="ledger-table">
+         <thead>
+           <tr>
+             <th>시각</th><th>상태</th><th>유형</th><th>브랜치</th><th>커밋</th><th>백로그</th><th>RUN ID</th><th>메모</th>
+           </tr>
+         </thead>
+         <tbody>${tableRows}</tbody>
+       </table>
+     </div>`
+    + buildPagerHTML(releasePage, totalPages, totalItems, RELEASE_PAGE_SIZE, 'releasePrevPage', 'releaseNextPage')
+  );
+}
+async function loadReleaseLedger() {
+  try {
+    const { data, error } = await sc.from('release_ledger')
+      .select('id,release_type,branch,commit_sha,backlog_id,run_id,status,released_at,completed_at,note')
+      .order('released_at', { ascending:false })
+      .limit(200);
+    if(error) throw error;
+    releaseLedgerAll = (data || []).map(r => ({ ...r, status: (r.status || 'UNKNOWN').toUpperCase() }));
+  } catch(e) {
+    console.warn('release_ledger 조회 실패, action_logs 폴백:', e.message);
+    try {
+      const { data, error } = await sc.from('action_logs')
+        .select('id,action_type,details,executed_at')
+        .order('executed_at', { ascending:false })
+        .limit(120);
+      if(error) throw error;
+      const rows = (data || []).filter(r => {
+        const at = String(r.action_type || '').toUpperCase();
+        const dt = String(r.details || '');
+        return at.includes('DEPLOY') || dt.includes('배포');
+      });
+      releaseLedgerAll = rows.map(r => {
+        const details = String(r.details || '');
+        const failed = details.includes('❌') || details.toLowerCase().includes('fail');
+        return {
+          run_id: '-',
+          release_type: r.action_type || 'ACTION_LOG',
+          branch: '-',
+          commit_sha: '',
+          backlog_id: '-',
+          status: failed ? 'FAILED' : 'SUCCEEDED',
+          released_at: r.executed_at || '',
+          note: details,
+          details,
+          action_type: r.action_type || 'ACTION_LOG',
+        };
+      });
+    } catch(fbErr) {
+      releaseLedgerAll = [];
+      render('release-ledger-status-filters', '');
+      render('release-ledger-box', `<div class="empty">릴리즈 이력 조회 실패: ${escHtml(fbErr.message)}</div>`);
+      return;
+    }
+  }
+  renderReleaseStatusFilters();
+  renderReleaseLedger();
+}
+
+/* ══════════════════════════════════════════
    포럼 탭
    ══════════════════════════════════════════ */
 async function loadLogs() {
@@ -1278,7 +1424,7 @@ async function loadCost() {
    전체 새로고침 / 초기화
    ══════════════════════════════════════════ */
 async function refreshAll() {
-  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadLogs(), loadVoc()]);
+  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadReleaseLedger(), loadLogs(), loadVoc()]);
   toast('🔄 전체 데이터 새로고침 완료');
 }
 
@@ -1303,7 +1449,7 @@ async function init() {
   } catch(e) { me={id:'master',email:CFG.master}; console.warn('세션 없음:', e.message); }
 
   startAutoApprovalTimer();
-  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadLogs(), loadVoc()]);
+  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadReleaseLedger(), loadLogs(), loadVoc()]);
   loadAgentSelect();
 
   // 실시간 구독

@@ -48,6 +48,14 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install supabase google-genai gnews resend
 
+      - name: Install Playwright browser (Chromium)
+        run: |
+          python -m playwright install --with-deps chromium
+
+      - name: E2E smoke gate (login/onboarding/keyword)
+        run: |
+          python scripts/e2e_smoke_gate.py
+
       # CRON_TYPE 결정: 스케줄별로 명확히 분리
       - name: Determine CRON_TYPE
         id: cron_type
@@ -71,6 +79,39 @@ jobs:
             echo "CRON_TYPE=BRIEFING" >> $GITHUB_ENV
             echo "✅ 수동 실행 기본값: BRIEFING"
           fi
+
+      - name: Record release ledger (start)
+        if: always()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "release_ledger skipped: missing secrets"
+            exit 0
+          fi
+          TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          PAYLOAD=$(cat <<JSON
+          [{
+            "run_id":"${GITHUB_RUN_ID}",
+            "release_type":"BOT_EXECUTION",
+            "trigger_type":"${GITHUB_EVENT_NAME}",
+            "cron_type":"${CRON_TYPE}",
+            "branch":"${GITHUB_REF_NAME:-main}",
+            "commit_sha":"${GITHUB_SHA}",
+            "backlog_id":"${{ github.event.inputs.backlog_id }}",
+            "status":"RUNNING",
+            "note":"workflow started",
+            "released_at":"${TS}"
+          }]
+          JSON
+          )
+          curl -sS -X POST "${SUPABASE_URL}/rest/v1/release_ledger?on_conflict=run_id" \
+          -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+          -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+          -H "Content-Type: application/json" \
+          -H "Prefer: resolution=merge-duplicates,return=minimal" \
+          -d "${PAYLOAD}" || echo "release_ledger start write failed (non-blocking)"
 
       - name: Run news_bot.py
         env:
@@ -100,6 +141,57 @@ jobs:
           else
             echo "No data.json changes detected to push."
           fi
+
+      - name: Record release ledger (success)
+        if: success()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "release_ledger success skipped: missing secrets"
+            exit 0
+          fi
+          TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          PAYLOAD=$(cat <<JSON
+          {
+            "status":"SUCCEEDED",
+            "completed_at":"${TS}",
+            "note":"workflow completed successfully"
+          }
+          JSON
+          )
+          curl -sS -X PATCH "${SUPABASE_URL}/rest/v1/release_ledger?run_id=eq.${GITHUB_RUN_ID}" \
+          -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+          -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+          -H "Content-Type: application/json" \
+          -d "${PAYLOAD}" || echo "release_ledger success write failed (non-blocking)"
+
+      - name: Record release ledger (failure)
+        if: failure()
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "release_ledger failure skipped: missing secrets"
+            exit 0
+          fi
+          TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          RUN_URL="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          PAYLOAD=$(cat <<JSON
+          {
+            "status":"FAILED",
+            "completed_at":"${TS}",
+            "note":"workflow failed: ${RUN_URL}"
+          }
+          JSON
+          )
+          curl -sS -X PATCH "${SUPABASE_URL}/rest/v1/release_ledger?run_id=eq.${GITHUB_RUN_ID}" \
+          -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+          -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+          -H "Content-Type: application/json" \
+          -d "${PAYLOAD}" || echo "release_ledger failure write failed (non-blocking)"
 
       - name: Notify Sovereign HQ (Success)
         if: success() && github.event.inputs.backlog_id != ''
