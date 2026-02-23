@@ -493,6 +493,13 @@ function render(id, html) { const el=$id(id); if(el) el.innerHTML=html; }
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+function escJsStr(s) {
+  return String(s)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, '\\n')
+    .replace(/\r/g, '');
+}
 function getSrKey() { return CFG.service_role || localStorage.getItem('sr_key') || ''; }
 function hasSrKey() { return !!getSrKey(); }
 function statusLabel(s) { return STATUS_KO[s] || s; }
@@ -1227,10 +1234,18 @@ function renderReleaseLedger() {
     const at = (r.released_at || r.executed_at || '').toString().slice(0,19).replace('T',' ') || '-';
     const runId = r.run_id || '-';
     const branch = r.branch || '-';
-    const sha = shortSha(r.commit_sha || r.sha || '');
+    const rawSha = String(r.commit_sha || r.sha || '').trim();
+    const sha = shortSha(rawSha);
     const backlog = r.backlog_id || '-';
     const kind = r.release_type || r.action_type || 'N/A';
     const memo = summarizeText(r.note || r.details || '', 80);
+    const rollbackAction = (
+      status === 'SUCCEEDED' &&
+      branch === 'main' &&
+      /^[0-9a-f]{7,40}$/i.test(rawSha)
+    )
+      ? `<button class="sm" style="background:#111" onclick="triggerRollback('${escJsStr(rawSha)}','${escJsStr(String(runId))}')">↩️ 이 버전으로 롤백</button>`
+      : `<span style="color:#94a3b8;font-size:.76rem">-</span>`;
     return `<tr>
       <td><span class="mono">${at}</span></td>
       <td><span class="s-tag s-${status}">${statusLabel(status)}</span></td>
@@ -1240,6 +1255,7 @@ function renderReleaseLedger() {
       <td class="mono">${escHtml(String(backlog))}</td>
       <td class="mono">${escHtml(String(runId))}</td>
       <td>${escHtml(memo || '-')}</td>
+      <td>${rollbackAction}</td>
     </tr>`;
   }).join('');
 
@@ -1249,7 +1265,7 @@ function renderReleaseLedger() {
        <table class="ledger-table">
          <thead>
            <tr>
-             <th>시각</th><th>상태</th><th>유형</th><th>브랜치</th><th>커밋</th><th>백로그</th><th>RUN ID</th><th>메모</th>
+             <th>시각</th><th>상태</th><th>유형</th><th>브랜치</th><th>커밋</th><th>백로그</th><th>RUN ID</th><th>메모</th><th>작업</th>
            </tr>
          </thead>
          <tbody>${tableRows}</tbody>
@@ -1334,6 +1350,47 @@ async function triggerRun() {
     if(res.status===204) { toast('🚀 시스템 가동 명령 전송 완료!'); setTimeout(loadLogs,3000); }
     else { const e=await res.json().catch(()=>({})); throw new Error(`${res.status}: ${e.message||'오류'}`); }
   } catch(e) { toast('❌ 가동 실패: '+e.message); }
+}
+async function triggerRollback(commitSha, sourceRunId='') {
+  const token = getToken();
+  if(!token) return toast('❌ GHP 토큰을 먼저 저장하세요');
+  if(!/^[0-9a-f]{7,40}$/i.test(commitSha || '')) return toast('❌ 유효하지 않은 커밋 SHA입니다.');
+
+  const defaultReason = sourceRunId ? `run ${sourceRunId} 기준 정상버전 롤백` : '운영 이슈 롤백';
+  const inputReason = prompt('롤백 사유를 입력하세요', defaultReason);
+  if(inputReason === null) return;
+  const reason = (inputReason || defaultReason).trim().slice(0, 140);
+  if(!confirm(`커밋 ${commitSha.slice(0,8)} 버전으로 롤백 워크플로우를 실행할까요?`)) return;
+
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${CFG.owner}/${CFG.repo}/actions/workflows/${CFG.workflow}/dispatches`,
+      {
+        method:'POST',
+        headers:{
+          'Authorization':`Bearer ${token}`,
+          'Accept':'application/vnd.github.v3+json',
+          'Content-Type':'application/json',
+        },
+        body: JSON.stringify({
+          ref:'main',
+          inputs:{
+            rollback_to_sha: commitSha,
+            rollback_reason: reason,
+          }
+        })
+      }
+    );
+    if(res.status===204) {
+      toast(`↩️ 롤백 워크플로우 실행 완료 (${commitSha.slice(0,8)})`);
+      setTimeout(loadReleaseLedger, 3500);
+    } else {
+      const e = await res.json().catch(()=>({}));
+      throw new Error(`${res.status}: ${e.message||'오류'}`);
+    }
+  } catch(e) {
+    toast('❌ 롤백 실행 실패: ' + e.message);
+  }
 }
 
 /* ══════════════════════════════════════════

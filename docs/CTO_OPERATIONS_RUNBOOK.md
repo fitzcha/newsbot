@@ -32,6 +32,15 @@ If gate fails, workflow fails and release is blocked.
   - mark backlog status as failure class
   - block git push
 
+### Emergency rollback (workflow_dispatch)
+- Use `rollback_to_sha` input to run rollback mode.
+- Rollback mode behavior:
+  1. restore product files (`app.html`, `index.html`, `master.html`, `news_bot.py`, `requirements.txt`, `data.json`) from target SHA
+  2. run E2E smoke gate on rollback snapshot
+  3. commit rollback snapshot and push to `main`
+  4. record result to `release_ledger`
+- `master.html` release ledger provides "↩️ 이 버전으로 롤백" action for successful `main` releases.
+
 ### Data rollback
 - Prefer forward-fix for DB/content changes.
 - Avoid destructive rollback unless critical impact confirmed.

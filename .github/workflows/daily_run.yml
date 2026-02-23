@@ -18,6 +18,14 @@ on:
         description: '강제 실행 타입 (BRIEFING / INDUSTRY / GOVERNANCE)'
         required: false
         default: ''
+      rollback_to_sha:
+        description: '롤백 대상 커밋 SHA (입력 시 롤백 모드 실행)'
+        required: false
+        default: ''
+      rollback_reason:
+        description: '롤백 사유 (선택)'
+        required: false
+        default: ''
 
 concurrency:
   group: daily-news-bot-${{ github.ref }}
@@ -53,29 +61,48 @@ jobs:
           python -m playwright install --with-deps chromium
 
       - name: E2E smoke gate (login/onboarding/keyword)
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.rollback_to_sha == '' }}
         run: |
           python scripts/e2e_smoke_gate.py
 
-      # CRON_TYPE 결정: 스케줄별로 명확히 분리
-      - name: Determine CRON_TYPE
+      # 실행 모드 결정: NORMAL(BOT_EXECUTION) / ROLLBACK
+      - name: Determine execution mode
         id: cron_type
         run: |
           SCHEDULE="${{ github.event.schedule }}"
           FORCE="${{ github.event.inputs.force_cron_type }}"
+          ROLLBACK_TO_SHA="$(echo '${{ github.event.inputs.rollback_to_sha }}' | xargs)"
 
-          if [ -n "$FORCE" ]; then
+          if [ -n "$ROLLBACK_TO_SHA" ]; then
+            echo "RUN_MODE=ROLLBACK" >> $GITHUB_ENV
+            echo "RELEASE_TYPE=ROLLBACK" >> $GITHUB_ENV
+            echo "CRON_TYPE=ROLLBACK" >> $GITHUB_ENV
+            echo "ROLLBACK_TO_SHA=$ROLLBACK_TO_SHA" >> $GITHUB_ENV
+            echo "ROLLBACK_REASON=${{ github.event.inputs.rollback_reason }}" >> $GITHUB_ENV
+            echo "✅ 롤백 모드 실행: target=$ROLLBACK_TO_SHA"
+          elif [ -n "$FORCE" ]; then
+            echo "RUN_MODE=BOT_EXECUTION" >> $GITHUB_ENV
+            echo "RELEASE_TYPE=BOT_EXECUTION" >> $GITHUB_ENV
             echo "CRON_TYPE=$FORCE" >> $GITHUB_ENV
             echo "✅ 강제 실행 타입: $FORCE"
           elif [ "$SCHEDULE" = "30 14 * * *" ]; then
+            echo "RUN_MODE=BOT_EXECUTION" >> $GITHUB_ENV
+            echo "RELEASE_TYPE=BOT_EXECUTION" >> $GITHUB_ENV
             echo "CRON_TYPE=GOVERNANCE" >> $GITHUB_ENV
             echo "✅ 스케줄 감지: GOVERNANCE (23:30 KST)"
           elif [ "$SCHEDULE" = "0 21 * * *" ]; then
+            echo "RUN_MODE=BOT_EXECUTION" >> $GITHUB_ENV
+            echo "RELEASE_TYPE=BOT_EXECUTION" >> $GITHUB_ENV
             echo "CRON_TYPE=INDUSTRY" >> $GITHUB_ENV
             echo "✅ 스케줄 감지: INDUSTRY (06:00 KST)"
           elif [ "$SCHEDULE" = "0 0 * * *" ]; then
+            echo "RUN_MODE=BOT_EXECUTION" >> $GITHUB_ENV
+            echo "RELEASE_TYPE=BOT_EXECUTION" >> $GITHUB_ENV
             echo "CRON_TYPE=BRIEFING" >> $GITHUB_ENV
             echo "✅ 스케줄 감지: BRIEFING (09:00 KST)"
           else
+            echo "RUN_MODE=BOT_EXECUTION" >> $GITHUB_ENV
+            echo "RELEASE_TYPE=BOT_EXECUTION" >> $GITHUB_ENV
             echo "CRON_TYPE=BRIEFING" >> $GITHUB_ENV
             echo "✅ 수동 실행 기본값: BRIEFING"
           fi
@@ -94,14 +121,14 @@ jobs:
           PAYLOAD=$(cat <<JSON
           [{
             "run_id":"${GITHUB_RUN_ID}",
-            "release_type":"BOT_EXECUTION",
+            "release_type":"${RELEASE_TYPE:-BOT_EXECUTION}",
             "trigger_type":"${GITHUB_EVENT_NAME}",
             "cron_type":"${CRON_TYPE}",
             "branch":"${GITHUB_REF_NAME:-main}",
             "commit_sha":"${GITHUB_SHA}",
             "backlog_id":"${{ github.event.inputs.backlog_id }}",
             "status":"RUNNING",
-            "note":"workflow started",
+            "note":"workflow started (rollback_target=${ROLLBACK_TO_SHA:-none}, reason=${ROLLBACK_REASON:-none})",
             "released_at":"${TS}"
           }]
           JSON
@@ -113,7 +140,63 @@ jobs:
           -H "Prefer: resolution=merge-duplicates,return=minimal" \
           -d "${PAYLOAD}" || echo "release_ledger start write failed (non-blocking)"
 
+      - name: Prepare rollback snapshot
+        if: ${{ env.RUN_MODE == 'ROLLBACK' }}
+        run: |
+          TARGET="${ROLLBACK_TO_SHA}"
+          if [ -z "$TARGET" ]; then
+            echo "ROLLBACK_NOOP=1" >> $GITHUB_ENV
+            echo "No rollback target supplied."
+            exit 0
+          fi
+          git cat-file -e "${TARGET}^{commit}" || { echo "Invalid rollback_to_sha: $TARGET"; exit 1; }
+          TARGET_FULL="$(git rev-parse "$TARGET")"
+          TARGET_SHORT="$(git rev-parse --short "$TARGET_FULL")"
+          HEAD_FULL="$(git rev-parse HEAD)"
+          echo "ROLLBACK_TARGET_FULL=${TARGET_FULL}" >> $GITHUB_ENV
+          echo "ROLLBACK_TARGET_SHORT=${TARGET_SHORT}" >> $GITHUB_ENV
+
+          if [ "$TARGET_FULL" = "$HEAD_FULL" ]; then
+            echo "ROLLBACK_NOOP=1" >> $GITHUB_ENV
+            echo "Rollback target equals HEAD. Nothing to do."
+            exit 0
+          fi
+
+          if ! git merge-base --is-ancestor "$TARGET_FULL" "$HEAD_FULL"; then
+            echo "rollback_to_sha must be an ancestor of main HEAD."
+            exit 1
+          fi
+
+          git restore --source "$TARGET_FULL" --staged --worktree -- \
+            app.html index.html master.html news_bot.py requirements.txt data.json
+
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "ROLLBACK_NOOP=1" >> $GITHUB_ENV
+            echo "No file changes after rollback snapshot restore."
+          else
+            echo "ROLLBACK_NOOP=0" >> $GITHUB_ENV
+            echo "Rollback snapshot prepared for commit."
+          fi
+
+      - name: E2E smoke gate (rollback snapshot)
+        if: ${{ env.RUN_MODE == 'ROLLBACK' && env.ROLLBACK_NOOP != '1' }}
+        run: |
+          python scripts/e2e_smoke_gate.py
+
+      - name: Commit and push rollback snapshot
+        if: ${{ env.RUN_MODE == 'ROLLBACK' && env.ROLLBACK_NOOP != '1' }}
+        run: |
+          git config --global user.name "Fitz Intelligence Bot"
+          git config --global user.email "positivecha@gmail.com"
+          REASON="${ROLLBACK_REASON:-manual rollback}"
+          SAFE_REASON="$(printf '%s' "$REASON" | tr '\n\r' ' ' | sed 's/\"/ /g' | cut -c1-80)"
+          TARGET_SHORT="${ROLLBACK_TARGET_SHORT:-unknown}"
+          git commit -m "↩️ [Rollback] to ${TARGET_SHORT} - ${SAFE_REASON}"
+          git push origin HEAD:${GITHUB_REF_NAME:-main}
+          echo "ROLLBACK_COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
       - name: Run news_bot.py
+        if: ${{ env.RUN_MODE != 'ROLLBACK' }}
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -129,6 +212,7 @@ jobs:
           python news_bot.py
 
       - name: Final Data Sync (safe)
+        if: ${{ env.RUN_MODE != 'ROLLBACK' }}
         run: |
           git config --global user.name "Fitz Intelligence Bot"
           git config --global user.email "positivecha@gmail.com"
@@ -157,6 +241,7 @@ jobs:
           {
             "status":"SUCCEEDED",
             "completed_at":"${TS}",
+            "commit_sha":"$(git rev-parse HEAD)",
             "note":"workflow completed successfully"
           }
           JSON
@@ -183,6 +268,7 @@ jobs:
           {
             "status":"FAILED",
             "completed_at":"${TS}",
+            "commit_sha":"$(git rev-parse HEAD)",
             "note":"workflow failed: ${RUN_URL}"
           }
           JSON
