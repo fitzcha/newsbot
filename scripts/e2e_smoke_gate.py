@@ -33,92 +33,82 @@ def start_static_server():
     return server
 
 
-# ── JS 스텁: 문자열 포매팅 없이 완전한 JS 파일 2개로 분리 ─────────────────────
+# ── supabase 스텁 (인증 여부만 다름, 두 버전 완전 독립) ──────────────────────
 
 STUB_UNAUTH = """\
 (function() {
-  var _fakeClient = {
-    auth: {
-      getSession: function() {
-        return Promise.resolve({ data: { session: null }, error: null });
-      },
-      signOut: function() { return Promise.resolve({ error: null }); },
-      signInWithOtp: function() { return Promise.resolve({ error: null }); }
-    },
-    from: function(t) { return _buildQuery(t); },
-    channel: function() { return { on: function() { return this; }, subscribe: function() { return this; } }; }
-  };
-
-  function _ok(d) { return Promise.resolve({ data: d, error: null }); }
-
-  function _buildQuery(table) {
+  function ok(d) { return Promise.resolve({ data: d, error: null }); }
+  function bq(t) {
     var q = {
       select: function() { return q; },
-      eq: function() { return q; },
-      order: function() { return _ok([]); },
-      limit: function() { return _ok([]); },
-      maybeSingle: function() { return _single(table); },
-      single: function() { return _single(table); },
-      upsert: function() { return _ok(null); },
-      insert: function() { return _ok(null); },
+      eq:     function() { return q; },
+      order:  function() { return ok([]); },
+      limit:  function() { return ok([]); },
+      maybeSingle: function() {
+        if (t === 'app_settings')  return ok({ value: 'true' });
+        if (t === 'user_settings') return ok({ keywords: [] });
+        return ok(null);
+      },
+      single: function() { return this.maybeSingle(); },
+      upsert: function() { return ok(null); },
+      insert: function() { return ok(null); },
       update: function() { return q; }
     };
     return q;
   }
-
-  function _single(table) {
-    if (table === 'app_settings') { return _ok({ value: 'true' }); }
-    if (table === 'user_settings') { return _ok({ keywords: [] }); }
-    return _ok(null);
-  }
-
-  window.supabase = { createClient: function() { return _fakeClient; } };
-  console.log('[STUB] supabase unauth stub installed');
+  var client = {
+    auth: {
+      getSession: function() {
+        return Promise.resolve({ data: { session: null }, error: null });
+      },
+      signOut:       function() { return Promise.resolve({ error: null }); },
+      signInWithOtp: function() { return Promise.resolve({ error: null }); }
+    },
+    from: function(t) { return bq(t); },
+    channel: function() { return { on: function() { return this; }, subscribe: function() { return this; } }; }
+  };
+  window.supabase = { createClient: function() { return client; } };
+  console.log('[STUB] unauth installed, session=null');
 })();
 """
 
 STUB_AUTH = """\
 (function() {
-  var _fakeClient = {
-    auth: {
-      getSession: function() {
-        return Promise.resolve({
-          data: { session: { user: { id: 'test-user-1', email: 'smoke@example.com' } } },
-          error: null
-        });
-      },
-      signOut: function() { return Promise.resolve({ error: null }); },
-      signInWithOtp: function() { return Promise.resolve({ error: null }); }
-    },
-    from: function(t) { return _buildQuery(t); },
-    channel: function() { return { on: function() { return this; }, subscribe: function() { return this; } }; }
-  };
-
-  function _ok(d) { return Promise.resolve({ data: d, error: null }); }
-
-  function _buildQuery(table) {
+  function ok(d) { return Promise.resolve({ data: d, error: null }); }
+  function bq(t) {
     var q = {
       select: function() { return q; },
-      eq: function() { return q; },
-      order: function() { return _ok([]); },
-      limit: function() { return _ok([]); },
-      maybeSingle: function() { return _single(table); },
-      single: function() { return _single(table); },
-      upsert: function() { return _ok(null); },
-      insert: function() { return _ok(null); },
+      eq:     function() { return q; },
+      order:  function() { return ok([]); },
+      limit:  function() { return ok([]); },
+      maybeSingle: function() {
+        if (t === 'app_settings')  return ok({ value: 'true' });
+        if (t === 'user_settings') return ok({ keywords: [] });
+        return ok(null);
+      },
+      single: function() { return this.maybeSingle(); },
+      upsert: function() { return ok(null); },
+      insert: function() { return ok(null); },
       update: function() { return q; }
     };
     return q;
   }
-
-  function _single(table) {
-    if (table === 'app_settings') { return _ok({ value: 'true' }); }
-    if (table === 'user_settings') { return _ok({ keywords: [] }); }
-    return _ok(null);
-  }
-
-  window.supabase = { createClient: function() { return _fakeClient; } };
-  console.log('[STUB] supabase AUTH stub installed');
+  var client = {
+    auth: {
+      getSession: function() {
+        return Promise.resolve({
+          data: { session: { user: { id: 'test-uid-1', email: 'smoke@example.com' } } },
+          error: null
+        });
+      },
+      signOut:       function() { return Promise.resolve({ error: null }); },
+      signInWithOtp: function() { return Promise.resolve({ error: null }); }
+    },
+    from: function(t) { return bq(t); },
+    channel: function() { return { on: function() { return this; }, subscribe: function() { return this; } }; }
+  };
+  window.supabase = { createClient: function() { return client; } };
+  console.log('[STUB] auth installed, session=smoke@example.com');
 })();
 """
 
@@ -126,35 +116,34 @@ STUB_AUTH = """\
 def attach_stub(context, mode: str) -> None:
     script = STUB_AUTH if mode == "onboarding" else STUB_UNAUTH
 
-    # 1) init_script: 페이지 JS보다 먼저 실행
+    # 1) init_script — 페이지 JS보다 반드시 먼저 실행
     context.add_init_script(script=script)
 
-    # 2) 네트워크 인터셉트: supabase CDN 요청을 스텁으로 대체
+    # 2) 네트워크 인터셉트 — supabase CDN 스크립트 자체를 스텁으로 교체
+    #    app.html 은 https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2 를 사용
     def _fulfill(route):
-        print(f"[STUB] intercepted: {route.request.url}", file=sys.stderr)
+        print(f"[INTERCEPT] {route.request.url}", file=sys.stderr)
         route.fulfill(status=200, content_type="application/javascript", body=script)
 
-    context.route("**/*supabase*", _fulfill)
+    context.route("**cdn.jsdelivr.net**supabase**", _fulfill)
+    context.route("**unpkg.com**supabase**", _fulfill)
+    context.route("**supabase**", _fulfill)          # 혹시 모를 다른 CDN 대비
 
 
-# ── 진단용: app.html이 로드하는 모든 스크립트 URL 출력 ──────────────────────────
-
-def _attach_diagnostics(page):
-    page.on("console", lambda m: print(f"[CON:{m.type}] {m.text}", file=sys.stderr))
-    page.on("pageerror", lambda e: print(f"[PAGEERROR] {e}", file=sys.stderr))
-    page.on("request", lambda r: print(f"[REQ] {r.resource_type} {r.url}", file=sys.stderr)
-            if r.resource_type in ("script", "fetch", "xhr") else None)
-    page.on("response", lambda r: print(f"[RES] {r.status} {r.url}", file=sys.stderr)
-            if r.request.resource_type in ("script", "fetch", "xhr") else None)
+def _diag(page):
+    page.on("console",   lambda m: print(f"[CON:{m.type}] {m.text}", file=sys.stderr))
+    page.on("pageerror", lambda e: print(f"[PAGEERROR] {e}",         file=sys.stderr))
+    page.on("request",   lambda r: print(f"[REQ] {r.url}",          file=sys.stderr)
+            if r.resource_type == "script" else None)
 
 
-# ── 테스트 함수 ────────────────────────────────────────────────────────────────
+# ── 테스트 1: index.html CTA → auth overlay ────────────────────────────────
 
 def check_index_overlay(browser) -> None:
     ctx = browser.new_context()
     attach_stub(ctx, "index")
     page = ctx.new_page()
-    _attach_diagnostics(page)
+    _diag(page)
     page.goto(f"{BASE_URL}/index.html", wait_until="domcontentloaded")
     page.get_by_role("button", name=re.compile("무료로 시작하기")).first.click()
     display = page.evaluate(
@@ -167,42 +156,42 @@ def check_index_overlay(browser) -> None:
     ctx.close()
 
 
+# ── 테스트 2: app.html 비인증 → index.html 리다이렉트 ──────────────────────
+
 def check_app_unauth_redirect(browser) -> None:
     ctx = browser.new_context()
     attach_stub(ctx, "unauth_app")
     page = ctx.new_page()
-    _attach_diagnostics(page)
-
+    _diag(page)
     page.goto(f"{BASE_URL}/app.html", wait_until="domcontentloaded")
 
-    # domcontentloaded 직후 supabase 스텁 상태 확인
-    stub_check = page.evaluate("""() => {
-      if (!window.supabase) return 'NO window.supabase';
-      if (typeof window.supabase.createClient !== 'function') return 'createClient not a function';
+    # domcontentloaded 직후 스텁 설치 확인
+    stub_ok = page.evaluate("""() => {
       try {
-        var c = window.supabase.createClient('x','y');
-        return c && c.auth ? 'stub OK' : 'stub client missing auth';
-      } catch(e) { return 'createClient threw: ' + e.message; }
+        var c = window.supabase && window.supabase.createClient('x','y');
+        return c && c.auth ? 'ok' : 'no auth';
+      } catch(e) { return 'err:' + e.message; }
     }""")
-    print(f"[DIAG] stub_check: {stub_check}", file=sys.stderr)
+    print(f"[DIAG] stub_check={stub_ok}", file=sys.stderr)
 
     try:
         page.wait_for_url(f"{BASE_URL}/index.html", timeout=6000)
     except PlaywrightTimeoutError:
-        # 추가 진단: 페이지 title, body 텍스트 일부
-        print(f"[DIAG] page title: {page.title()}", file=sys.stderr)
-        print(f"[DIAG] body snippet: {page.inner_text('body')[:300]}", file=sys.stderr)
+        print(f"[DIAG] title={page.title()}", file=sys.stderr)
+        print(f"[DIAG] body[:200]={page.inner_text('body')[:200]}", file=sys.stderr)
 
     if "index.html" not in page.url:
         raise AssertionError(f"redirect 미발생. 현재 URL: {page.url}")
     ctx.close()
 
 
+# ── 테스트 3: 온보딩 + 키워드 모달 ────────────────────────────────────────
+
 def check_onboarding_keyword_modal(browser) -> None:
     ctx = browser.new_context()
     attach_stub(ctx, "onboarding")
     page = ctx.new_page()
-    _attach_diagnostics(page)
+    _diag(page)
     page.goto(f"{BASE_URL}/app.html", wait_until="domcontentloaded")
     page.wait_for_selector(".onboarding-title", timeout=10000)
     if not page.evaluate("() => document.getElementById('kw-modal').classList.contains('open')"):
