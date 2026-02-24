@@ -663,17 +663,24 @@ async function runAutoApproval(){
    ══════════════════════════════════════════ */
 async function loadHrDates(){
   try {
-    const {data}=await sc.from('reports').select('report_date').eq('user_id',me.id).order('report_date',{ascending:false});
+    // me가 없으면 대기
+    if (!me) { render('hr-content','<div style="color:#aaa;text-align:center;padding:40px">인증 정보를 확인 중...</div>'); return; }
+    const {data, error}=await sc.from('reports').select('report_date').order('report_date',{ascending:false});
+    if(error) throw error;
     const dates=[...new Set((data||[]).map(d=>d.report_date))];
     if(!dates.length){ render('hr-content','<div style="color:#aaa;text-align:center;padding:40px">리포트 없음</div>'); return; }
     render('hr-date',dates.map(d=>`<option value="${d}">${d}</option>`).join(''));
     loadHrReport();
-  } catch(e){ console.error(e); }
+  } catch(e){
+    console.error('loadHrDates error:', e);
+    render('hr-content',`<div style="color:#ef4444;text-align:center;padding:40px">⚠️ 리포트 로드 실패: ${escHtml(e.message)}<br><button class="btn" style="margin-top:12px" onclick="loadHrDates()">🔄 재시도</button></div>`);
+  }
 }
 async function loadHrReport(){
   const date=$id('hr-date')?.value; if(!date) return;
   try {
-    const {data}=await sc.from('reports').select('content').eq('report_date',date).eq('user_id',me.id).single();
+    const {data,error}=await sc.from('reports').select('content').eq('report_date',date).order('created_at',{ascending:false}).limit(1).single();
+    if(error) throw error;
     const c=data?.content; let html='';
     if(c?.hr_proposal)      html+=`<h2>👤 HR 제안</h2>${marked.parse(c.hr_proposal)}`;
     if(c?.ba_brief)         html+=`<h2>🔍 BA 분석</h2>${marked.parse(c.ba_brief)}`;
@@ -1147,18 +1154,6 @@ function renderHrProposals(){
     </div>`;
   }).join(''));
 }
-async function hrDecide(id,decision){
-  const opinion=($id(`hr-opinion-${id}`)?.value||'').trim();
-  if(decision==='APPROVED'&&!opinion){ toast('❌ HR 검토 의견을 입력해주세요'); return; }
-  try {
-    const newStatus=decision==='APPROVED'?'PENDING_MASTER':'REJECTED';
-    const autoAt=new Date(Date.now()+23.5*3600*1000).toISOString();
-    await sc.from('hr_staff_proposals').update({
-      status:newStatus
-/* ══════════════════════════════════════════
-   ④ 인사(STAFF) 탭 — hrDecide 이어서
-   ══════════════════════════════════════════ */
-
 async function hrDecide(id, decision) {
   const opinion = ($id(`hr-opinion-${id}`)?.value || '').trim();
   if (decision === 'APPROVED' && !opinion) {
@@ -1744,24 +1739,31 @@ async function init() {
   if (savedToken) { $id('ghp-token').value = savedToken; updateTokenStatus(savedToken); }
   if (savedSr)    { $id('sr-key-input').value = savedSr; CFG.service_role = savedSr; updateSrStatus(savedSr); }
 
-  // 로그인 확인
-  const { data:{ user } } = await sc.auth.getUser();
-  if (!user || user.email !== CFG.master) {
-    document.body.innerHTML =
-      `<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif">
-         <div style="text-align:center">
-           <div style="font-size:3rem;margin-bottom:16px">🔒</div>
-           <div style="font-size:1.2rem;font-weight:700;color:#ef4444">마스터 전용 페이지입니다.</div>
-           <a href="index.html" style="color:#2563eb;margin-top:12px;display:inline-block">← 홈으로</a>
-         </div>
-       </div>`;
-    return;
-  }
-  me = user;
+  try {
+    // 로그인 확인
+    const { data:{ user }, error } = await sc.auth.getUser();
+    if (error) throw error;
+    if (!user || user.email !== CFG.master) {
+      document.body.innerHTML =
+        `<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif">
+           <div style="text-align:center">
+             <div style="font-size:3rem;margin-bottom:16px">🔒</div>
+             <div style="font-size:1.2rem;font-weight:700;color:#ef4444">마스터 전용 페이지입니다.</div>
+             <a href="index.html" style="color:#2563eb;margin-top:12px;display:inline-block">← 홈으로</a>
+           </div>
+         </div>`;
+      return;
+    }
+    me = user;
 
-  startClock();
-  startAutoApprovalTimer();
-  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadAgentSelect()]);
+    startClock();
+    startAutoApprovalTimer();
+    await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadAgentSelect()]);
+  } catch(e) {
+    console.error('init error:', e);
+    // Supabase 연결 실패 시에도 UI 기본 틀은 보여줌
+    render('hr-content', `<div style="color:#ef4444;text-align:center;padding:40px">⚠️ 초기화 실패: ${escHtml(e.message)}<br><small style="color:#aaa">Supabase 연결을 확인하거나 페이지를 새로고침 하세요.</small><br><button class="btn" style="margin-top:12px" onclick="location.reload()">🔄 새로고침</button></div>`);
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
