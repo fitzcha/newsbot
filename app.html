@@ -904,16 +904,17 @@ async function submitFeedback() {
       user_email:    window.CURRENT_USER.email,
       is_positive:   selectedThumb,
       feedback_text: text || null,
-      report_date:   curDate,
+      report_date:   curDate || null,
       created_at:    new Date().toISOString()
     });
-  } catch(e) { 
-  console.error('피드백 저장 오류:', e);
-  console.error('에러 상세:', JSON.stringify(e));  // ← 이 줄 추가
-  alert(JSON.stringify(e));  // ← 이 줄 추가 (팝업으로 바로 보기)
-  document.getElementById('feedback-form-view').style.display = 'none';
-  document.getElementById('feedback-done-view').style.display = 'block';
-}
+    document.getElementById('feedback-form-view').style.display = 'none';
+    document.getElementById('feedback-done-view').style.display = 'block';
+  } catch(e) {
+    console.error('피드백 저장 오류:', e);
+    alert(JSON.stringify(e));
+    btn.disabled = false;
+    btn.textContent = '제출하기';
+  }
 }
 function resetFeedback() {
   selectedThumb = null;
