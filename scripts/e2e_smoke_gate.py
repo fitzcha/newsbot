@@ -164,9 +164,11 @@ def check_app_unauth_redirect(browser) -> None:
     attach_stub(context, "unauth_app")
     page = context.new_page()
 
-    # goto 전에 navigation 이벤트를 등록해야 리다이렉트를 놓치지 않음
-    with page.expect_navigation(url="**/index.html", timeout=15000):
-        page.goto(f"{BASE_URL}/app.html", wait_until="domcontentloaded")
+    # 1) app.html DOM 먼저 로드 (JS init() 실행 시작)
+    page.goto(f"{BASE_URL}/app.html", wait_until="domcontentloaded")
+    # 2) init() 안의 location.href = 'index.html' 리다이렉트 완료를 별도로 대기
+    #    wait_until="domcontentloaded" 로 load 이벤트까지는 안 기다림
+    page.wait_for_url("**/index.html", timeout=15000, wait_until="domcontentloaded")
 
     context.close()
 
