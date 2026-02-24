@@ -1420,19 +1420,8 @@ def run_agent_initiative(by_keyword_all: dict):
                 t = re.search(r"\[TITLE\](.*?)(?=\[DETAIL\]|$)",  proposal, re.DOTALL)
                 d = re.search(r"\[DETAIL\](.*?)$",                  proposal, re.DOTALL)
                 if t and d:
-                    # 마크다운 제거 후 첫 줄만 제목으로 사용
                     title  = strip_markdown(t.group(1).strip()).split('\n')[0]
-                    # 마크다운 제거 후 전체를 상세 내용으로 사용
                     detail = strip_markdown(d.group(1).strip())
-                    supabase.table("dev_backlog").insert({
-                        "title":         f"[AI발의] {title}",
-                        "task_detail":   detail,
-                        "affected_file": "news_bot.py",
-                        "priority":      5,
-                        "status":        "PENDING",
-                    }).execute()
-                    print(f"  📋 [MASTER] dev_backlog 자동 등록: {title}")
-                continue
                     supabase.table("dev_backlog").insert({
                         "title":         f"[AI발의] {title}",
                         "task_detail":   detail,
