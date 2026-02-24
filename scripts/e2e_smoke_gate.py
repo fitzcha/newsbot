@@ -42,87 +42,72 @@ def start_static_server() -> ThreadingHTTPServer:
 
 def supabase_stub_script(mode: str) -> str:
     authenticated = "true" if mode == "onboarding" else "false"
-    signup_open = "true"
-    if mode == "onboarding":
-        keywords_payload = "[]"
-    else:
-        keywords_payload = "[]"
 
-    return f"""
-(() => {{
-  function ok(data) {{
-    return Promise.resolve({{ data, error: null }});
-  }}
+    # f-string 중첩 이스케이프 오류 방지 — 템플릿 문자열로 분리
+    template = """
+(function() {
+  function ok(data) {
+    return Promise.resolve({ data: data, error: null });
+  }
 
-  function buildQuery(table) {{
-    const state = {{ table, filters: {{}} }};
-    const q = {{
-      select() {{ return q; }},
-      eq(key, val) {{ state.filters[key] = val; return q; }},
-      order() {{ return resolveRows(); }},
-      limit() {{ return resolveRows(); }},
-      maybeSingle() {{ return resolveSingle(); }},
-      single() {{ return resolveSingle(); }},
-      upsert() {{ return ok(null); }},
-      insert() {{ return ok(null); }},
-      update() {{ return q; }},
-    }};
+  function buildQuery(table) {
+    var q = {
+      select: function() { return q; },
+      eq:     function() { return q; },
+      order:  function() { return resolveRows(); },
+      limit:  function() { return resolveRows(); },
+      maybeSingle: function() { return resolveSingle(); },
+      single:      function() { return resolveSingle(); },
+      upsert: function() { return ok(null); },
+      insert: function() { return ok(null); },
+      update: function() { return q; },
+    };
 
-    function resolveSingle() {{
-      if (state.table === 'app_settings') {{
-        return ok({{ value: '{signup_open}' }});
-      }}
-      if (state.table === 'user_settings') {{
-        return ok({{ keywords: {keywords_payload} }});
-      }}
+    function resolveSingle() {
+      if (table === 'app_settings')  { return ok({ value: 'true' }); }
+      if (table === 'user_settings') { return ok({ keywords: KEYWORDS_PAYLOAD }); }
       return ok(null);
-    }}
+    }
 
-    function resolveRows() {{
-      if (state.table === 'industry_map')    {{ return ok([]); }}
-      if (state.table === 'reports')         {{ return ok([]); }}
-      if (state.table === 'brief_employees') {{ return ok([]); }}
-      if (state.table === 'agents')          {{ return ok([]); }}
+    function resolveRows() {
       return ok([]);
-    }}
+    }
 
     return q;
-  }}
+  }
 
-  window.supabase = {{
-    createClient: function() {{
-      return {{
-        auth: {{
-          getSession: async () => ({{
-            data: {{
-              session: {authenticated}
-                ? {{
-                    user: {{
-                      id: 'test-user-1',
-                      email: 'smoke-user@example.com'
-                    }}
-                  }}
-                : null
-            }},
-            error: null
-          }}),
-          signOut: async () => ({{ error: null }}),
-          signInWithOtp: async () => ({{ error: null }}),
-        }},
-        from: function(table) {{
-          return buildQuery(table);
-        }},
-        channel: function() {{
-          return {{
-            on: function() {{ return this; }},
-            subscribe: function() {{ return this; }},
-          }};
-        }},
-      }};
-    }}
-  }};
-}})();
+  window.supabase = {
+    createClient: function() {
+      return {
+        auth: {
+          getSession: async function() {
+            return {
+              data: {
+                session: IS_AUTHENTICATED ? {
+                  user: { id: 'test-user-1', email: 'smoke-user@example.com' }
+                } : null
+              },
+              error: null
+            };
+          },
+          signOut:       async function() { return { error: null }; },
+          signInWithOtp: async function() { return { error: null }; },
+        },
+        from: function(table) { return buildQuery(table); },
+        channel: function() {
+          return {
+            on:        function() { return this; },
+            subscribe: function() { return this; },
+          };
+        },
+      };
+    }
+  };
+})();
 """
+    script = template.replace("IS_AUTHENTICATED", authenticated)
+    script = script.replace("KEYWORDS_PAYLOAD", "[]")
+    return script
 
 
 def attach_stub(context, mode: str) -> None:
