@@ -15,7 +15,7 @@ body{font-family:'Pretendard',sans-serif;margin:0;background:var(--bg);color:#22
 
 /* 보안바 */
 .sec-bar{background:#111;color:#eee;padding:12px 20px;border-radius:14px;margin-bottom:18px;display:flex;gap:12px;align-items:center;font-size:.85rem;flex-wrap:wrap}
-.sec-bar input{flex:1;min-width:200px;padding:6px 12px;background:rgba(255,255,255,.1);border:1px solid #444;color:#fff;border-radius:8px;font-size:.85rem}
+.sec-bar input{flex:1;min-width:180px;padding:6px 12px;background:rgba(255,255,255,.1);border:1px solid #444;color:#fff;border-radius:8px;font-size:.85rem}
 .sec-bar input::placeholder{color:#888}
 .sec-bar button{padding:6px 14px;background:#ff4d4f;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:.82rem;white-space:nowrap}
 .sec-bar .sep{color:#444;font-size:1rem;user-select:none}
@@ -49,7 +49,8 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 /* 상태 뱃지 */
 .s-tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.75rem;font-weight:700;margin-left:6px}
 .s-PENDING{background:#fff3cd;color:#856404}
-.s-PENDING_MASTER{background:#fff3cd;color:#856404}
+.s-PENDING_HR{background:#fff3cd;color:#856404}
+.s-PENDING_MASTER{background:#e0f2fe;color:#075985}
 .s-CONFIRMED{background:#cce5ff;color:#004085}
 .s-DEVELOPING{background:#d4edda;color:#155724}
 .s-DEPLOYED{background:#d1ecf1;color:#0c5460}
@@ -58,6 +59,9 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 .s-SUCCEEDED{background:#dcfce7;color:#166534}
 .s-APPROVED{background:#d4edda;color:#155724}
 .s-REJECTED{background:#f8d7da;color:#721c24}
+.s-AUTO_APPROVED{background:#dbeafe;color:#1e40af}
+.s-ACTIVE{background:#d4edda;color:#155724}
+.s-FIRED{background:#f8d7da;color:#721c24}
 .s-UNKNOWN{background:#e5e7eb;color:#374151}
 .s-FAILED,.s-BACKUP_FAILED,.s-SYNTAX_ERROR,.s-VALIDATION_ERROR,.s-DEPLOY_FAILED{background:#f8d7da;color:#721c24}
 
@@ -129,13 +133,12 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 .one-rule-warn{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:.82rem;color:#c2410c;margin-bottom:10px;display:none}
 .one-rule-warn.show{display:block}
 
-/* 회원 관리 탭 */
+/* 회원 관리 */
 .member-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
 .member-stat-card{background:#fff;border:1px solid #eee;border-radius:14px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .member-stat-label{font-size:.7rem;color:#9ca3af;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
 .member-stat-value{font-size:1.8rem;font-weight:900;color:#111}
 .member-stat-unit{font-size:.75rem;color:#6b7280;margin-top:3px}
-
 .signup-control{background:#fff;border:1px solid #eee;border-left:6px solid #10b981;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .signup-status-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
 .signup-status-badge{padding:6px 18px;border-radius:20px;font-size:.88rem;font-weight:800}
@@ -147,7 +150,6 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 .lever-label{font-size:.72rem;font-weight:700;color:#64748b;letter-spacing:.5px;margin-bottom:8px;text-transform:uppercase}
 .lever-value{font-size:1rem;font-weight:800;color:#0f172a;margin-bottom:8px}
 .lever-btns{display:flex;gap:6px}
-
 .member-table-wrap{background:#fff;border:1px solid #eee;border-radius:16px;overflow:hidden;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
 .member-table{width:100%;border-collapse:collapse;font-size:.84rem}
 .member-table th{background:#f8fafc;padding:10px 14px;text-align:left;font-weight:700;color:#64748b;font-size:.76rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid #e2e8f0}
@@ -165,36 +167,69 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 .ban-btn:hover{opacity:.8}
 .sr-warn{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 16px;font-size:.84rem;color:#92400e;margin-bottom:14px;display:none}
 .sr-warn.show{display:block}
+
+/* ══ 인사(STAFF) 탭 ══ */
+.hr-staff-section{background:#fff;border:1px solid #eee;border-left:6px solid #f97316;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.hr-staff-section h3{margin:0 0 14px;color:#222;font-size:1rem}
+.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:16px}
+.staff-card{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:14px}
+.staff-card.fired{opacity:.55;background:#fff5f5;border-color:#fecaca}
+.staff-role-badge{display:inline-block;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:8px}
+.staff-name{font-size:.92rem;font-weight:800;color:#0f172a;margin-bottom:3px}
+.staff-title{font-size:.78rem;color:#64748b;margin-bottom:10px}
+.staff-btn{padding:5px 11px;border-radius:8px;border:none;font-size:.76rem;font-weight:700;cursor:pointer}
+.staff-fire-btn{background:#fee2e2;color:#b91c1c}
+.staff-fire-btn:hover{background:#fecaca}
+.hr-proposal-card{background:#fff;border:1px solid #e0e0e0;border-left:6px solid #f59e0b;padding:16px;border-radius:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.hr-proposal-card.master-pending{border-left-color:#3b82f6}
+.hr-proposal-type{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;margin-right:6px}
+.hr-proposal-type.HIRE{background:#dcfce7;color:#15803d}
+.hr-proposal-type.FIRE{background:#fee2e2;color:#b91c1c}
+.hr-proposal-reason{font-size:.84rem;color:#475569;line-height:1.6;background:#f8fafc;padding:10px 12px;border-radius:8px;margin:8px 0}
+.auto-approve-note{font-size:.75rem;color:#6b7280;margin-top:6px}
+
+/* ══ 사이트 정책 탭 ══ */
+.agent-sites-section{background:#fff;border:1px solid #eee;border-left:6px solid #7c3aed;border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.site-agent-card{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;margin-bottom:12px}
+.site-agent-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.site-agent-role{font-size:.82rem;font-weight:800;padding:4px 12px;border-radius:20px}
+.site-table{width:100%;border-collapse:collapse;font-size:.8rem;margin-bottom:10px}
+.site-table th{background:#f1f5f9;padding:7px 10px;text-align:left;font-weight:700;color:#64748b;font-size:.73rem;border-bottom:1px solid #e2e8f0}
+.site-table td{padding:7px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.site-url{color:#2563eb;font-size:.78rem;word-break:break-all}
+.site-policy-badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.7rem;font-weight:700}
+.site-policy-badge.allow{background:#dcfce7;color:#15803d}
+.site-policy-badge.deny{background:#fee2e2;color:#b91c1c}
+.site-policy-badge.limit{background:#fef9c3;color:#854d0e}
+.site-add-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.site-add-row input{flex:1;min-width:140px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:.82rem;font-family:inherit}
+.site-add-row select{width:auto;padding:8px 12px;margin:0;font-size:.82rem}
+.site-add-btn{padding:8px 14px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:.82rem;font-weight:700;cursor:pointer}
+.site-remove-btn{padding:3px 8px;background:#fee2e2;color:#b91c1c;border:none;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- ── 보안바 (GHP 토큰 + Service Role 키) ── -->
+  <!-- ── 보안바 ── -->
   <div class="sec-bar">
     <span>🔒 <b>Auth Center</b></span>
-
-    <!-- GHP 토큰 -->
     <input type="password" id="ghp-token" placeholder="ghp_... GitHub PAT">
     <button onclick="saveToken()">GHP 저장</button>
     <span id="token-status" style="color:#aaa">GHP 미입력</span>
-
     <span class="sep">│</span>
-
-    <!-- Service Role 키 (신규) -->
     <input type="password" id="sr-key-input" placeholder="eyJ... Supabase service_role key">
     <button onclick="saveSrKey()" style="background:#7c3aed">SR 저장</button>
     <span id="sr-status" style="color:#aaa">SR 미입력</span>
-
     <span class="auto-badge" id="auto-badge" style="display:none">⏱ 자동승인 ON</span>
-    <span class="sr-badge" id="sr-badge" style="display:none">🔑 SR 활성화</span>
+    <span class="sr-badge"   id="sr-badge"   style="display:none">🔑 SR 활성화</span>
   </div>
 
   <!-- 헤더 -->
   <div class="hdr">
     <div>
       <h1 onclick="location.href='index.html'">Sovereign HQ</h1>
-      <small>v20.0 · <span id="now-time"></span></small>
+      <small>v21.0 · <span id="now-time"></span></small>
     </div>
     <div class="hdr-btns">
       <button class="btn" onclick="location.href='index.html'">🌐 홈</button>
@@ -208,6 +243,8 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
     <div id="t-hr"     class="tab on" onclick="tab('hr')">🕵️ 전략</div>
     <div id="t-evo"    class="tab"    onclick="tab('evo')">🧠 지능 <span class="badge" id="evo-cnt" style="display:none">0</span></div>
     <div id="t-dev"    class="tab"    onclick="tab('dev')">🛠️ 개발 <span class="badge" id="dev-cnt" style="display:none">0</span></div>
+    <div id="t-staff"  class="tab"    onclick="tab('staff')">👤 인사 <span class="badge" id="staff-cnt" style="display:none">0</span></div>
+    <div id="t-sites"  class="tab"    onclick="tab('sites')">🌐 사이트</div>
     <div id="t-member" class="tab"    onclick="tab('member')">👥 회원</div>
     <div id="t-log"    class="tab"    onclick="tab('log')">📋 포럼</div>
     <div id="t-voc"    class="tab"    onclick="tab('voc')">💬 VOC</div>
@@ -225,14 +262,13 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 
   <!-- ② 지능 탭 -->
   <div id="v-evo" style="display:none">
-    <div class="countdown" id="countdown-bar">
+    <div class="countdown">
       <div>
         <div style="font-weight:700;margin-bottom:2px">⏳ 23:30 자동승인까지</div>
         <div style="font-size:.78rem;color:#aaa">미결 안건은 자동으로 APPROVED 처리됩니다</div>
       </div>
       <div class="timer" id="countdown-timer">--:--:--</div>
     </div>
-
     <div class="directive-section">
       <h3>✍️ 지능 하달</h3>
       <div class="mode-tabs">
@@ -256,11 +292,10 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
       <div class="one-rule-warn" id="one-rule-warn">
         ⚠️ 지침은 <b>1개 안건만</b> 입력해주세요. 여러 내용을 동시에 입력하면 반영 효과가 낮아집니다.
       </div>
-      <textarea id="m-text" rows="3" placeholder="에이전트에게 직접 지침을 하달하세요. (예: '분석 결론을 항상 첫 문장에 배치할 것')" oninput="onDirectiveInput(this)"></textarea>
+      <textarea id="m-text" rows="3" placeholder="에이전트에게 직접 지침을 하달하세요." oninput="onDirectiveInput(this)"></textarea>
       <div class="char-count" id="char-count">0자</div>
       <button class="btn" style="background:#111;color:#fff;border:none;width:100%" onclick="sendDirectOrder()">⚡ 즉시 하달 (바로 적용)</button>
     </div>
-
     <div id="evo-status-filters" class="status-filter-row"></div>
     <div id="pending-evo-list"></div>
     <div id="live-agent-list"></div>
@@ -270,7 +305,7 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
   <div id="v-dev" style="display:none">
     <div class="card" style="border-left-color:var(--dev);background:#f5f0ff">
       <h3>🛠️ 새 개발 안건 등록</h3>
-      <input id="d-title" placeholder="안건 제목" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;margin-bottom:10px;font-size:.9rem">
+      <input id="d-title" placeholder="안건 제목" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;margin-bottom:10px;font-size:.9rem;font-family:inherit">
       <textarea id="d-task" rows="4" placeholder="요구사항을 상세히 작성하세요."></textarea>
       <button class="btn" style="background:var(--dev);color:#fff;border:none;width:100%" onclick="addDev()">📋 백로그 등록</button>
     </div>
@@ -283,16 +318,50 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
     </div>
   </div>
 
-  <!-- ④ 회원 관리 탭 (신규) -->
-  <div id="v-member" style="display:none">
+  <!-- ④ 인사 탭 (NEW) -->
+  <div id="v-staff" style="display:none">
+    <div class="hr-staff-section">
+      <h3>👥 에이전트별 직원 현황</h3>
+      <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <select id="staff-agent-filter" onchange="renderStaffByAgent()" style="margin:0;width:auto;padding:8px 12px">
+          <option value="">전체 에이전트</option>
+        </select>
+        <button class="btn" style="background:#f97316;color:#fff;border:none;padding:8px 16px" onclick="openAddStaffModal()">+ 직원 추가</button>
+      </div>
+      <div id="staff-grid-wrap">로드 중...</div>
+    </div>
+    <div class="hr-staff-section" style="border-left-color:#3b82f6">
+      <h3>📋 HR 인사 제안 결재함</h3>
+      <div style="font-size:.82rem;color:#64748b;margin-bottom:12px">
+        BRIEF 에이전트가 채용/해고를 제안 → HR 검토 → 마스터 최종 결재 (미결 시 23:30 자동승인)
+      </div>
+      <div class="status-filter-row" id="hr-prop-filter-row">
+        <span class="status-chip on"  data-f="ALL"            onclick="setHrFilter('ALL',this)">전체 <span class="cnt" id="hf-all">0</span></span>
+        <span class="status-chip"     data-f="PENDING_HR"     onclick="setHrFilter('PENDING_HR',this)">HR 검토중 <span class="cnt" id="hf-hr">0</span></span>
+        <span class="status-chip"     data-f="PENDING_MASTER" onclick="setHrFilter('PENDING_MASTER',this)">마스터 결재 <span class="cnt" id="hf-master">0</span></span>
+        <span class="status-chip"     data-f="APPROVED"       onclick="setHrFilter('APPROVED',this)">승인 <span class="cnt" id="hf-approved">0</span></span>
+        <span class="status-chip"     data-f="AUTO_APPROVED"  onclick="setHrFilter('AUTO_APPROVED',this)">자동승인 <span class="cnt" id="hf-auto">0</span></span>
+        <span class="status-chip"     data-f="REJECTED"       onclick="setHrFilter('REJECTED',this)">반려 <span class="cnt" id="hf-rejected">0</span></span>
+      </div>
+      <div id="hr-proposal-list">로드 중...</div>
+    </div>
+  </div>
 
-    <!-- service_role 키 없을 때 경고 -->
+  <!-- ⑤ 사이트 정책 탭 (NEW) -->
+  <div id="v-sites" style="display:none">
+    <div class="agent-sites-section">
+      <h3>🌐 에이전트 콘텐츠 수집 사이트 & 정책</h3>
+      <div style="font-size:.82rem;color:#64748b;margin-bottom:16px">각 에이전트가 뉴스/콘텐츠를 수집하는 사이트 목록과 허용/차단 정책을 관리합니다.</div>
+      <div id="agent-sites-list">로드 중...</div>
+    </div>
+  </div>
+
+  <!-- ⑥ 회원 탭 -->
+  <div id="v-member" style="display:none">
     <div class="sr-warn" id="sr-warn-member">
       🔑 일부 기능(개별 차단/해제)은 <b>service_role 키</b>가 필요합니다.<br>
       위 보안바에서 SR 키를 저장하면 모든 기능이 활성화됩니다.
     </div>
-
-    <!-- 통계 카드 -->
     <div class="member-stat-grid">
       <div class="member-stat-card" style="border-top:3px solid #2563eb">
         <div class="member-stat-label">현재 회원 수</div>
@@ -310,14 +379,10 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
         <div class="member-stat-unit">Supabase Auth</div>
       </div>
     </div>
-
-    <!-- 가입 제어 레버 2개 -->
     <div class="signup-control">
       <h3>🎚️ 가입 제어 (레버 2개)</h3>
       <p style="font-size:.82rem;color:#64748b;margin:-6px 0 14px">두 레버 모두 허용일 때만 실제로 가입이 열립니다.</p>
-
       <div class="signup-lever-row">
-        <!-- 레버 1: 수동 ON/OFF -->
         <div class="lever-card">
           <div class="lever-label">레버 1 — 수동 제어</div>
           <div class="lever-value" id="lever1-val">로딩 중...</div>
@@ -326,7 +391,6 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
             <button class="sm" style="background:#ef4444" onclick="setSignupStatus(false)">🔒 제한</button>
           </div>
         </div>
-        <!-- 레버 2: 최대 회원 수 -->
         <div class="lever-card">
           <div class="lever-label">레버 2 — 최대 회원 수</div>
           <div class="lever-value" id="lever2-val">로딩 중...</div>
@@ -337,21 +401,19 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
           </div>
         </div>
       </div>
-
-      <!-- 실제 Auth 상태 표시 -->
       <div class="signup-status-row">
         <span style="font-size:.88rem;font-weight:700;color:#475569">실제 Supabase Auth 상태:</span>
         <span class="signup-status-badge" id="signup-status-badge">확인 중...</span>
         <button class="btn" style="padding:6px 14px;font-size:.82rem" onclick="loadMemberSettings()">🔄 새로고침</button>
       </div>
     </div>
-
-    <!-- 회원 목록 -->
     <div class="card" style="border-left-color:#2563eb">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <h3 style="margin:0">👤 회원 목록</h3>
         <div style="display:flex;gap:6px;align-items:center">
-          <input id="member-search" placeholder="이메일 검색..." style="padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.84rem;font-family:inherit;width:200px" oninput="filterMembers()">
+          <input id="member-search" placeholder="이메일 검색..."
+                 style="padding:6px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:.84rem;font-family:inherit;width:200px"
+                 oninput="filterMembers()">
           <button class="sm" style="background:#475569" onclick="loadMemberList()">불러오기</button>
         </div>
       </div>
@@ -361,822 +423,531 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
     </div>
   </div>
 
-  <!-- ⑤ 포럼 탭 -->
+  <!-- ⑦ 포럼 탭 -->
   <div id="v-log" style="display:none">
     <div id="forum-box"><span style="color:#8be9fd"># Sovereign HQ — 작전 로그</span><br>로딩 중...</div>
     <div style="display:flex;gap:10px;margin-top:14px">
-      <button class="btn" style="flex:1;background:var(--admin);color:#fff;border:none;padding:15px" onclick="triggerRun()">🚀 시스템 즉시 가동</button>
-      <button class="btn" style="background:#333;color:#fff;border:none;padding:15px" onclick="loadLogs()">🔄 로그 새로고침</button>
+      <button class="btn" onclick="loadLogs()">🔄 로그 갱신</button>
+      <button class="btn" style="background:#111;color:#fff;border:none" onclick="triggerRun()">🚀 즉시 시스템 가동</button>
     </div>
   </div>
 
-  <!-- ⑥ VOC 탭 -->
+  <!-- ⑧ VOC 탭 -->
   <div id="v-voc" style="display:none">
+    <div class="row" style="margin-bottom:14px">
+      <h3 style="margin:0">💬 사용자 피드백 (VOC)</h3>
+      <button class="btn" onclick="loadVoc()">🔄 갱신</button>
+    </div>
     <div id="voc-list"></div>
   </div>
 
-  <!-- ⑦ 비용 탭 -->
+  <!-- ⑨ 비용 탭 -->
   <div id="v-cost" style="display:none">
+    <h3>💰 API 비용 현황</h3>
     <div class="cost-grid">
-      <div class="cost-card" style="border-top:3px solid #f59e0b">
-        <div class="cost-label">오늘 Gemini 호출</div>
-        <div class="cost-value" id="c-calls">—</div>
-        <div class="cost-unit">회</div>
-      </div>
-      <div class="cost-card" style="border-top:3px solid #10b981">
-        <div class="cost-label">오늘 추정 비용</div>
-        <div class="cost-value" id="c-cost" style="color:#059669">—</div>
-        <div class="cost-unit">USD</div>
-      </div>
-      <div class="cost-card" style="border-top:3px solid #6366f1">
-        <div class="cost-label">Supabase 총 rows</div>
-        <div class="cost-value" id="c-rows">—</div>
-        <div class="cost-unit">/ 500,000 무료 한도</div>
-      </div>
-      <div class="cost-card" style="border-top:3px solid #ec4899">
-        <div class="cost-label">7일 누적 비용</div>
-        <div class="cost-value" id="c-week">—</div>
-        <div class="cost-unit">USD</div>
-      </div>
+      <div class="cost-card"><div class="cost-label">오늘 토큰</div><div class="cost-value" id="c-tokens">—</div><div class="cost-unit">tokens</div></div>
+      <div class="cost-card"><div class="cost-label">오늘 비용(추정)</div><div class="cost-value" id="c-cost">—</div><div class="cost-unit">USD</div></div>
+      <div class="cost-card"><div class="cost-label">이번달 누적</div><div class="cost-value" id="c-month">—</div><div class="cost-unit">USD</div></div>
+      <div class="cost-card"><div class="cost-label">DB rows</div><div class="cost-value" id="c-rows">—</div><div class="cost-unit">rows</div></div>
     </div>
-    <div class="card" style="border-left-color:#f59e0b">
-      <h3>📈 7일 Gemini 호출 추이</h3>
-      <canvas id="cost-chart" height="180"></canvas>
-    </div>
-    <div class="card" style="border-left-color:#6366f1">
-      <h3>🗄️ Supabase 테이블별 row 수</h3>
-      <div id="c-row-detail">로드 중...</div>
-    </div>
-    <div class="card" style="border-left-color:#e5e7eb">
-      <h3>📋 오늘 호출 유형별 내역</h3>
-      <div id="c-breakdown">로드 중...</div>
+    <div id="c-breakdown">로드 중...</div>
+    <div id="c-row-detail" style="margin-top:14px"></div>
+  </div>
+</div><!-- /wrap -->
+
+<!-- 직원 추가 모달 -->
+<div id="add-staff-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:18px;padding:28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <h3 style="margin:0 0 18px">👤 직원 추가 (BRIEF 제안)</h3>
+    <select id="add-staff-agent" style="margin-bottom:10px"><option value="">에이전트 선택...</option></select>
+    <input type="text" id="add-staff-name" placeholder="직원 이름 (예: 김민준)"
+           style="width:100%;padding:11px 13px;border:1px solid #ddd;border-radius:10px;margin-bottom:10px;font-family:inherit;font-size:.9rem">
+    <input type="text" id="add-staff-title" placeholder="직책 (예: 선임 리서처)"
+           style="width:100%;padding:11px 13px;border:1px solid #ddd;border-radius:10px;margin-bottom:10px;font-family:inherit;font-size:.9rem">
+    <textarea id="add-staff-reason" rows="3" placeholder="채용 제안 사유..." style="margin-bottom:10px"></textarea>
+    <div style="display:flex;gap:8px">
+      <button class="btn" style="flex:1;background:#111;color:#fff;border:none" onclick="submitStaffHireProposal()">📤 HR에 제안</button>
+      <button class="btn" style="flex:1" onclick="closeAddStaffModal()">취소</button>
     </div>
   </div>
-
-</div><!-- /wrap -->
+</div>
 
 <div id="toast"></div>
 
 <script>
 /* ══════════════════════════════════════════
-   CFG — service_role은 런타임에 localStorage에서 주입
+   CFG / Supabase 초기화
    ══════════════════════════════════════════ */
 const CFG = {
   url:          'https://zrlpwmpbrvohautldcon.supabase.co',
   key:          'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G',
-  service_role: '',   // saveSrKey() 호출 시 채워짐
+  service_role: '',
   master:       'positivecha@gmail.com',
   owner:        'fitzcha',
   repo:         'newsbot',
-  workflow:     'daily_run.yml'
+  workflow:     'daily_run.yml',
 };
-
 const sc = supabase.createClient(CFG.url, CFG.key);
-let me = null, autoTimer = null, costChartInstance = null;
+let me = null, autoTimer = null;
 let directiveMode = 'single';
-let allMembers = [];   // 회원 목록 캐시
+let allMembers = [];
+
+/* ── 지능 탭 상태 ── */
 let evoPropsAll = [], evoStatusFilter = 'PENDING', evoPage = 1;
 let evoAgentsAll = [], evoAgentPage = 1;
+const EVO_PAGE_SIZE = 6, EVO_AGENT_PAGE_SIZE = 6;
+const EVO_STATUS_BASE = ['ALL','PENDING','APPROVED','REJECTED'];
+
+/* ── 개발 탭 상태 ── */
 let devRowsAll = [], devStatusFilter = 'ALL', devPage = 1;
-let releaseLedgerAll = [], releaseStatusFilter = 'ALL', releasePage = 1;
-const EVO_PAGE_SIZE = 6;
-const EVO_AGENT_PAGE_SIZE = 6;
 const DEV_PAGE_SIZE = 6;
+const DEV_STATUS_BASE = ['ALL','PENDING','PENDING_MASTER','CONFIRMED','DEVELOPING','COMPLETED','DEPLOYED','FAILED','REJECTED'];
+
+/* ── 릴리즈 이력 상태 ── */
+let releaseLedgerAll = [], releaseStatusFilter = 'ALL', releasePage = 1;
 const RELEASE_PAGE_SIZE = 8;
+const RELEASE_STATUS_BASE = ['ALL','RUNNING','SUCCEEDED','FAILED','UNKNOWN'];
+
+/* ── 인사 탭 상태 ── */
+let staffAll = [], hrProposalsAll = [], hrFilter = 'ALL';
+
+/* ── 사이트 탭 상태 ── */
+let sitesData = {};
+
+const ROLE_COLORS = {BA:'#2563eb',STOCK:'#0891b2',PM:'#7c3aed',HR:'#f97316',BRIEF:'#10b981',KW:'#8b5cf6',DATA:'#f59e0b',INFO:'#06b6d4',DEV:'#64748b',QA:'#ec4899'};
 
 const STATUS_KO = {
-  ALL: '전체',
-  PENDING: '대기',
-  PENDING_MASTER: '대표승인대기',
-  CONFIRMED: '확정',
-  DEVELOPING: '배포중',
-  COMPLETED: '완료',
-  DEPLOYED: '배포완료',
-  RUNNING: '진행중',
-  SUCCEEDED: '성공',
-  UNKNOWN: '알수없음',
-  APPROVED: '승인',
-  REJECTED: '반려',
-  FAILED: '실패',
-  BACKUP_FAILED: '백업실패',
-  SYNTAX_ERROR: '문법오류',
-  VALIDATION_ERROR: '검증오류',
-  DEPLOY_FAILED: '배포실패',
+  ALL:'전체', PENDING:'대기', PENDING_HR:'HR검토중', PENDING_MASTER:'마스터결재',
+  CONFIRMED:'확정', DEVELOPING:'배포중', COMPLETED:'완료', DEPLOYED:'배포완료',
+  RUNNING:'진행중', SUCCEEDED:'성공', UNKNOWN:'알수없음',
+  APPROVED:'승인', REJECTED:'반려', AUTO_APPROVED:'자동승인',
+  ACTIVE:'재직', FIRED:'해고',
+  FAILED:'실패', BACKUP_FAILED:'백업실패', SYNTAX_ERROR:'문법오류',
+  VALIDATION_ERROR:'검증오류', DEPLOY_FAILED:'배포실패',
 };
-const EVO_STATUS_BASE = ['ALL','PENDING','APPROVED','REJECTED'];
-const DEV_STATUS_BASE = ['ALL','PENDING','PENDING_MASTER','CONFIRMED','DEVELOPING','COMPLETED','DEPLOYED','FAILED','REJECTED'];
-const RELEASE_STATUS_BASE = ['ALL','RUNNING','SUCCEEDED','FAILED','UNKNOWN'];
+
 const ROLE_BRIEF = {
-  BA: '비즈니스 모델과 경쟁 구도를 해석합니다.',
-  STOCK: '시장 반응과 투자 시그널을 분석합니다.',
-  PM: '서비스 기획 우선순위와 실행 전략을 제안합니다.',
-  HR: '조직 운영과 인사/문화 관점을 점검합니다.',
-  DEV: '개발 구현과 배포 안정성을 관리합니다.',
-  QA: '품질 리스크를 사전 검증합니다.',
-  BRIEF: '핵심 브리핑을 짧고 명확하게 요약합니다.',
-  KW: '키워드 확장/정제를 통해 탐지 정확도를 높입니다.',
-  DATA: '데이터 수집 품질과 커버리지를 개선합니다.',
-  INFO: '외부 정보의 맥락과 신뢰도를 보강합니다.',
-  MASTER: '에이전트 운영을 총괄 조정합니다.',
+  BA:'비즈니스 모델과 경쟁 구도를 해석합니다.',
+  STOCK:'시장 반응과 투자 시그널을 분석합니다.',
+  PM:'서비스 기획 우선순위와 실행 전략을 제안합니다.',
+  HR:'조직 운영과 인사/문화 관점을 점검합니다.',
+  DEV:'개발 구현과 배포 안정성을 관리합니다.',
+  QA:'품질 리스크를 사전 검증합니다.',
+  BRIEF:'핵심 브리핑을 짧고 명확하게 요약합니다.',
+  KW:'키워드 확장/정제를 통해 탐지 정확도를 높입니다.',
+  DATA:'데이터 수집 품질과 커버리지를 개선합니다.',
+  INFO:'외부 정보의 맥락과 신뢰도를 보강합니다.',
+  MASTER:'에이전트 운영을 총괄 조정합니다.',
 };
 
-/* ──────────────────────────────────────────
-   유틸
-────────────────────────────────────────── */
+/* ── 유틸 ── */
 function toast(msg, dur=3000) {
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), dur);
+  const el=$id('toast'); el.textContent=msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), dur);
 }
-function $id(id) { return document.getElementById(id); }
-function render(id, html) { const el=$id(id); if(el) el.innerHTML=html; }
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function escJsStr(s) {
-  return String(s)
-    .replace(/\\/g, '\\\\')
-    .replace(/'/g, "\\'")
-    .replace(/\n/g, '\\n')
-    .replace(/\r/g, '');
-}
-function getSrKey() { return CFG.service_role || localStorage.getItem('sr_key') || ''; }
-function hasSrKey() { return !!getSrKey(); }
-function statusLabel(s) { return STATUS_KO[s] || s; }
-function summarizeText(raw, maxLen=130) {
-  const txt = String(raw || '')
-    .replace(/\[PROPOSAL\]|\[REASON\]|\[NEEDS_DEV\]/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+function $id(id){ return document.getElementById(id); }
+function render(id, html){ const el=$id(id); if(el) el.innerHTML=html; }
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escJsStr(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n').replace(/\r/g,''); }
+function statusLabel(s){ return STATUS_KO[s]||s; }
+function getSrKey(){ return CFG.service_role||localStorage.getItem('sr_key')||''; }
+function hasSrKey(){ return !!getSrKey(); }
+function shortSha(v){ const s=String(v||'').trim(); return s?s.slice(0,8):'-'; }
+function summarizeText(raw, maxLen=130){
+  const txt=String(raw||'').replace(/\[PROPOSAL\]|\[REASON\]|\[NEEDS_DEV\]/gi,' ').replace(/\s+/g,' ').trim();
   if(!txt) return '요약 정보 없음';
-  if(txt.length <= maxLen) return txt;
-  const cut = txt.slice(0, maxLen);
-  const stop = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '), cut.lastIndexOf('다.'));
-  return (stop > 40 ? cut.slice(0, stop + 1) : cut) + '…';
+  if(txt.length<=maxLen) return txt;
+  const cut=txt.slice(0,maxLen);
+  const stop=Math.max(cut.lastIndexOf('. '),cut.lastIndexOf('! '),cut.lastIndexOf('? '),cut.lastIndexOf('다.'));
+  return (stop>40?cut.slice(0,stop+1):cut)+'…';
 }
-function withExtraStatuses(base, counts) {
-  const extras = Object.keys(counts).filter(k => k !== 'ALL' && !base.includes(k));
-  return [...base, ...extras];
+function withExtraStatuses(base, counts){
+  const extras=Object.keys(counts).filter(k=>k!=='ALL'&&!base.includes(k));
+  return [...base,...extras];
 }
-function buildStatusFilterHTML(order, active, counts, clickFn) {
-  return order.map(st => `
+function buildStatusFilterHTML(order, active, counts, clickFn){
+  return order.map(st=>`
     <button class="status-chip ${st===active?'on':''}" onclick="${clickFn}('${st}')">
-      ${statusLabel(st)} <span class="cnt">${counts[st] || 0}</span>
-    </button>
-  `).join('');
+      ${statusLabel(st)} <span class="cnt">${counts[st]||0}</span>
+    </button>`).join('');
 }
-function buildPagerHTML(page, totalPages, totalItems, pageSize, prevFn, nextFn) {
-  if(totalPages <= 1) return '';
-  const from = totalItems === 0 ? 0 : ((page - 1) * pageSize + 1);
-  const to = Math.min(page * pageSize, totalItems);
-  return `
-    <div class="list-pager">
-      <button class="pbtn" onclick="${prevFn}()" ${page<=1?'disabled':''}>◀ 이전</button>
-      <span class="pinfo">${page}/${totalPages} · ${from}-${to}</span>
-      <button class="pbtn" onclick="${nextFn}()" ${page>=totalPages?'disabled':''}>다음 ▶</button>
-    </div>
-  `;
-}
-function shortSha(v) {
-  const s = String(v || '').trim();
-  if(!s) return '-';
-  return s.slice(0, 8);
+function buildPagerHTML(page, totalPages, totalItems, pageSize, prevFn, nextFn){
+  if(totalPages<=1) return '';
+  const from=totalItems===0?0:((page-1)*pageSize+1), to=Math.min(page*pageSize,totalItems);
+  return `<div class="list-pager">
+    <button class="pbtn" onclick="${prevFn}()" ${page<=1?'disabled':''}>◀ 이전</button>
+    <span class="pinfo">${page}/${totalPages} · ${from}-${to}</span>
+    <button class="pbtn" onclick="${nextFn}()" ${page>=totalPages?'disabled':''}>다음 ▶</button>
+  </div>`;
 }
 
-/* ──────────────────────────────────────────
-   토큰 / SR 키 관리
-────────────────────────────────────────── */
-function saveToken() {
-  const v = $id('ghp-token').value.trim();
+/* ── 토큰 / SR 키 ── */
+function saveToken(){
+  const v=$id('ghp-token').value.trim();
   if(!v) return toast('❌ GHP 토큰을 입력하세요');
-  localStorage.setItem('ghp_token', v);
-  updateTokenStatus(v);
-  toast('✅ GHP 토큰 저장 완료');
+  localStorage.setItem('ghp_token',v); updateTokenStatus(v); toast('✅ GHP 토큰 저장 완료');
 }
-function getToken() { return localStorage.getItem('ghp_token') || ''; }
-function updateTokenStatus(t) {
-  $id('token-status').textContent = t ? '✅ GHP 활성' : '⚠️ 미입력';
-  $id('token-status').style.color = t ? '#50fa7b' : '#ffb86c';
+function getToken(){ return localStorage.getItem('ghp_token')||''; }
+function updateTokenStatus(t){
+  $id('token-status').textContent=t?'✅ GHP 활성':'⚠️ 미입력';
+  $id('token-status').style.color=t?'#50fa7b':'#ffb86c';
 }
-
-function saveSrKey() {
-  const v = $id('sr-key-input').value.trim();
+function saveSrKey(){
+  const v=$id('sr-key-input').value.trim();
   if(!v) return toast('❌ service_role 키를 입력하세요');
-  localStorage.setItem('sr_key', v);
-  CFG.service_role = v;
-  updateSrStatus(v);
-  toast('✅ Service Role 키 저장 완료');
-  // SR 키 저장 시 회원 탭 경고 숨김
+  localStorage.setItem('sr_key',v); CFG.service_role=v; updateSrStatus(v); toast('✅ Service Role 키 저장 완료');
   $id('sr-warn-member').classList.remove('show');
 }
-function updateSrStatus(k) {
-  const has = !!k;
-  $id('sr-status').textContent = has ? '✅ SR 활성' : '⚠️ 미입력';
-  $id('sr-status').style.color  = has ? '#a78bfa' : '#ffb86c';
-  $id('sr-badge').style.display  = has ? '' : 'none';
+function updateSrStatus(k){
+  const has=!!k;
+  $id('sr-status').textContent=has?'✅ SR 활성':'⚠️ 미입력';
+  $id('sr-status').style.color=has?'#a78bfa':'#ffb86c';
+  $id('sr-badge').style.display=has?'':'none';
 }
 
-/* ──────────────────────────────────────────
-   탭
-────────────────────────────────────────── */
-function tab(t) {
-  ['hr','evo','dev','member','log','voc','cost'].forEach(x => {
-    $id('v-'+x).style.display = x===t ? 'block' : 'none';
-    $id('t-'+x).classList.toggle('on', x===t);
+/* ── 탭 ── */
+const ALL_TABS=['hr','evo','dev','staff','sites','member','log','voc','cost'];
+function tab(t){
+  ALL_TABS.forEach(x=>{
+    const v=$id('v-'+x), tb=$id('t-'+x);
+    if(v) v.style.display=x===t?'block':'none';
+    if(tb) tb.classList.toggle('on',x===t);
   });
-  if(t === 'cost')   loadCost();
-  if(t === 'member') loadMemberSettings();
-  if(t === 'dev')    loadReleaseLedger();
+  if(t==='cost')   loadCost();
+  if(t==='member') loadMemberSettings();
+  if(t==='dev')    loadReleaseLedger();
+  if(t==='staff')  loadStaffTab();
+  if(t==='sites')  loadSitesTab();
+  if(t==='log')    loadLogs();
+  if(t==='voc')    loadVoc();
 }
 
-/* ──────────────────────────────────────────
-   시계 / 자동승인
-────────────────────────────────────────── */
-function startClock() {
-  const tick = () => {
-    const kst = new Date(Date.now() + (9*60 - new Date().getTimezoneOffset())*60000);
-    $id('now-time').textContent = kst.toLocaleTimeString('ko-KR');
+/* ── 시계 / 자동승인 타이머 ── */
+function startClock(){
+  const tick=()=>{
+    const kst=new Date(Date.now()+(9*60-new Date().getTimezoneOffset())*60000);
+    $id('now-time').textContent=kst.toLocaleTimeString('ko-KR');
   };
-  tick(); setInterval(tick, 1000);
+  tick(); setInterval(tick,1000);
 }
-function startAutoApprovalTimer() {
-  $id('auto-badge').style.display = '';
+function startAutoApprovalTimer(){
+  $id('auto-badge').style.display='';
   if(autoTimer) clearInterval(autoTimer);
-  autoTimer = setInterval(async () => {
-    const kst = new Date(Date.now() + (9*60 - new Date().getTimezoneOffset())*60000);
-    const [h,m,s] = [kst.getHours(), kst.getMinutes(), kst.getSeconds()];
-    if(h===23 && m===30 && s<5) { await runAutoApproval(); return; }
-    let now = h*3600+m*60+s, tgt = 23*3600+30*60;
-    if(now >= tgt) tgt += 86400;
-    let d = tgt-now, rh=Math.floor(d/3600), rm=Math.floor((d%3600)/60), rs=d%60;
-    const el = $id('countdown-timer');
-    el.textContent = `${String(rh).padStart(2,'0')}:${String(rm).padStart(2,'0')}:${String(rs).padStart(2,'0')}`;
-    el.className = 'timer'+(rh<1?(rm<30?' danger':' warn'):'');
-  }, 1000);
+  autoTimer=setInterval(async()=>{
+    const kst=new Date(Date.now()+(9*60-new Date().getTimezoneOffset())*60000);
+    const [h,m,s]=[kst.getHours(),kst.getMinutes(),kst.getSeconds()];
+    if(h===23&&m===30&&s<5){ await runAutoApproval(); await autoApproveStaffProposals(); return; }
+    let now=h*3600+m*60+s, tgt=23*3600+30*60;
+    if(now>=tgt) tgt+=86400;
+    let d=tgt-now, rh=Math.floor(d/3600), rm=Math.floor((d%3600)/60), rs=d%60;
+    const el=$id('countdown-timer');
+    el.textContent=`${String(rh).padStart(2,'0')}:${String(rm).padStart(2,'0')}:${String(rs).padStart(2,'0')}`;
+    el.className='timer'+(rh<1?(rm<30?' danger':' warn'):'');
+  },1000);
 }
-async function runAutoApproval() {
+async function runAutoApproval(){
   try {
-    const { data: pending } = await sc.from('pending_approvals').select('*').eq('status','PENDING');
+    const {data:pending}=await sc.from('pending_approvals').select('*').eq('status','PENDING');
     if(!pending?.length) return;
-    for(const p of pending) {
-      await sc.from('agents').update({ instruction: p.proposed_instruction }).eq('agent_role', p.agent_role);
-      await sc.from('pending_approvals').update({ status:'APPROVED' }).eq('id', p.id);
+    for(const p of pending){
+      await sc.from('agents').update({instruction:p.proposed_instruction}).eq('agent_role',p.agent_role);
+      await sc.from('pending_approvals').update({status:'APPROVED'}).eq('id',p.id);
     }
     toast(`⏰ 23:30 자동승인 완료 — ${pending.length}건 적용됨`);
     loadEvo();
-  } catch(e) { console.error('자동승인 오류:', e); }
+  } catch(e){ console.error('자동승인 오류:',e); }
 }
 
 /* ══════════════════════════════════════════
-   회원 관리 — 핵심 함수들
+   ① 전략 탭
    ══════════════════════════════════════════ */
-
-/* ── 레버 2개 합산해서 실제 가입 허용 여부 반환 ── */
-async function checkSignupAllowed() {
-  const [countRes, maxRes, openRes] = await Promise.all([
-    sc.from('member_count_view').select('count').single(),
-    sc.from('app_settings').select('value').eq('key','max_members').maybeSingle(),
-    sc.from('app_settings').select('value').eq('key','signup_open').maybeSingle(),
-  ]);
-  const current = Number(countRes.data?.count ?? 0);
-  const maxVal  = Number(maxRes.data?.value   ?? 999999);
-  const isOpen  = openRes.data?.value === 'true';
-  return isOpen && current < maxVal;
-}
-
-/* ── Supabase Auth 전역 가입 ON/OFF (service_role 필요) ── */
-async function setSupabaseSignup(enable) {
-  const srKey = getSrKey();
-  if(!srKey) throw new Error('service_role 키가 없습니다. 보안바에서 SR 키를 저장하세요.');
-  const res = await fetch(`${CFG.url}/auth/v1/admin/config`, {
-    method: 'PATCH',
-    headers: {
-      'apikey':        srKey,
-      'Authorization': `Bearer ${srKey}`,
-      'Content-Type':  'application/json',
-    },
-    body: JSON.stringify({ disable_signup: !enable }),
-  });
-  if(!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(`Auth 설정 실패: ${err.msg || err.message || res.status}`);
-  }
-}
-
-/* ── 레버1 (수동) 변경 → Auth 토글 동기화 ── */
-async function setSignupStatus(open) {
+async function loadHrDates(){
   try {
-    await sc.from('app_settings').upsert(
-      { key: 'signup_open', value: String(open) },
-      { onConflict: 'key' }
-    );
-    const allowed = await checkSignupAllowed();
-    await setSupabaseSignup(allowed);
-    updateSignupStatusUI(open, allowed);
-
-    const reason = !open        ? '🔒 수동 제한'
-                 : !allowed     ? '⚠️ 최대 회원 수 초과로 자동 제한'
-                 :                '✅ 허용';
-    toast(allowed
-      ? `✅ 회원가입 허용 (Supabase Auth 활성화)`
-      : `🔒 회원가입 제한 (Supabase Auth 비활성화) — ${reason}`
-    );
-  } catch(e) { toast('❌ 변경 실패: ' + e.message); }
+    const {data}=await sc.from('reports').select('report_date').eq('user_id',me.id).order('report_date',{ascending:false});
+    const dates=[...new Set((data||[]).map(d=>d.report_date))];
+    if(!dates.length){ render('hr-content','<div style="color:#aaa;text-align:center;padding:40px">리포트 없음</div>'); return; }
+    render('hr-date',dates.map(d=>`<option value="${d}">${d}</option>`).join(''));
+    loadHrReport();
+  } catch(e){ console.error(e); }
 }
-
-/* ── 레버2 (최대 회원 수) 변경 → Auth 토글 동기화 ── */
-async function saveMaxMembers() {
-  const val = $id('m-max-input').value.trim();
-  if(!val || isNaN(val) || Number(val) < 1) return toast('❌ 올바른 숫자를 입력하세요');
+async function loadHrReport(){
+  const date=$id('hr-date')?.value; if(!date) return;
   try {
-    await sc.from('app_settings').upsert(
-      { key: 'max_members', value: String(val) },
-      { onConflict: 'key' }
-    );
-    $id('m-max-count').textContent = val;
-    const allowed = await checkSignupAllowed();
-    await setSupabaseSignup(allowed);
-    toast(allowed
-      ? `✅ 최대 회원 수 ${val}명 저장 — 가입 허용 유지`
-      : `✅ 최대 회원 수 ${val}명 저장 — 현재 회원 수 초과로 자동 제한`
-    );
-    loadMemberSettings();
-  } catch(e) { toast('❌ 저장 실패: ' + e.message); }
-}
-
-/* ── UI 업데이트 헬퍼 ── */
-function updateSignupStatusUI(lever1Open, allowed) {
-  $id('lever1-val').textContent    = lever1Open ? '✅ 허용' : '🔒 제한';
-  $id('lever1-val').style.color    = lever1Open ? '#15803d' : '#b91c1c';
-
-  const badge = $id('signup-status-badge');
-  const authSt = $id('m-auth-status');
-  if(allowed === undefined) {
-    badge.textContent  = '확인 중...';
-    badge.className    = 'signup-status-badge';
-    authSt.textContent = '—';
-  } else if(allowed) {
-    badge.textContent  = '🟢 가입 허용 중';
-    badge.className    = 'signup-status-badge open';
-    authSt.textContent = '🟢 OPEN';
-    authSt.style.color = '#15803d';
-  } else {
-    badge.textContent  = lever1Open ? '🟡 최대 인원 초과 제한' : '🔴 수동 제한';
-    badge.className    = 'signup-status-badge ' + (lever1Open ? 'auto-closed' : 'closed');
-    authSt.textContent = '🔴 CLOSED';
-    authSt.style.color = '#b91c1c';
-  }
-}
-
-/* ── 회원 설정 로드 (탭 진입 시 자동 호출) ── */
-async function loadMemberSettings() {
-  // SR 키 경고
-  if(!hasSrKey()) $id('sr-warn-member').classList.add('show');
-  else            $id('sr-warn-member').classList.remove('show');
-
-  try {
-    const [countRes, maxRes, openRes] = await Promise.all([
-      sc.from('member_count_view').select('count').single(),
-      sc.from('app_settings').select('value').eq('key','max_members').maybeSingle(),
-      sc.from('app_settings').select('value').eq('key','signup_open').maybeSingle(),
-    ]);
-    const current = Number(countRes.data?.count ?? 0);
-    const maxVal  = Number(maxRes.data?.value   ?? 999999);
-    const isOpen  = openRes.data?.value === 'true';
-    const allowed = isOpen && current < maxVal;
-
-    $id('m-cur-count').textContent = current;
-    $id('m-max-count').textContent = maxVal === 999999 ? '무제한' : maxVal;
-    $id('lever2-val').textContent  = `${current} / ${maxVal === 999999 ? '무제한' : maxVal}명`;
-    $id('lever2-val').style.color  = (current >= maxVal && maxVal !== 999999) ? '#b91c1c' : '#15803d';
-
-    updateSignupStatusUI(isOpen, allowed);
-  } catch(e) {
-    toast('⚠️ 회원 설정 로드 실패: ' + e.message);
-  }
-}
-
-/* ── 회원 목록 불러오기 (Auth Admin API) ── */
-async function loadMemberList() {
-  const srKey = getSrKey();
-  if(!srKey) return toast('❌ SR 키가 필요합니다. 보안바에서 SR 키를 먼저 저장하세요.');
-
-  render('member-table-wrap', '<div class="empty" style="padding:30px">불러오는 중... ⏳</div>');
-  try {
-    // Supabase Auth Admin API: 최대 1000명 단순 페이지
-    const res = await fetch(`${CFG.url}/auth/v1/admin/users?page=1&per_page=200`, {
-      headers: {
-        'apikey':        srKey,
-        'Authorization': `Bearer ${srKey}`,
-      }
+    const {data}=await sc.from('reports').select('content').eq('report_date',date).eq('user_id',me.id).single();
+    const c=data?.content; let html='';
+    if(c?.hr_proposal)      html+=`<h2>👤 HR 제안</h2>${marked.parse(c.hr_proposal)}`;
+    if(c?.ba_brief)         html+=`<h2>🔍 BA 분석</h2>${marked.parse(c.ba_brief)}`;
+    if(c?.pm_brief)         html+=`<h2>🗂 PM 브리핑</h2>${marked.parse(c.pm_brief)}`;
+    if(c?.securities_brief) html+=`<h2>📈 증권 인사이트</h2>${marked.parse(c.securities_brief)}`;
+    if(c?.by_keyword) Object.entries(c.by_keyword).forEach(([kw,kd])=>{
+      html+=`<h2># ${kw}</h2>`;
+      if(kd?.ba_brief?.summary)         html+=`<p><b>BA:</b> ${escHtml(kd.ba_brief.summary)}</p>`;
+      if(kd?.securities_brief?.summary) html+=`<p><b>STOCK:</b> ${escHtml(kd.securities_brief.summary)}</p>`;
+      if(kd?.pm_brief?.summary)         html+=`<p><b>PM:</b> ${escHtml(kd.pm_brief.summary)}</p>`;
     });
-    if(!res.ok) {
-      const err = await res.json().catch(()=>({}));
-      throw new Error(`Auth API 오류: ${err.msg || err.message || res.status}`);
-    }
-    const json = await res.json();
-    // Supabase returns { users: [...] } or just [...]
-    allMembers = json.users || json || [];
-    renderMemberTable(allMembers);
-  } catch(e) {
-    render('member-table-wrap', `<div class="empty" style="color:#ef4444">❌ ${escHtml(e.message)}</div>`);
-  }
-}
-
-/* ── 회원 테이블 렌더링 ── */
-function renderMemberTable(members) {
-  if(!members.length) {
-    render('member-table-wrap', '<div class="empty">회원이 없습니다.</div>');
-    return;
-  }
-  const rows = members.map((u, i) => {
-    const isBanned = !!u.banned_until && new Date(u.banned_until) > new Date();
-    const createdAt = u.created_at ? u.created_at.slice(0,10) : '—';
-    const lastSign  = u.last_sign_in_at ? u.last_sign_in_at.slice(0,16).replace('T',' ') : '미로그인';
-    return `<tr>
-      <td style="color:#94a3b8;font-size:.78rem">${i+1}</td>
-      <td><span class="user-email">${escHtml(u.email||'(이메일 없음)')}</span></td>
-      <td><span class="user-date">${createdAt}</span></td>
-      <td><span class="user-date">${lastSign}</span></td>
-      <td><span class="ban-badge ${isBanned?'banned':'active'}">${isBanned?'🚫 차단':'✅ 정상'}</span></td>
-      <td>
-        ${isBanned
-          ? `<button class="ban-btn do-unban" onclick="toggleBan('${escHtml(u.id)}','${escHtml(u.email||'')}',false)">해제</button>`
-          : `<button class="ban-btn do-ban"   onclick="toggleBan('${escHtml(u.id)}','${escHtml(u.email||'')}',true)">차단</button>`
-        }
-      </td>
-    </tr>`;
-  }).join('');
-
-  render('member-table-wrap', `
-    <table class="member-table">
-      <thead><tr>
-        <th>#</th><th>이메일</th><th>가입일</th><th>최근 로그인</th><th>상태</th><th>관리</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `);
-}
-
-/* ── 검색 필터 ── */
-function filterMembers() {
-  const q = ($id('member-search').value || '').toLowerCase();
-  const filtered = q ? allMembers.filter(u => (u.email||'').toLowerCase().includes(q)) : allMembers;
-  renderMemberTable(filtered);
-}
-
-/* ── 개별 차단 / 해제 (Auth Admin API PATCH) ── */
-async function toggleBan(userId, email, ban) {
-  const srKey = getSrKey();
-  if(!srKey) return toast('❌ SR 키가 필요합니다.');
-  if(!confirm(`${email} 을(를) ${ban ? '차단' : '해제'}하시겠습니까?`)) return;
-  try {
-    // ban: banned_until을 먼 미래로, unban: null 또는 과거
-    const body = ban
-      ? { ban_duration: '876000h' }   // ~100년
-      : { ban_duration: 'none' };
-    const res = await fetch(`${CFG.url}/auth/v1/admin/users/${userId}`, {
-      method:  'PUT',
-      headers: {
-        'apikey':        srKey,
-        'Authorization': `Bearer ${srKey}`,
-        'Content-Type':  'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-    if(!res.ok) {
-      const err = await res.json().catch(()=>({}));
-      throw new Error(`Auth API 오류: ${err.msg || err.message || res.status}`);
-    }
-    toast(ban ? `🚫 ${email} 차단 완료` : `✅ ${email} 차단 해제 완료`);
-    // 캐시 업데이트
-    const updated = await res.json();
-    const idx = allMembers.findIndex(u => u.id === userId);
-    if(idx >= 0) allMembers[idx] = updated;
-    renderMemberTable(allMembers);
-  } catch(e) { toast('❌ 실패: ' + e.message); }
+    render('hr-content',html||'<div style="color:#aaa;text-align:center;padding:40px">내용 없음</div>');
+  } catch(e){ render('hr-content',`<span style="color:#f55">로드 실패: ${e.message}</span>`); }
 }
 
 /* ══════════════════════════════════════════
-   지능 탭
+   ② 지능 탭
    ══════════════════════════════════════════ */
-function setDirectiveMode(mode) {
-  directiveMode = mode;
-  $id('mode-single').classList.toggle('on', mode==='single');
-  $id('mode-all').classList.toggle('on', mode==='all');
-  $id('directive-single').style.display = mode==='single' ? 'block' : 'none';
-  $id('directive-all').style.display    = mode==='all'    ? 'block' : 'none';
+function setDirectiveMode(mode){
+  directiveMode=mode;
+  $id('mode-single').classList.toggle('on',mode==='single');
+  $id('mode-all').classList.toggle('on',mode==='all');
+  $id('directive-single').style.display=mode==='single'?'block':'none';
+  $id('directive-all').style.display=mode==='all'?'block':'none';
 }
-function onDirectiveInput(el) {
-  const len = el.value.length;
-  const cc = $id('char-count');
-  cc.textContent = `${len}자`;
-  cc.className = 'char-count' + (len>300?' over':len>200?' warn':'');
-  const multi = /(\d+\.\s|\n{2,}|;\s*[^\n]|[가나다라마바사아자차카타파하]\.\s)/;
-  $id('one-rule-warn').classList.toggle('show', multi.test(el.value) && el.value.length>30);
+function onDirectiveInput(el){
+  const len=el.value.length;
+  const cc=$id('char-count');
+  cc.textContent=`${len}자`;
+  cc.className='char-count'+(len>300?' over':len>200?' warn':'');
+  const multi=/(\d+\.\s|\n{2,}|;\s*[^\n]|[가나다라마바사아자차카타파하]\.\s)/;
+  $id('one-rule-warn').classList.toggle('show',multi.test(el.value)&&el.value.length>30);
 }
-async function loadAgentSelect() {
+async function loadAgentSelect(){
   try {
-    const { data } = await sc.from('agents').select('agent_role').order('agent_role');
-    const roles = (data||[]).map(a => a.agent_role);
-    const icons = {BA:'🔍',STOCK:'📈',PM:'🗂',HR:'👤',DEV:'💻',QA:'✅',BRIEF:'📝',KW:'🔑',DATA:'📉',INFO:'🌐'};
-    render('m-role', roles.length
-      ? roles.map(r=>`<option value="${r}">${icons[r]||'🤖'} ${r}</option>`).join('')
-      : `<option value="BA">🔍 BA</option><option value="STOCK">📈 STOCK</option><option value="PM">🗂 PM</option>`
+    const {data}=await sc.from('agents').select('agent_role').order('agent_role');
+    const roles=(data||[]).map(a=>a.agent_role);
+    const icons={BA:'🔍',STOCK:'📈',PM:'🗂',HR:'👤',DEV:'💻',QA:'✅',BRIEF:'📝',KW:'🔑',DATA:'📉',INFO:'🌐'};
+    render('m-role',roles.length
+      ?roles.map(r=>`<option value="${r}">${icons[r]||'🤖'} ${r}</option>`).join('')
+      :`<option value="BA">🔍 BA</option><option value="STOCK">📈 STOCK</option><option value="PM">🗂 PM</option>`
     );
   } catch { render('m-role','<option value="BA">🔍 BA</option>'); }
 }
-async function sendDirectOrder() {
-  const text = $id('m-text').value.trim();
+async function sendDirectOrder(){
+  const text=$id('m-text').value.trim();
   if(!text) return toast('❌ 지침 내용을 입력하세요');
-  const multi = /(\d+\.\s|\n{2,}|;\s*[^\n]|[가나다라마바사아자차카타파하]\.\s)/;
-  if(multi.test(text) && text.length>30 && !confirm('⚠️ 여러 안건이 감지되었습니다. 계속하시겠습니까?')) return;
-  const applyMode = document.querySelector('input[name="apply-mode"]:checked').value;
+  const multi=/(\d+\.\s|\n{2,}|;\s*[^\n]|[가나다라마바사아자차카타파하]\.\s)/;
+  if(multi.test(text)&&text.length>30&&!confirm('⚠️ 여러 안건이 감지되었습니다. 계속하시겠습니까?')) return;
+  const applyMode=document.querySelector('input[name="apply-mode"]:checked').value;
   try {
-    if(directiveMode === 'single') {
-      const role = $id('m-role').value;
+    if(directiveMode==='single'){
+      const role=$id('m-role').value;
       if(!role) return toast('❌ 에이전트를 선택하세요');
-      await applyDirective(role, text, applyMode);
+      await applyDirective(role,text,applyMode);
       toast(`⚡ ${role} 에이전트 지침 하달 완료`);
     } else {
-      const { data: agents } = await sc.from('agents').select('agent_role, instruction');
+      const {data:agents}=await sc.from('agents').select('agent_role, instruction');
       if(!agents?.length) return toast('❌ 등록된 에이전트 없음');
       if(!confirm(`📢 ${agents.length}명 전체에게 하달합니다. 계속?`)) return;
-      for(const a of agents) await applyDirective(a.agent_role, text, applyMode, a.instruction);
+      for(const a of agents) await applyDirective(a.agent_role,text,applyMode,a.instruction);
       toast(`📢 전체 ${agents.length}개 에이전트 하달 완료`);
     }
     $id('m-text').value=''; $id('char-count').textContent='0자';
     $id('one-rule-warn').classList.remove('show');
     loadEvo();
-  } catch(e) { toast('❌ 하달 실패: '+e.message); }
+  } catch(e){ toast('❌ 하달 실패: '+e.message); }
 }
-async function applyDirective(role, newText, mode, existingInstruction) {
-  let cur = existingInstruction;
-  if(cur === undefined) {
-    const { data } = await sc.from('agents').select('instruction').eq('agent_role',role).single();
-    cur = data?.instruction || '';
+async function applyDirective(role,newText,mode,existingInstruction){
+  let cur=existingInstruction;
+  if(cur===undefined){
+    const {data}=await sc.from('agents').select('instruction').eq('agent_role',role).single();
+    cur=data?.instruction||'';
   }
-  const final = mode==='append'
-    ? (cur ? cur+'\n\n---\n[마스터 추가 '+new Date().toLocaleDateString('ko-KR')+']\n'+newText : newText)
-    : newText;
-  const { error } = await sc.from('agents').update({ instruction: final }).eq('agent_role',role);
+  const final=mode==='append'
+    ?(cur?cur+'\n\n---\n[마스터 추가 '+new Date().toLocaleDateString('ko-KR')+']\n'+newText:newText)
+    :newText;
+  const {error}=await sc.from('agents').update({instruction:final}).eq('agent_role',role);
   if(error) throw error;
   await sc.from('pending_approvals').insert([{
-    agent_role: role, proposed_instruction: final,
-    proposal_reason: `마스터 직접 하달 (${mode==='append'?'추가':'대체'})`, status: 'APPROVED'
+    agent_role:role, proposed_instruction:final,
+    proposal_reason:`마스터 직접 하달 (${mode==='append'?'추가':'대체'})`, status:'APPROVED'
   }]);
 }
-function setEvoStatus(status) { evoStatusFilter = status; evoPage = 1; renderEvoProposalList(); }
-function evoPrevPage() { if(evoPage > 1) { evoPage--; renderEvoProposalList(); } }
-function evoNextPage() {
-  const totalPages = Math.max(1, Math.ceil(getEvoFilteredProps().length / EVO_PAGE_SIZE));
-  if(evoPage < totalPages) { evoPage++; renderEvoProposalList(); }
+function setEvoStatus(status){ evoStatusFilter=status; evoPage=1; renderEvoProposalList(); }
+function evoPrevPage(){ if(evoPage>1){evoPage--;renderEvoProposalList();} }
+function evoNextPage(){
+  const tp=Math.max(1,Math.ceil(getEvoFilteredProps().length/EVO_PAGE_SIZE));
+  if(evoPage<tp){evoPage++;renderEvoProposalList();}
 }
-function agentPrevPage() { if(evoAgentPage > 1) { evoAgentPage--; renderLiveAgentList(); } }
-function agentNextPage() {
-  const totalPages = Math.max(1, Math.ceil((evoAgentsAll||[]).length / EVO_AGENT_PAGE_SIZE));
-  if(evoAgentPage < totalPages) { evoAgentPage++; renderLiveAgentList(); }
+function agentPrevPage(){ if(evoAgentPage>1){evoAgentPage--;renderLiveAgentList();} }
+function agentNextPage(){
+  const tp=Math.max(1,Math.ceil((evoAgentsAll||[]).length/EVO_AGENT_PAGE_SIZE));
+  if(evoAgentPage<tp){evoAgentPage++;renderLiveAgentList();}
 }
-function getEvoFilteredProps() {
-  const rows = evoPropsAll || [];
-  if(evoStatusFilter === 'ALL') return rows;
-  return rows.filter(p => (p.status || 'PENDING') === evoStatusFilter);
+function getEvoFilteredProps(){
+  const rows=evoPropsAll||[];
+  return evoStatusFilter==='ALL'?rows:rows.filter(p=>(p.status||'PENDING')===evoStatusFilter);
 }
-function renderEvoStatusFilters() {
-  const counts = { ALL: (evoPropsAll || []).length };
-  (evoPropsAll || []).forEach(p => {
-    const st = (p.status || 'PENDING').toUpperCase();
-    counts[st] = (counts[st] || 0) + 1;
-  });
-  const order = withExtraStatuses(EVO_STATUS_BASE, counts);
-  render('evo-status-filters', buildStatusFilterHTML(order, evoStatusFilter, counts, 'setEvoStatus'));
+function renderEvoStatusFilters(){
+  const counts={ALL:(evoPropsAll||[]).length};
+  (evoPropsAll||[]).forEach(p=>{ const st=(p.status||'PENDING').toUpperCase(); counts[st]=(counts[st]||0)+1; });
+  const order=withExtraStatuses(EVO_STATUS_BASE,counts);
+  render('evo-status-filters',buildStatusFilterHTML(order,evoStatusFilter,counts,'setEvoStatus'));
 }
-function renderEvoProposalList() {
-  const filtered = getEvoFilteredProps();
-  const totalItems = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / EVO_PAGE_SIZE));
-  if(evoPage > totalPages) evoPage = totalPages;
-  if(evoPage < 1) evoPage = 1;
-  const start = (evoPage - 1) * EVO_PAGE_SIZE;
-  const rows = filtered.slice(start, start + EVO_PAGE_SIZE);
-
-  if(!totalItems) {
-    render('pending-evo-list', `<h3>📄 지능 발의 리스트</h3><div class="empty">선택한 상태의 안건이 없습니다.</div>`);
-    return;
-  }
-
+function renderEvoProposalList(){
+  const filtered=getEvoFilteredProps();
+  const totalItems=filtered.length, totalPages=Math.max(1,Math.ceil(totalItems/EVO_PAGE_SIZE));
+  if(evoPage>totalPages) evoPage=totalPages; if(evoPage<1) evoPage=1;
+  const rows=filtered.slice((evoPage-1)*EVO_PAGE_SIZE,evoPage*EVO_PAGE_SIZE);
+  if(!totalItems){ render('pending-evo-list','<h3>📄 지능 발의 리스트</h3><div class="empty">선택한 상태의 안건이 없습니다.</div>'); return; }
   render('pending-evo-list',
-    `<h3>📄 지능 발의 리스트</h3>
-     <div class="list-summary">총 ${totalItems}건 · 상태: ${statusLabel(evoStatusFilter)}</div>`
-    + rows.map(p => {
-      const st = (p.status || 'PENDING').toUpperCase();
-      const canDecide = st === 'PENDING';
-      const created = p.created_at ? p.created_at.slice(0,16).replace('T',' ') : '';
+    `<h3>📄 지능 발의 리스트</h3><div class="list-summary">총 ${totalItems}건 · 상태: ${statusLabel(evoStatusFilter)}</div>`
+    +rows.map(p=>{
+      const st=(p.status||'PENDING').toUpperCase(), canDecide=st==='PENDING';
+      const created=p.created_at?p.created_at.slice(0,16).replace('T',' '):'';
       return `<div class="evo-card">
-        <div class="meta">🤖 ${p.agent_role} · ${created} · ${escHtml(p.proposal_reason || '에이전트 자율 제안')}
+        <div class="meta">🤖 ${p.agent_role} · ${created} · ${escHtml(p.proposal_reason||'에이전트 자율 제안')}
           <span class="s-tag s-${st}">${statusLabel(st)}</span>
         </div>
-        <div class="box summary-box"><b>핵심 요약</b><br>${escHtml(summarizeText(p.proposed_instruction, 160))}</div>
+        <div class="box summary-box"><b>핵심 요약</b><br>${escHtml(summarizeText(p.proposed_instruction,160))}</div>
         <details>
           <summary style="cursor:pointer;font-size:.82rem;font-weight:700;color:#64748b">전체 제안 보기</summary>
-          <div class="box">${escHtml(p.proposed_instruction || '내용 없음')}</div>
+          <div class="box">${escHtml(p.proposed_instruction||'내용 없음')}</div>
         </details>
-        ${canDecide ? `
-          <div class="evo-actions">
-            <button class="sm" style="background:var(--success)" onclick="decideEvo('${p.id}','${p.agent_role}','APPROVED')">✅ 승인</button>
-            <button class="sm" style="background:var(--admin)"   onclick="decideEvo('${p.id}','${p.agent_role}','REJECTED')">❌ 반려</button>
-          </div>
-        ` : ``}
+        ${canDecide?`<div class="evo-actions">
+          <button class="sm" style="background:var(--success)" onclick="decideEvo('${p.id}','${p.agent_role}','APPROVED')">✅ 승인</button>
+          <button class="sm" style="background:var(--admin)"   onclick="decideEvo('${p.id}','${p.agent_role}','REJECTED')">❌ 반려</button>
+        </div>`:''}
       </div>`;
     }).join('')
-    + buildPagerHTML(evoPage, totalPages, totalItems, EVO_PAGE_SIZE, 'evoPrevPage', 'evoNextPage')
+    +buildPagerHTML(evoPage,totalPages,totalItems,EVO_PAGE_SIZE,'evoPrevPage','evoNextPage')
   );
 }
-function renderLiveAgentList() {
-  const totalItems = (evoAgentsAll || []).length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / EVO_AGENT_PAGE_SIZE));
-  if(evoAgentPage > totalPages) evoAgentPage = totalPages;
-  if(evoAgentPage < 1) evoAgentPage = 1;
-  const start = (evoAgentPage - 1) * EVO_AGENT_PAGE_SIZE;
-  const rows = (evoAgentsAll || []).slice(start, start + EVO_AGENT_PAGE_SIZE);
-
+function renderLiveAgentList(){
+  const totalItems=(evoAgentsAll||[]).length;
+  const totalPages=Math.max(1,Math.ceil(totalItems/EVO_AGENT_PAGE_SIZE));
+  if(evoAgentPage>totalPages) evoAgentPage=totalPages; if(evoAgentPage<1) evoAgentPage=1;
+  const rows=(evoAgentsAll||[]).slice((evoAgentPage-1)*EVO_AGENT_PAGE_SIZE,evoAgentPage*EVO_AGENT_PAGE_SIZE);
   render('live-agent-list',
-    `<h3>🚀 현재 가동 중인 에이전트 지침</h3>
-     <div class="list-summary">총 ${totalItems}명 에이전트</div>`
-    + (rows.length===0
-      ? `<div class="empty">에이전트 정보 없음</div>`
-      : rows.map(a => {
-          const role = a.agent_role || 'UNKNOWN';
-          const full = a.instruction || '지침 없음';
-          return `<div class="card" style="border-left-color:#bbb">
-            <strong>🤖 ${escHtml(role)}</strong>
-            <div class="role-brief">역할 요약: ${escHtml(ROLE_BRIEF[role] || '역할 설명이 등록되지 않았습니다.')}</div>
-            <div class="box summary-box"><b>핵심 지침 요약</b><br>${escHtml(summarizeText(full, 150))}</div>
-            <details>
-              <summary style="cursor:pointer;font-size:.82rem;font-weight:700;color:#64748b">지침 전체 보기</summary>
-              <div class="box">${escHtml(full)}</div>
-            </details>
-          </div>`;
-        }).join('')
-    )
-    + buildPagerHTML(evoAgentPage, totalPages, totalItems, EVO_AGENT_PAGE_SIZE, 'agentPrevPage', 'agentNextPage')
+    `<h3>🚀 현재 가동 중인 에이전트 지침</h3><div class="list-summary">총 ${totalItems}명 에이전트</div>`
+    +(rows.length===0?'<div class="empty">에이전트 정보 없음</div>':rows.map(a=>{
+      const role=a.agent_role||'UNKNOWN', full=a.instruction||'지침 없음';
+      const empCnt=(staffAll||[]).filter(s=>s.agent_role===role&&s.status==='ACTIVE').length;
+      return `<div class="card" style="border-left-color:#bbb">
+        <strong>🤖 ${escHtml(role)}</strong>
+        <span style="font-size:.75rem;color:#64748b;margin-left:8px">직원 ${empCnt}명</span>
+        <div class="role-brief">역할: ${escHtml(ROLE_BRIEF[role]||'역할 설명 없음')}</div>
+        <div class="box summary-box"><b>핵심 지침 요약</b><br>${escHtml(summarizeText(full,150))}</div>
+        <details>
+          <summary style="cursor:pointer;font-size:.82rem;font-weight:700;color:#64748b">지침 전체 보기</summary>
+          <div class="box">${escHtml(full)}</div>
+        </details>
+      </div>`;
+    }).join(''))
+    +buildPagerHTML(evoAgentPage,totalPages,totalItems,EVO_AGENT_PAGE_SIZE,'agentPrevPage','agentNextPage')
   );
 }
-async function loadEvo() {
+async function loadEvo(){
   try {
-    const [agRes, prRes] = await Promise.all([
+    const [agRes,prRes]=await Promise.all([
       sc.from('agents').select('agent_role, instruction').order('agent_role'),
       sc.from('pending_approvals').select('id,agent_role,proposed_instruction,proposal_reason,created_at,status')
         .order('created_at',{ascending:false}).limit(500)
     ]);
-    evoAgentsAll = agRes.data || [];
-    evoPropsAll  = (prRes.data || []).map(p => ({ ...p, status: (p.status || 'PENDING').toUpperCase() }));
-    const pendingCnt = evoPropsAll.filter(p => p.status === 'PENDING').length;
-    $id('evo-cnt').style.display = pendingCnt ? '' : 'none';
-    if(pendingCnt) $id('evo-cnt').textContent = pendingCnt;
-
-    renderEvoStatusFilters();
-    renderEvoProposalList();
-    renderLiveAgentList();
-  } catch(e) {
-    render('evo-status-filters', '');
-    render('pending-evo-list', `<div class="card">⚠️ 로드 실패: ${e.message}</div>`);
-    render('live-agent-list', `<div class="card">⚠️ 로드 실패: ${e.message}</div>`);
-  }
+    evoAgentsAll=agRes.data||[];
+    evoPropsAll=(prRes.data||[]).map(p=>({...p,status:(p.status||'PENDING').toUpperCase()}));
+    const pendingCnt=evoPropsAll.filter(p=>p.status==='PENDING').length;
+    $id('evo-cnt').style.display=pendingCnt?'':'none';
+    if(pendingCnt) $id('evo-cnt').textContent=pendingCnt;
+    renderEvoStatusFilters(); renderEvoProposalList(); renderLiveAgentList();
+  } catch(e){ render('pending-evo-list',`<div class="card">⚠️ 로드 실패: ${e.message}</div>`); }
 }
-async function decideEvo(id, role, status) {
+async function decideEvo(id,role,status){
   try {
-    if(status==='APPROVED') {
-      const { data: p } = await sc.from('pending_approvals').select('proposed_instruction').eq('id',id).single();
-      if(p) { const {error}=await sc.from('agents').update({instruction:p.proposed_instruction}).eq('agent_role',role); if(error) throw error; }
+    if(status==='APPROVED'){
+      const {data:p}=await sc.from('pending_approvals').select('proposed_instruction').eq('id',id).single();
+      if(p){ const {error}=await sc.from('agents').update({instruction:p.proposed_instruction}).eq('agent_role',role); if(error) throw error; }
     }
     await sc.from('pending_approvals').update({status}).eq('id',id);
     toast(status==='APPROVED'?`✅ ${role} 지침 승인 완료`:`❌ ${role} 안건 반려됨`);
     loadEvo();
-  } catch(e) { toast('❌ 처리 실패: '+e.message); }
+  } catch(e){ toast('❌ 처리 실패: '+e.message); }
 }
 
 /* ══════════════════════════════════════════
-   개발 탭
+   ③ 개발 탭
    ══════════════════════════════════════════ */
-function setDevStatus(status) { devStatusFilter = status; devPage = 1; renderDevList(); }
-function devPrevPage() { if(devPage > 1) { devPage--; renderDevList(); } }
-function devNextPage() {
-  const totalPages = Math.max(1, Math.ceil(getFilteredDevRows().length / DEV_PAGE_SIZE));
-  if(devPage < totalPages) { devPage++; renderDevList(); }
+function setDevStatus(status){ devStatusFilter=status; devPage=1; renderDevList(); }
+function devPrevPage(){ if(devPage>1){devPage--;renderDevList();} }
+function devNextPage(){
+  const tp=Math.max(1,Math.ceil(getFilteredDevRows().length/DEV_PAGE_SIZE));
+  if(devPage<tp){devPage++;renderDevList();}
 }
-function getFilteredDevRows() {
-  const rows = devRowsAll || [];
-  if(devStatusFilter === 'ALL') return rows;
-  return rows.filter(r => (r.status || 'PENDING') === devStatusFilter);
+function getFilteredDevRows(){
+  const rows=devRowsAll||[];
+  return devStatusFilter==='ALL'?rows:rows.filter(r=>(r.status||'PENDING')===devStatusFilter);
 }
-function renderDevStatusFilters() {
-  const counts = { ALL: (devRowsAll || []).length };
-  (devRowsAll || []).forEach(r => {
-    const st = (r.status || 'PENDING').toUpperCase();
-    counts[st] = (counts[st] || 0) + 1;
-  });
-  const order = withExtraStatuses(DEV_STATUS_BASE, counts);
-  render('dev-status-filters', buildStatusFilterHTML(order, devStatusFilter, counts, 'setDevStatus'));
+function renderDevStatusFilters(){
+  const counts={ALL:(devRowsAll||[]).length};
+  (devRowsAll||[]).forEach(r=>{ const st=(r.status||'PENDING').toUpperCase(); counts[st]=(counts[st]||0)+1; });
+  const order=withExtraStatuses(DEV_STATUS_BASE,counts);
+  render('dev-status-filters',buildStatusFilterHTML(order,devStatusFilter,counts,'setDevStatus'));
 }
-function renderDevList() {
-  const filtered = getFilteredDevRows();
-  const totalItems = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / DEV_PAGE_SIZE));
-  if(devPage > totalPages) devPage = totalPages;
-  if(devPage < 1) devPage = 1;
-  const start = (devPage - 1) * DEV_PAGE_SIZE;
-  const rows = filtered.slice(start, start + DEV_PAGE_SIZE);
-
-  if(!totalItems) {
-    render('dev-list', `<h3>📋 개발 백로그 리스트</h3><div class="empty">선택한 상태의 안건이 없습니다.</div>`);
-    return;
-  }
-
+function renderDevList(){
+  const filtered=getFilteredDevRows();
+  const totalItems=filtered.length, totalPages=Math.max(1,Math.ceil(totalItems/DEV_PAGE_SIZE));
+  if(devPage>totalPages) devPage=totalPages; if(devPage<1) devPage=1;
+  const rows=filtered.slice((devPage-1)*DEV_PAGE_SIZE,devPage*DEV_PAGE_SIZE);
+  if(!totalItems){ render('dev-list','<h3>📋 개발 백로그 리스트</h3><div class="empty">선택한 상태의 안건이 없습니다.</div>'); return; }
   render('dev-list',
-    `<h3>📋 개발 백로그 리스트</h3>
-     <div class="list-summary">총 ${totalItems}건 · 상태: ${statusLabel(devStatusFilter)}</div>`
-    + rows.map(b => {
-      const st = (b.status || 'PENDING').toUpperCase();
-      const created = b.created_at ? new Date(b.created_at).toLocaleString('ko-KR') : '';
-      let btns = '';
-      if(st === 'PENDING' || st === 'PENDING_MASTER') {
-        btns = `
-          <button class="sm" style="background:var(--primary)" onclick="upDev('${b.id}','CONFIRMED')">✅ 개발 확정</button>
-          <button class="sm" style="background:var(--admin)" onclick="rejectDev('${b.id}')">❌ 마스터 반려</button>
-        `;
-      } else if(st === 'CONFIRMED') {
-        btns = `
-          <button class="sm" style="background:var(--dev)" onclick="triggerDev('${b.id}')">🚀 배포 시작</button>
-          <button class="sm" style="background:var(--admin)" onclick="rejectDev('${b.id}')">❌ 마스터 반려</button>
-        `;
-      } else if(st === 'DEVELOPING') {
-        btns = `<span class="pulse" style="color:var(--dev);font-weight:700">⏳ AI 배포 중...</span>`;
-      } else if(['FAILED','DEPLOY_FAILED','VALIDATION_ERROR','SYNTAX_ERROR','BACKUP_FAILED'].includes(st)) {
-        btns = `
-          <button class="sm" style="background:#475569" onclick="upDev('${b.id}','CONFIRMED')">🔁 재시도 준비</button>
-          <button class="sm" style="background:var(--admin)" onclick="rejectDev('${b.id}')">❌ 마스터 반려</button>
-        `;
-      } else if(st === 'REJECTED') {
-        btns = `<button class="sm" style="background:#475569" onclick="upDev('${b.id}','PENDING')">↩️ 재오픈</button>`;
+    `<h3>📋 개발 백로그 리스트</h3><div class="list-summary">총 ${totalItems}건 · 상태: ${statusLabel(devStatusFilter)}</div>`
+    +rows.map(b=>{
+      const st=(b.status||'PENDING').toUpperCase();
+      const created=b.created_at?new Date(b.created_at).toLocaleString('ko-KR'):'';
+      let btns='';
+      if(st==='PENDING'||st==='PENDING_MASTER'){
+        btns=`<button class="sm" style="background:var(--primary)" onclick="upDev('${b.id}','CONFIRMED')">✅ 개발 확정</button>
+              <button class="sm" style="background:var(--admin)"   onclick="rejectDev('${b.id}')">❌ 마스터 반려</button>`;
+      } else if(st==='CONFIRMED'){
+        btns=`<button class="sm" style="background:var(--dev)" onclick="triggerDev('${b.id}')">🚀 배포 시작</button>
+              <button class="sm" style="background:var(--admin)" onclick="rejectDev('${b.id}')">❌ 마스터 반려</button>`;
+      } else if(st==='DEVELOPING'){
+        btns=`<span class="pulse" style="color:var(--dev);font-weight:700">⏳ AI 배포 중...</span>`;
+      } else if(['FAILED','DEPLOY_FAILED','VALIDATION_ERROR','SYNTAX_ERROR','BACKUP_FAILED'].includes(st)){
+        btns=`<button class="sm" style="background:#475569" onclick="upDev('${b.id}','CONFIRMED')">🔁 재시도 준비</button>
+              <button class="sm" style="background:var(--admin)" onclick="rejectDev('${b.id}')">❌ 마스터 반려</button>`;
+      } else if(st==='REJECTED'){
+        btns=`<button class="sm" style="background:#475569" onclick="upDev('${b.id}','PENDING')">↩️ 재오픈</button>`;
       } else {
-        btns = `<span style="color:var(--success);font-weight:700">✅ ${statusLabel(st)}</span>`;
+        btns=`<span style="color:var(--success);font-weight:700">✅ ${statusLabel(st)}</span>`;
       }
-
       return `<div class="card" style="border-left-color:var(--dev)">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px">
-          <div><strong>${escHtml(b.title || '무제')}</strong><span class="s-tag s-${st}">${statusLabel(st)}</span></div>
+          <div><strong>${escHtml(b.title||'무제')}</strong><span class="s-tag s-${st}">${statusLabel(st)}</span></div>
           <small style="color:#aaa">${created}</small>
         </div>
-        <div class="box summary-box"><b>요약</b><br>${escHtml(summarizeText(b.task_detail || '', 150))}</div>
+        <div class="box summary-box"><b>요약</b><br>${escHtml(summarizeText(b.task_detail||'',150))}</div>
         <details>
           <summary style="cursor:pointer;font-size:.82rem;font-weight:700;color:#64748b">요구사항 전체 보기</summary>
-          <div class="box">${escHtml(b.task_detail || '')}</div>
+          <div class="box">${escHtml(b.task_detail||'')}</div>
         </details>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">${btns}</div>
       </div>`;
     }).join('')
-    + buildPagerHTML(devPage, totalPages, totalItems, DEV_PAGE_SIZE, 'devPrevPage', 'devNextPage')
+    +buildPagerHTML(devPage,totalPages,totalItems,DEV_PAGE_SIZE,'devPrevPage','devNextPage')
   );
 }
-async function loadDev() {
+async function loadDev(){
   try {
-    const { data, error } = await sc.from('dev_backlog').select('*').order('created_at',{ascending:false});
+    const {data,error}=await sc.from('dev_backlog').select('*').order('created_at',{ascending:false});
     if(error) throw error;
-    devRowsAll = (data || []).map(d => ({ ...d, status: (d.status || 'PENDING').toUpperCase() }));
-    const openCnt = devRowsAll.filter(b => ['PENDING','PENDING_MASTER','CONFIRMED','DEVELOPING'].includes(b.status)).length;
-    $id('dev-cnt').style.display = openCnt ? '' : 'none';
-    if(openCnt) $id('dev-cnt').textContent = openCnt;
-    renderDevStatusFilters();
-    renderDevList();
-  } catch(e) {
-    render('dev-status-filters', '');
-    render('dev-list',`<div class="card">⚠️ 로드 실패: ${e.message}</div>`);
-  }
+    devRowsAll=(data||[]).map(d=>({...d,status:(d.status||'PENDING').toUpperCase()}));
+    const openCnt=devRowsAll.filter(b=>['PENDING','PENDING_MASTER','CONFIRMED','DEVELOPING'].includes(b.status)).length;
+    $id('dev-cnt').style.display=openCnt?'':'none';
+    if(openCnt) $id('dev-cnt').textContent=openCnt;
+    renderDevStatusFilters(); renderDevList();
+  } catch(e){ render('dev-list',`<div class="card">⚠️ 로드 실패: ${e.message}</div>`); }
 }
-async function addDev() {
+async function addDev(){
   const title=$id('d-title').value.trim(), task=$id('d-task').value.trim();
   if(!title||!task) return toast('❌ 제목과 요구사항을 모두 입력하세요');
   try {
     await sc.from('dev_backlog').insert([{title,task_detail:task,status:'PENDING',priority:5}]);
     $id('d-title').value=''; $id('d-task').value='';
     toast('📋 개발 안건 등록 완료'); loadDev();
-  } catch(e) { toast('❌ 등록 실패: '+e.message); }
+  } catch(e){ toast('❌ 등록 실패: '+e.message); }
 }
-async function rejectDev(id) {
-  if(!confirm('해당 개발 안건을 마스터 반려 처리할까요?')) return;
-  await upDev(id, 'REJECTED');
+async function rejectDev(id){ if(!confirm('해당 개발 안건을 마스터 반려 처리할까요?')) return; await upDev(id,'REJECTED'); }
+async function upDev(id,status){
+  try { await sc.from('dev_backlog').update({status}).eq('id',id); toast(`✅ 상태 업데이트: ${statusLabel(status)}`); loadDev(); }
+  catch(e){ toast('❌ 상태 업데이트 실패: '+e.message); }
 }
-async function upDev(id, status) {
-  try {
-    await sc.from('dev_backlog').update({status}).eq('id',id);
-    toast(`✅ 상태 업데이트: ${statusLabel(status)}`);
-    loadDev();
-  } catch(e) {
-    toast('❌ 상태 업데이트 실패: ' + e.message);
-  }
-}
-async function triggerDev(id) {
+async function triggerDev(id){
   const token=getToken();
   if(!token) return toast('❌ GHP 토큰을 먼저 저장하세요');
   try {
@@ -1186,66 +957,45 @@ async function triggerDev(id) {
       {method:'POST',headers:{'Authorization':`Bearer ${token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
        body:JSON.stringify({ref:'main',inputs:{backlog_id:String(id)}})}
     );
-    if(res.status===204) { toast('🚀 GitHub Actions 배포 트리거 완료!'); }
+    if(res.status===204){ toast('🚀 GitHub Actions 배포 트리거 완료!'); setTimeout(loadLogs,3000); }
     else { const e=await res.json().catch(()=>({})); await sc.from('dev_backlog').update({status:'CONFIRMED'}).eq('id',id); throw new Error(`${res.status}: ${e.message||'오류'}`); }
     loadDev();
-  } catch(e) { toast('❌ 배포 실패: '+e.message); }
+  } catch(e){ toast('❌ 배포 실패: '+e.message); }
 }
 
-/* ══════════════════════════════════════════
-   릴리즈 이력
-   ══════════════════════════════════════════ */
-function setReleaseStatus(status) { releaseStatusFilter = status; releasePage = 1; renderReleaseLedger(); }
-function releasePrevPage() { if(releasePage > 1) { releasePage--; renderReleaseLedger(); } }
-function releaseNextPage() {
-  const totalPages = Math.max(1, Math.ceil(getFilteredReleaseRows().length / RELEASE_PAGE_SIZE));
-  if(releasePage < totalPages) { releasePage++; renderReleaseLedger(); }
+/* ── 릴리즈 이력 ── */
+function setReleaseStatus(status){ releaseStatusFilter=status; releasePage=1; renderReleaseLedger(); }
+function releasePrevPage(){ if(releasePage>1){releasePage--;renderReleaseLedger();} }
+function releaseNextPage(){
+  const tp=Math.max(1,Math.ceil(getFilteredReleaseRows().length/RELEASE_PAGE_SIZE));
+  if(releasePage<tp){releasePage++;renderReleaseLedger();}
 }
-function getFilteredReleaseRows() {
-  const rows = releaseLedgerAll || [];
-  if(releaseStatusFilter === 'ALL') return rows;
-  return rows.filter(r => (r.status || 'UNKNOWN') === releaseStatusFilter);
+function getFilteredReleaseRows(){
+  const rows=releaseLedgerAll||[];
+  return releaseStatusFilter==='ALL'?rows:rows.filter(r=>(r.status||'UNKNOWN')===releaseStatusFilter);
 }
-function renderReleaseStatusFilters() {
-  const counts = { ALL: (releaseLedgerAll || []).length };
-  (releaseLedgerAll || []).forEach(r => {
-    const st = (r.status || 'UNKNOWN').toUpperCase();
-    counts[st] = (counts[st] || 0) + 1;
-  });
-  const order = withExtraStatuses(RELEASE_STATUS_BASE, counts);
-  render('release-ledger-status-filters', buildStatusFilterHTML(order, releaseStatusFilter, counts, 'setReleaseStatus'));
+function renderReleaseStatusFilters(){
+  const counts={ALL:(releaseLedgerAll||[]).length};
+  (releaseLedgerAll||[]).forEach(r=>{ const st=(r.status||'UNKNOWN').toUpperCase(); counts[st]=(counts[st]||0)+1; });
+  const order=withExtraStatuses(RELEASE_STATUS_BASE,counts);
+  render('release-ledger-status-filters',buildStatusFilterHTML(order,releaseStatusFilter,counts,'setReleaseStatus'));
 }
-function renderReleaseLedger() {
-  const filtered = getFilteredReleaseRows();
-  const totalItems = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / RELEASE_PAGE_SIZE));
-  if(releasePage > totalPages) releasePage = totalPages;
-  if(releasePage < 1) releasePage = 1;
-  const start = (releasePage - 1) * RELEASE_PAGE_SIZE;
-  const rows = filtered.slice(start, start + RELEASE_PAGE_SIZE);
-
-  if(!rows.length) {
-    render('release-ledger-box', '<div class="empty">릴리즈 이력 데이터가 없습니다.</div>');
-    return;
-  }
-
-  const tableRows = rows.map(r => {
-    const status = (r.status || 'UNKNOWN').toUpperCase();
-    const at = (r.released_at || r.executed_at || '').toString().slice(0,19).replace('T',' ') || '-';
-    const runId = r.run_id || '-';
-    const branch = r.branch || '-';
-    const rawSha = String(r.commit_sha || r.sha || '').trim();
-    const sha = shortSha(rawSha);
-    const backlog = r.backlog_id || '-';
-    const kind = r.release_type || r.action_type || 'N/A';
-    const memo = summarizeText(r.note || r.details || '', 80);
-    const rollbackAction = (
-      status === 'SUCCEEDED' &&
-      branch === 'main' &&
-      /^[0-9a-f]{7,40}$/i.test(rawSha)
-    )
-      ? `<button class="sm" style="background:#111" onclick="triggerRollback('${escJsStr(rawSha)}','${escJsStr(String(runId))}')">↩️ 이 버전으로 롤백</button>`
-      : `<span style="color:#94a3b8;font-size:.76rem">-</span>`;
+function renderReleaseLedger(){
+  const filtered=getFilteredReleaseRows();
+  const totalItems=filtered.length, totalPages=Math.max(1,Math.ceil(totalItems/RELEASE_PAGE_SIZE));
+  if(releasePage>totalPages) releasePage=totalPages; if(releasePage<1) releasePage=1;
+  const rows=filtered.slice((releasePage-1)*RELEASE_PAGE_SIZE,releasePage*RELEASE_PAGE_SIZE);
+  if(!rows.length){ render('release-ledger-box','<div class="empty">릴리즈 이력 데이터가 없습니다.</div>'); return; }
+  const tableRows=rows.map(r=>{
+    const status=(r.status||'UNKNOWN').toUpperCase();
+    const at=(r.released_at||r.executed_at||'').toString().slice(0,19).replace('T',' ')||'-';
+    const runId=r.run_id||'-', branch=r.branch||'-';
+    const rawSha=String(r.commit_sha||r.sha||'').trim(), sha=shortSha(rawSha);
+    const backlog=r.backlog_id||'-', kind=r.release_type||r.action_type||'N/A';
+    const memo=summarizeText(r.note||r.details||'',80);
+    const rollbackAction=(status==='SUCCEEDED'&&branch==='main'&&/^[0-9a-f]{7,40}$/i.test(rawSha))
+      ?`<button class="sm" style="background:#111" onclick="triggerRollback('${escJsStr(rawSha)}','${escJsStr(String(runId))}')">↩️ 이 버전으로 롤백</button>`
+      :`<span style="color:#94a3b8;font-size:.76rem">-</span>`;
     return `<tr>
       <td><span class="mono">${at}</span></td>
       <td><span class="s-tag s-${status}">${statusLabel(status)}</span></td>
@@ -1254,268 +1004,764 @@ function renderReleaseLedger() {
       <td class="mono">${escHtml(sha)}</td>
       <td class="mono">${escHtml(String(backlog))}</td>
       <td class="mono">${escHtml(String(runId))}</td>
-      <td>${escHtml(memo || '-')}</td>
+      <td>${escHtml(memo||'-')}</td>
       <td>${rollbackAction}</td>
     </tr>`;
   }).join('');
-
   render('release-ledger-box',
     `<div class="list-summary">총 ${totalItems}건 · 상태: ${statusLabel(releaseStatusFilter)}</div>
-     <div class="member-table-wrap">
-       <table class="ledger-table">
-         <thead>
-           <tr>
-             <th>시각</th><th>상태</th><th>유형</th><th>브랜치</th><th>커밋</th><th>백로그</th><th>RUN ID</th><th>메모</th><th>작업</th>
-           </tr>
-         </thead>
-         <tbody>${tableRows}</tbody>
-       </table>
-     </div>`
-    + buildPagerHTML(releasePage, totalPages, totalItems, RELEASE_PAGE_SIZE, 'releasePrevPage', 'releaseNextPage')
+     <div style="overflow-x:auto"><table class="ledger-table">
+       <thead><tr><th>시각</th><th>상태</th><th>유형</th><th>브랜치</th><th>커밋</th><th>백로그</th><th>RUN ID</th><th>메모</th><th>작업</th></tr></thead>
+       <tbody>${tableRows}</tbody>
+     </table></div>`
+    +buildPagerHTML(releasePage,totalPages,totalItems,RELEASE_PAGE_SIZE,'releasePrevPage','releaseNextPage')
   );
 }
-async function loadReleaseLedger() {
+async function loadReleaseLedger(){
   try {
-    const { data, error } = await sc.from('release_ledger')
+    const {data,error}=await sc.from('release_ledger')
       .select('id,release_type,branch,commit_sha,backlog_id,run_id,status,released_at,completed_at,note')
-      .order('released_at', { ascending:false })
-      .limit(200);
+      .order('released_at',{ascending:false}).limit(200);
     if(error) throw error;
-    releaseLedgerAll = (data || []).map(r => ({ ...r, status: (r.status || 'UNKNOWN').toUpperCase() }));
-  } catch(e) {
-    console.warn('release_ledger 조회 실패, action_logs 폴백:', e.message);
+    releaseLedgerAll=(data||[]).map(r=>({...r,status:(r.status||'UNKNOWN').toUpperCase()}));
+  } catch(e){
+    console.warn('release_ledger 조회 실패, action_logs 폴백:',e.message);
     try {
-      const { data, error } = await sc.from('action_logs')
-        .select('id,action_type,details,executed_at')
-        .order('executed_at', { ascending:false })
-        .limit(120);
+      const {data,error}=await sc.from('action_logs').select('id,action_type,details,executed_at')
+        .order('executed_at',{ascending:false}).limit(120);
       if(error) throw error;
-      const rows = (data || []).filter(r => {
-        const at = String(r.action_type || '').toUpperCase();
-        const dt = String(r.details || '');
-        return at.includes('DEPLOY') || dt.includes('배포');
+      const rows=(data||[]).filter(r=>{
+        const at=String(r.action_type||'').toUpperCase(), dt=String(r.details||'');
+        return at.includes('DEPLOY')||dt.includes('배포');
       });
-      releaseLedgerAll = rows.map(r => {
-        const details = String(r.details || '');
-        const failed = details.includes('❌') || details.toLowerCase().includes('fail');
-        return {
-          run_id: '-',
-          release_type: r.action_type || 'ACTION_LOG',
-          branch: '-',
-          commit_sha: '',
-          backlog_id: '-',
-          status: failed ? 'FAILED' : 'SUCCEEDED',
-          released_at: r.executed_at || '',
-          note: details,
-          details,
-          action_type: r.action_type || 'ACTION_LOG',
-        };
+      releaseLedgerAll=rows.map(r=>{
+        const details=String(r.details||'');
+        const failed=details.includes('❌')||details.toLowerCase().includes('fail');
+        return {run_id:'-',release_type:r.action_type||'ACTION_LOG',branch:'-',commit_sha:'',backlog_id:'-',
+                status:failed?'FAILED':'SUCCEEDED',released_at:r.executed_at||'',note:details};
       });
-    } catch(fbErr) {
-      releaseLedgerAll = [];
-      render('release-ledger-status-filters', '');
-      render('release-ledger-box', `<div class="empty">릴리즈 이력 조회 실패: ${escHtml(fbErr.message)}</div>`);
+    } catch(fbErr){
+      releaseLedgerAll=[];
+      render('release-ledger-status-filters','');
+      render('release-ledger-box',`<div class="empty">릴리즈 이력 조회 실패: ${escHtml(fbErr.message)}</div>`);
       return;
     }
   }
-  renderReleaseStatusFilters();
-  renderReleaseLedger();
+  renderReleaseStatusFilters(); renderReleaseLedger();
 }
 
 /* ══════════════════════════════════════════
-   포럼 탭
+   ④ 인사(STAFF) 탭
+   ══════════════════════════════════════════ */
+async function loadStaffTab(){
+  try {
+    const [sRes,pRes,aRes]=await Promise.all([
+      sc.from('brief_employees').select('*').order('hired_at',{ascending:false}),
+      sc.from('hr_staff_proposals').select('*').order('created_at',{ascending:false}),
+      sc.from('agents').select('agent_role').order('agent_role'),
+    ]);
+    staffAll=sRes.data||[]; hrProposalsAll=pRes.data||[];
+    const roles=(aRes.data||[]).map(a=>a.agent_role);
+    const sf=$id('staff-agent-filter');
+    if(sf){
+      const cur=sf.value;
+      sf.innerHTML='<option value="">전체 에이전트</option>'+roles.map(r=>`<option value="${r}">${r}</option>`).join('');
+      sf.value=cur;
+    }
+    const as=$id('add-staff-agent');
+    if(as) as.innerHTML='<option value="">에이전트 선택...</option>'+roles.map(r=>`<option value="${r}">${r}</option>`).join('');
+    renderStaffByAgent(); renderHrProposals(); updateHrBadgeCounts();
+  } catch(e){ toast('❌ 인사 탭 로드 실패: '+e.message); }
+}
+function renderStaffByAgent(){
+  const filter=($id('staff-agent-filter')?.value)||'';
+  const list=filter?staffAll.filter(s=>s.agent_role===filter):staffAll;
+  if(!list.length){ render('staff-grid-wrap','<div class="empty">직원이 없습니다.</div>'); return; }
+  const groups={};
+  list.forEach(s=>{ if(!groups[s.agent_role]) groups[s.agent_role]=[]; groups[s.agent_role].push(s); });
+  let html='';
+  for(const [role,members] of Object.entries(groups)){
+    const col=ROLE_COLORS[role]||'#94a3b8';
+    html+=`<div style="margin-bottom:20px">
+      <div style="font-size:.8rem;font-weight:800;color:${col};letter-spacing:1px;margin-bottom:8px">🤖 ${escHtml(role)} (${members.length}명)</div>
+      <div class="staff-grid">${members.map(s=>`
+        <div class="staff-card ${s.status==='FIRED'?'fired':''}">
+          <div><span class="staff-role-badge" style="background:${col}22;color:${col}">${escHtml(role)}</span>
+            <span class="s-tag s-${s.status||'ACTIVE'}">${s.status==='FIRED'?'해고':'재직'}</span>
+          </div>
+          <div class="staff-name">${escHtml(s.name||'이름없음')}</div>
+          <div class="staff-title">${escHtml(s.role_title||'')}</div>
+          <div style="font-size:.74rem;color:#94a3b8;margin-bottom:10px">
+            입사 ${s.hired_at?s.hired_at.slice(0,10):'—'}${s.status==='FIRED'&&s.fired_at?` · 퇴사 ${s.fired_at.slice(0,10)}`:''}
+          </div>
+          ${s.status!=='FIRED'?`<div><button class="staff-btn staff-fire-btn" onclick="proposeFireStaff('${s.id}','${escJsStr(s.name||'')}','${escJsStr(role)}')">🔴 해고 제안</button></div>`:''}
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+  render('staff-grid-wrap',html);
+}
+function setHrFilter(f,el){
+  hrFilter=f;
+  document.querySelectorAll('#hr-prop-filter-row .status-chip').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on');
+  renderHrProposals();
+}
+function updateHrBadgeCounts(){
+  const c={ALL:0,PENDING_HR:0,PENDING_MASTER:0,APPROVED:0,AUTO_APPROVED:0,REJECTED:0};
+  hrProposalsAll.forEach(p=>{ const s=(p.status||'PENDING_HR').toUpperCase(); c.ALL++; if(c[s]!==undefined) c[s]++; });
+  $id('hf-all').textContent=c.ALL; $id('hf-hr').textContent=c.PENDING_HR;
+  $id('hf-master').textContent=c.PENDING_MASTER; $id('hf-approved').textContent=c.APPROVED;
+  $id('hf-auto').textContent=c.AUTO_APPROVED; $id('hf-rejected').textContent=c.REJECTED;
+  const pending=c.PENDING_HR+c.PENDING_MASTER;
+  const badge=$id('staff-cnt');
+  if(badge){ badge.textContent=pending; badge.style.display=pending?'':'none'; }
+}
+function renderHrProposals(){
+  const list=hrFilter==='ALL'?hrProposalsAll:hrProposalsAll.filter(p=>(p.status||'PENDING_HR').toUpperCase()===hrFilter);
+  if(!list.length){ render('hr-proposal-list','<div class="empty">해당 상태의 제안이 없습니다.</div>'); return; }
+  render('hr-proposal-list',list.map(p=>{
+    const st=(p.status||'PENDING_HR').toUpperCase();
+    const created=p.created_at?p.created_at.slice(0,16).replace('T',' '):'';
+    const autoAt=p.auto_approve_at?p.auto_approve_at.slice(0,16).replace('T',' '):'';
+    const isMasterPending=st==='PENDING_MASTER', isHrPending=st==='PENDING_HR';
+    return `<div class="hr-proposal-card ${isMasterPending?'master-pending':''}">
+      <div>
+        <span class="hr-proposal-type ${p.proposal_type||'HIRE'}">${p.proposal_type==='FIRE'?'🔴 해고 제안':'🟢 채용 제안'}</span>
+        <span style="font-weight:700;font-size:.88rem">${escHtml(p.employee_name||'(이름없음)')}</span>
+        <span style="font-size:.8rem;color:#64748b"> — ${escHtml(p.agent_role||'')}</span>
+        <span class="s-tag s-${st}">${statusLabel(st)}</span>
+      </div>
+      <div style="font-size:.78rem;color:#94a3b8;margin:6px 0">제안: ${created} · 발의: ${escHtml(p.proposer||'BRIEF')}</div>
+      <div class="hr-proposal-reason"><b>사유:</b> ${escHtml(p.reason||'—')}</div>
+      ${p.hr_decision?`<div class="hr-proposal-reason" style="background:#f0f9ff;border-left:3px solid #3b82f6"><b>HR 검토 의견:</b> ${escHtml(p.hr_decision)}</div>`:''}
+      ${isHrPending?`<div class="evo-actions">
+        <textarea id="hr-opinion-${p.id}" rows="2" placeholder="HR 검토 의견 입력..." style="width:100%;margin-bottom:6px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:.82rem;font-family:inherit;resize:vertical"></textarea>
+        <button class="sm" style="background:var(--success)" onclick="hrDecide('${p.id}','APPROVED')">✅ HR 승인 → 마스터 전달</button>
+        <button class="sm" style="background:var(--admin)"   onclick="hrDecide('${p.id}','REJECTED')">❌ HR 반려</button>
+      </div>`:''}
+      ${isMasterPending?`<div class="evo-actions">
+        <button class="sm" style="background:var(--success)" onclick="masterDecideStaff('${p.id}','APPROVED')">✅ 마스터 승인</button>
+        <button class="sm" style="background:var(--admin)"   onclick="masterDecideStaff('${p.id}','REJECTED')">❌ 마스터 반려</button>
+      </div>${autoAt?`<div class="auto-approve-note">⏰ ${autoAt} 이후 자동승인</div>`:''}`:''}
+    </div>`;
+  }).join(''));
+}
+async function hrDecide(id,decision){
+  const opinion=($id(`hr-opinion-${id}`)?.value||'').trim();
+  if(decision==='APPROVED'&&!opinion){ toast('❌ HR 검토 의견을 입력해주세요'); return; }
+  try {
+    const newStatus=decision==='APPROVED'?'PENDING_MASTER':'REJECTED';
+    const autoAt=new Date(Date.now()+23.5*3600*1000).toISOString();
+    await sc.from('hr_staff_proposals').update({
+      status:newStatus
+/* ══════════════════════════════════════════
+   ④ 인사(STAFF) 탭 — hrDecide 이어서
+   ══════════════════════════════════════════ */
+
+async function hrDecide(id, decision) {
+  const opinion = ($id(`hr-opinion-${id}`)?.value || '').trim();
+  if (decision === 'APPROVED' && !opinion) {
+    return toast('❌ HR 검토 의견을 입력해주세요');
+  }
+  try {
+    const newStatus = decision === 'APPROVED' ? 'PENDING_MASTER' : 'REJECTED';
+    const autoAt = new Date(Date.now() + 23.5 * 3600 * 1000).toISOString();
+    await sc.from('hr_staff_proposals').update({
+      status:      newStatus,
+      hr_decision: opinion || null,
+      ...(newStatus === 'PENDING_MASTER' ? { auto_approve_at: autoAt } : {}),
+    }).eq('id', id);
+    toast(decision === 'APPROVED'
+      ? '✅ HR 승인 → 마스터 결재 대기로 전달'
+      : '❌ HR 반려 완료');
+    loadStaffTab();
+  } catch(e) { toast('❌ HR 결재 실패: ' + e.message); }
+}
+
+async function masterDecideStaff(id, decision) {
+  try {
+    const { data: prop } = await sc
+      .from('hr_staff_proposals').select('*').eq('id', id).single();
+    if (!prop) throw new Error('제안 데이터를 찾을 수 없습니다.');
+
+    await sc.from('hr_staff_proposals').update({ status: decision }).eq('id', id);
+
+    if (decision === 'APPROVED') {
+      if (prop.proposal_type === 'HIRE') {
+        await sc.from('brief_employees').insert([{
+          agent_role: prop.agent_role,
+          name:       prop.employee_name,
+          role_title: prop.role_title || '',
+          status:     'ACTIVE',
+          hired_at:   new Date().toISOString(),
+        }]);
+        toast(`✅ ${prop.employee_name} 채용 승인 완료 — brief_employees 등록`);
+      } else if (prop.proposal_type === 'FIRE') {
+        await sc.from('brief_employees')
+          .update({ status: 'FIRED', fired_at: new Date().toISOString() })
+          .eq('id', prop.employee_id);
+        toast(`🔴 ${prop.employee_name} 해고 승인 완료`);
+      }
+    } else {
+      toast(`❌ ${prop.employee_name} 제안 반려`);
+    }
+    loadStaffTab();
+  } catch(e) { toast('❌ 마스터 결재 실패: ' + e.message); }
+}
+
+/* 23:30 자동승인 — staff proposals */
+async function autoApproveStaffProposals() {
+  try {
+    const now = new Date().toISOString();
+    const { data: pending } = await sc
+      .from('hr_staff_proposals')
+      .select('*')
+      .eq('status', 'PENDING_MASTER')
+      .lte('auto_approve_at', now);
+    if (!pending?.length) return;
+    for (const p of pending) {
+      await masterDecideStaff(p.id, 'APPROVED');
+    }
+    toast(`⏰ 자동승인 완료 — HR 제안 ${pending.length}건`);
+  } catch(e) { console.error('자동승인(staff) 오류:', e); }
+}
+
+/* 해고 제안 (직원카드 버튼) */
+async function proposeFireStaff(employeeId, name, agentRole) {
+  const reason = prompt(`[${name}] 해고 사유를 입력하세요:`);
+  if (!reason) return;
+  try {
+    await sc.from('hr_staff_proposals').insert([{
+      proposal_type: 'FIRE',
+      employee_id:   employeeId,
+      employee_name: name,
+      agent_role:    agentRole,
+      proposer:      'MASTER',
+      reason,
+      status:        'PENDING_HR',
+    }]);
+    toast(`🔴 ${name} 해고 제안 — HR 검토 대기`);
+    loadStaffTab();
+  } catch(e) { toast('❌ 해고 제안 실패: ' + e.message); }
+}
+
+/* 직원 추가 모달 */
+function openAddStaffModal()  { $id('add-staff-modal').style.display = 'flex'; }
+function closeAddStaffModal() { $id('add-staff-modal').style.display = 'none'; }
+
+async function submitStaffHireProposal() {
+  const agentRole = $id('add-staff-agent').value;
+  const name      = $id('add-staff-name').value.trim();
+  const title     = $id('add-staff-title').value.trim();
+  const reason    = $id('add-staff-reason').value.trim();
+  if (!agentRole) return toast('❌ 에이전트를 선택하세요');
+  if (!name)      return toast('❌ 직원 이름을 입력하세요');
+  if (!reason)    return toast('❌ 채용 사유를 입력하세요');
+  try {
+    await sc.from('hr_staff_proposals').insert([{
+      proposal_type: 'HIRE',
+      employee_name: name,
+      role_title:    title,
+      agent_role:    agentRole,
+      proposer:      'MASTER',
+      reason,
+      status:        'PENDING_HR',
+    }]);
+    toast(`🟢 ${name} 채용 제안 완료 — HR 검토 대기`);
+    closeAddStaffModal();
+    $id('add-staff-name').value = '';
+    $id('add-staff-title').value = '';
+    $id('add-staff-reason').value = '';
+    loadStaffTab();
+  } catch(e) { toast('❌ 채용 제안 실패: ' + e.message); }
+}
+
+/* ══════════════════════════════════════════
+   ⑤ 사이트 정책 탭
+   ══════════════════════════════════════════ */
+async function loadSitesTab() {
+  try {
+    const { data, error } = await sc
+      .from('agents').select('agent_role, crawl_sites').order('agent_role');
+    if (error) throw error;
+    sitesData = {};
+    (data || []).forEach(a => {
+      sitesData[a.agent_role] = Array.isArray(a.crawl_sites) ? a.crawl_sites : [];
+    });
+    renderSitesList();
+  } catch(e) {
+    render('agent-sites-list', `<div class="empty">⚠️ 로드 실패: ${escHtml(e.message)}</div>`);
+  }
+}
+
+function renderSitesList() {
+  const roles = Object.keys(sitesData);
+  if (!roles.length) {
+    render('agent-sites-list', '<div class="empty">에이전트 없음</div>');
+    return;
+  }
+  const col = { BA:'#2563eb',STOCK:'#0891b2',PM:'#7c3aed',HR:'#f97316',
+                BRIEF:'#10b981',KW:'#8b5cf6',DATA:'#f59e0b',
+                INFO:'#06b6d4',DEV:'#64748b',QA:'#ec4899' };
+  const html = roles.map(role => {
+    const sites = sitesData[role] || [];
+    const c = col[role] || '#64748b';
+    const rows = sites.length
+      ? sites.map((s, i) => `
+          <tr>
+            <td><span class="site-url">${escHtml(s.url || '')}</span></td>
+            <td>${escHtml(s.label || '')}</td>
+            <td><span class="site-policy-badge ${s.policy || 'allow'}">${
+              s.policy === 'deny' ? '🚫 차단' : s.policy === 'limit' ? '⚠️ 제한' : '✅ 허용'
+            }</span></td>
+            <td>${escHtml(s.memo || '')}</td>
+            <td><button class="site-remove-btn"
+              onclick="removeSite('${escJsStr(role)}',${i})">삭제</button></td>
+          </tr>`)
+        .join('')
+      : `<tr><td colspan="5" style="color:#aaa;font-style:italic;padding:12px">등록된 사이트 없음</td></tr>`;
+
+    return `
+      <div class="site-agent-card">
+        <div class="site-agent-header">
+          <span class="site-agent-role"
+            style="background:${c}22;color:${c}">🤖 ${escHtml(role)}</span>
+          <span style="font-size:.78rem;color:#64748b">${sites.length}개 사이트</span>
+        </div>
+        <table class="site-table">
+          <thead><tr>
+            <th>URL</th><th>라벨</th><th>정책</th><th>메모</th><th>삭제</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div class="site-add-row">
+          <input  id="site-url-${escHtml(role)}"   placeholder="https://example.com">
+          <input  id="site-label-${escHtml(role)}" placeholder="라벨 (예: 로이터)" style="max-width:130px">
+          <select id="site-pol-${escHtml(role)}" style="width:auto;padding:8px 10px;margin:0;font-size:.82rem">
+            <option value="allow">✅ 허용</option>
+            <option value="deny">🚫 차단</option>
+            <option value="limit">⚠️ 제한</option>
+          </select>
+          <input  id="site-memo-${escHtml(role)}"  placeholder="메모" style="max-width:140px">
+          <button class="site-add-btn"
+            onclick="addSite('${escJsStr(role)}')">+ 추가</button>
+        </div>
+      </div>`;
+  }).join('');
+  render('agent-sites-list', html);
+}
+
+async function addSite(role) {
+  const url   = ($id(`site-url-${role}`)?.value || '').trim();
+  const label = ($id(`site-label-${role}`)?.value || '').trim();
+  const policy= $id(`site-pol-${role}`)?.value || 'allow';
+  const memo  = ($id(`site-memo-${role}`)?.value || '').trim();
+  if (!url) return toast('❌ URL을 입력하세요');
+  if (!/^https?:\/\//.test(url)) return toast('❌ http:// 또는 https:// 로 시작해야 합니다');
+  if (!sitesData[role]) sitesData[role] = [];
+  if (sitesData[role].some(s => s.url === url))
+    return toast('⚠️ 이미 등록된 URL입니다');
+  sitesData[role].push({ url, label, policy, memo });
+  await saveSites(role);
+}
+
+async function removeSite(role, idx) {
+  if (!confirm('이 사이트를 삭제할까요?')) return;
+  sitesData[role].splice(idx, 1);
+  await saveSites(role);
+}
+
+async function saveSites(role) {
+  try {
+    const { error } = await sc.from('agents')
+      .update({ crawl_sites: sitesData[role] })
+      .eq('agent_role', role);
+    if (error) throw error;
+    toast(`✅ ${role} 사이트 정책 저장 완료`);
+    renderSitesList();
+  } catch(e) { toast('❌ 저장 실패: ' + e.message); }
+}
+
+/* ══════════════════════════════════════════
+   ⑥ 회원 탭
+   ══════════════════════════════════════════ */
+async function loadMemberSettings() {
+  try {
+    // SR 경고 표시
+    if (!hasSrKey()) $id('sr-warn-member').classList.add('show');
+    else             $id('sr-warn-member').classList.remove('show');
+
+    const [openRes, maxRes, cntRes] = await Promise.all([
+      sc.from('app_settings').select('value').eq('key','signup_open').single(),
+      sc.from('app_settings').select('value').eq('key','max_members').single(),
+      sc.from('profiles').select('id', { count:'exact', head:true }),
+    ]);
+    const isOpen  = openRes.data?.value === 'true';
+    const maxVal  = Number(maxRes.data?.value ?? 999999);
+    const current = cntRes.count ?? 0;
+
+    $id('m-cur-count').textContent = current;
+    $id('m-max-count').textContent = maxVal === 999999 ? '무제한' : maxVal;
+    $id('lever1-val').textContent  = isOpen ? '✅ 허용' : '🔒 제한';
+    $id('lever1-val').style.color  = isOpen ? '#15803d' : '#b91c1c';
+    $id('lever2-val').textContent  = `${current} / ${maxVal === 999999 ? '무제한' : maxVal}명`;
+    $id('lever2-val').style.color  = (current >= maxVal && maxVal !== 999999) ? '#b91c1c' : '#15803d';
+
+    const allowed = await checkSignupAllowed();
+    updateSignupStatusUI(isOpen, allowed);
+  } catch(e) { toast('⚠️ 회원 설정 로드 실패: ' + e.message); }
+}
+
+async function checkSignupAllowed() {
+  const [openRes, maxRes, cntRes] = await Promise.all([
+    sc.from('app_settings').select('value').eq('key','signup_open').single(),
+    sc.from('app_settings').select('value').eq('key','max_members').single(),
+    sc.from('profiles').select('id', { count:'exact', head:true }),
+  ]);
+  const isOpen  = openRes.data?.value === 'true';
+  const maxVal  = Number(maxRes.data?.value ?? 999999);
+  const current = cntRes.count ?? 0;
+  return isOpen && current < maxVal;
+}
+
+async function setSupabaseSignup(enable) {
+  const srKey = getSrKey();
+  if (!srKey) throw new Error('service_role 키가 없습니다.');
+  const res = await fetch(`${CFG.url}/auth/v1/admin/config`, {
+    method:  'PATCH',
+    headers: {
+      'apikey': srKey, 'Authorization': `Bearer ${srKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ disable_signup: !enable }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({}));
+    throw new Error(`Auth 설정 실패: ${err.msg || err.message || res.status}`);
+  }
+}
+
+async function setSignupStatus(open) {
+  try {
+    await sc.from('app_settings')
+      .upsert({ key:'signup_open', value: String(open) }, { onConflict:'key' });
+    const allowed = await checkSignupAllowed();
+    await setSupabaseSignup(allowed);
+    updateSignupStatusUI(open, allowed);
+    toast(allowed ? '✅ 회원가입 허용' : '🔒 회원가입 제한');
+  } catch(e) { toast('❌ 변경 실패: ' + e.message); }
+}
+
+async function saveMaxMembers() {
+  const val = $id('m-max-input').value.trim();
+  if (!val || isNaN(val) || Number(val) < 1) return toast('❌ 올바른 숫자를 입력하세요');
+  try {
+    await sc.from('app_settings')
+      .upsert({ key:'max_members', value: String(val) }, { onConflict:'key' });
+    $id('m-max-count').textContent = val;
+    const allowed = await checkSignupAllowed();
+    await setSupabaseSignup(allowed);
+    toast(allowed ? `✅ 최대 ${val}명 저장 — 가입 허용` : `✅ 최대 ${val}명 저장 — 초과로 자동 제한`);
+    loadMemberSettings();
+  } catch(e) { toast('❌ 저장 실패: ' + e.message); }
+}
+
+function updateSignupStatusUI(lever1Open, allowed) {
+  $id('lever1-val').textContent = lever1Open ? '✅ 허용' : '🔒 제한';
+  $id('lever1-val').style.color = lever1Open ? '#15803d' : '#b91c1c';
+  const badge  = $id('signup-status-badge');
+  const authSt = $id('m-auth-status');
+  if (allowed === undefined) {
+    badge.textContent = '확인 중...'; badge.className = 'signup-status-badge';
+    authSt.textContent = '—';
+  } else if (allowed) {
+    badge.textContent = '🟢 가입 허용 중'; badge.className = 'signup-status-badge open';
+    authSt.textContent = '🟢 OPEN'; authSt.style.color = '#15803d';
+  } else {
+    badge.textContent = lever1Open ? '🟡 최대 인원 초과 제한' : '🔴 수동 제한';
+    badge.className = 'signup-status-badge ' + (lever1Open ? 'auto-closed' : 'closed');
+    authSt.textContent = '🔴 CLOSED'; authSt.style.color = '#b91c1c';
+  }
+}
+
+async function loadMemberList() {
+  const srKey = getSrKey();
+  if (!srKey) return toast('❌ SR 키가 필요합니다.');
+  render('member-table-wrap', '<div class="empty" style="padding:30px">불러오는 중... ⏳</div>');
+  try {
+    const res = await fetch(`${CFG.url}/auth/v1/admin/users?page=1&per_page=200`, {
+      headers: { 'apikey': srKey, 'Authorization': `Bearer ${srKey}` },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      throw new Error(`Auth API 오류: ${err.msg || err.message || res.status}`);
+    }
+    const json = await res.json();
+    allMembers = json.users || json || [];
+    renderMemberTable(allMembers);
+  } catch(e) {
+    render('member-table-wrap', `<div class="empty" style="color:#ef4444">❌ ${escHtml(e.message)}</div>`);
+  }
+}
+
+function renderMemberTable(members) {
+  if (!members.length) {
+    render('member-table-wrap', '<div class="empty">회원이 없습니다.</div>');
+    return;
+  }
+  const rows = members.map((u, i) => {
+    const isBanned  = !!u.banned_until && new Date(u.banned_until) > new Date();
+    const createdAt = u.created_at ? u.created_at.slice(0,10) : '—';
+    const lastSign  = u.last_sign_in_at
+      ? u.last_sign_in_at.slice(0,16).replace('T',' ') : '미로그인';
+    return `<tr>
+      <td style="color:#94a3b8;font-size:.78rem">${i+1}</td>
+      <td><span class="user-email">${escHtml(u.email||'(없음)')}</span></td>
+      <td><span class="user-date">${createdAt}</span></td>
+      <td><span class="user-date">${lastSign}</span></td>
+      <td><span class="ban-badge ${isBanned?'banned':'active'}">${isBanned?'🚫 차단':'✅ 정상'}</span></td>
+      <td>${isBanned
+        ? `<button class="ban-btn do-unban" onclick="toggleBan('${escJsStr(u.id)}','${escJsStr(u.email||'')}',false)">해제</button>`
+        : `<button class="ban-btn do-ban"   onclick="toggleBan('${escJsStr(u.id)}','${escJsStr(u.email||'')}',true)">차단</button>`
+      }</td>
+    </tr>`;
+  }).join('');
+  render('member-table-wrap', `
+    <table class="member-table">
+      <thead><tr>
+        <th>#</th><th>이메일</th><th>가입일</th><th>최근 로그인</th><th>상태</th><th>관리</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`);
+}
+
+function filterMembers() {
+  const q = ($id('member-search').value || '').toLowerCase();
+  renderMemberTable(q ? allMembers.filter(u => (u.email||'').toLowerCase().includes(q)) : allMembers);
+}
+
+async function toggleBan(userId, email, ban) {
+  const srKey = getSrKey();
+  if (!srKey) return toast('❌ SR 키가 필요합니다.');
+  if (!confirm(`${email} 을(를) ${ban?'차단':'해제'}하시겠습니까?`)) return;
+  try {
+    const res = await fetch(`${CFG.url}/auth/v1/admin/users/${userId}`, {
+      method: 'PUT',
+      headers: {
+        'apikey': srKey, 'Authorization': `Bearer ${srKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ban_duration: ban ? '876000h' : 'none' }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(()=>({}));
+      throw new Error(`Auth API 오류: ${err.msg || err.message || res.status}`);
+    }
+    toast(ban ? `🚫 ${email} 차단 완료` : `✅ ${email} 차단 해제 완료`);
+    const updated = await res.json();
+    const idx = allMembers.findIndex(u => u.id === userId);
+    if (idx >= 0) allMembers[idx] = updated;
+    renderMemberTable(allMembers);
+  } catch(e) { toast('❌ 실패: ' + e.message); }
+}
+
+/* ══════════════════════════════════════════
+   ⑦ 포럼(로그) 탭
    ══════════════════════════════════════════ */
 async function loadLogs() {
+  const box = $id('forum-box');
+  if (!box) return;
   try {
-    const { data } = await sc.from('action_logs').select('*').order('executed_at',{ascending:false}).limit(30);
-    const lines=(data||[]).map(l=>{
-      const t=l.executed_at?l.executed_at.slice(11,19):'??:??:??';
-      const msg=l.memo||l.details||(l.target_word?l.target_word+' 분석 완료':'시스템 이벤트');
-      const cls=msg.includes('❌')||msg.includes('실패')?'err':msg.includes('⚠️')?'warn':'info';
-      return `<div class="${cls}">[${t} KST] ${escHtml(String(msg))}</div>`;
-    });
-    render('forum-box',`<span class="info"># Sovereign HQ — 작전 로그 (${lines.length}건)</span><br>`+(lines.join('')||'<span style="color:#aaa">로그 없음</span>'));
-  } catch(e) { render('forum-box',`<span class="err">로그 로드 실패: ${e.message}</span>`); }
+    const { data } = await sc
+      .from('action_logs').select('executed_at,action_type,details')
+      .order('executed_at', { ascending: false }).limit(80);
+    if (!data?.length) { box.innerHTML = '<span style="color:#8be9fd"># 로그 없음</span>'; return; }
+    box.innerHTML = data.map(l => {
+      const t = (l.executed_at||'').slice(0,19).replace('T',' ');
+      const d = escHtml(l.details||'');
+      const cls = d.includes('❌')||d.toLowerCase().includes('fail') ? 'err'
+                : d.includes('⚠️') ? 'warn' : 'info';
+      return `<div><span class="${cls}">[${t}] ${escHtml(l.action_type||'')}</span> — ${d}</div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  } catch(e) { box.innerHTML = `<span class="err">로드 실패: ${escHtml(e.message)}</span>`; }
 }
+
 async function triggerRun() {
-  const token=getToken();
-  if(!token) return toast('❌ GHP 토큰을 먼저 저장하세요');
-  if(!confirm('전체 시스템을 즉시 가동합니다. 계속?')) return;
-  try {
-    const res=await fetch(
-      `https://api.github.com/repos/${CFG.owner}/${CFG.repo}/actions/workflows/${CFG.workflow}/dispatches`,
-      {method:'POST',headers:{'Authorization':`Bearer ${token}`,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
-       body:JSON.stringify({ref:'main',inputs:{}})}
-    );
-    if(res.status===204) { toast('🚀 시스템 가동 명령 전송 완료!'); setTimeout(loadLogs,3000); }
-    else { const e=await res.json().catch(()=>({})); throw new Error(`${res.status}: ${e.message||'오류'}`); }
-  } catch(e) { toast('❌ 가동 실패: '+e.message); }
-}
-async function triggerRollback(commitSha, sourceRunId='') {
   const token = getToken();
-  if(!token) return toast('❌ GHP 토큰을 먼저 저장하세요');
-  if(!/^[0-9a-f]{7,40}$/i.test(commitSha || '')) return toast('❌ 유효하지 않은 커밋 SHA입니다.');
-
-  const defaultReason = sourceRunId ? `run ${sourceRunId} 기준 정상버전 롤백` : '운영 이슈 롤백';
-  const inputReason = prompt('롤백 사유를 입력하세요', defaultReason);
-  if(inputReason === null) return;
-  const reason = (inputReason || defaultReason).trim().slice(0, 140);
-  if(!confirm(`커밋 ${commitSha.slice(0,8)} 버전으로 롤백 워크플로우를 실행할까요?`)) return;
-
+  if (!token) return toast('❌ GHP 토큰을 먼저 저장하세요');
   try {
     const res = await fetch(
       `https://api.github.com/repos/${CFG.owner}/${CFG.repo}/actions/workflows/${CFG.workflow}/dispatches`,
-      {
-        method:'POST',
-        headers:{
-          'Authorization':`Bearer ${token}`,
-          'Accept':'application/vnd.github.v3+json',
-          'Content-Type':'application/json',
-        },
-        body: JSON.stringify({
-          ref:'main',
-          inputs:{
-            rollback_to_sha: commitSha,
-            rollback_reason: reason,
-          }
-        })
-      }
+      { method:'POST',
+        headers:{ 'Authorization':`Bearer ${token}`,
+                  'Accept':'application/vnd.github.v3+json',
+                  'Content-Type':'application/json' },
+        body: JSON.stringify({ ref:'main' }) }
     );
-    if(res.status===204) {
-      toast(`↩️ 롤백 워크플로우 실행 완료 (${commitSha.slice(0,8)})`);
-      setTimeout(loadReleaseLedger, 3500);
-    } else {
-      const e = await res.json().catch(()=>({}));
-      throw new Error(`${res.status}: ${e.message||'오류'}`);
-    }
+    if (res.status === 204) toast('🚀 시스템 즉시 가동 완료!');
+    else { const e = await res.json().catch(()=>({})); throw new Error(`${res.status}: ${e.message||'오류'}`); }
+  } catch(e) { toast('❌ 가동 실패: ' + e.message); }
+}
+
+/* ══════════════════════════════════════════
+   ⑧ VOC 탭
+   ══════════════════════════════════════════ */
+async function loadVoc() {
+  try {
+    const { data } = await sc
+      .from('user_feedback').select('*')
+      .order('created_at', { ascending: false }).limit(60);
+    if (!data?.length) { render('voc-list','<div class="empty">피드백 없음</div>'); return; }
+    render('voc-list', data.map(f => {
+      const t = (f.created_at||'').slice(0,16).replace('T',' ');
+      const thumb = f.thumb === 'up' ? '👍' : f.thumb === 'down' ? '👎' : '—';
+      return `<div class="card" style="border-left-color:#6366f1">
+        <div style="font-size:.78rem;color:#94a3b8;margin-bottom:6px">
+          ${t} · ${escHtml(f.user_email||'익명')} ${thumb}
+        </div>
+        <div class="box">${escHtml(f.content||'(내용 없음)')}</div>
+      </div>`;
+    }).join(''));
+  } catch(e) { render('voc-list',`<div class="card">⚠️ 로드 실패: ${escHtml(e.message)}</div>`); }
+}
+
+/* ══════════════════════════════════════════
+   ⑨ 비용 탭
+   ══════════════════════════════════════════ */
+async function loadCost() {
+  try {
+    const today = new Date().toISOString().slice(0,10);
+    // 오늘 action_logs
+    const { data: todayLogs } = await sc
+      .from('action_logs').select('action_type,details,executed_at')
+      .gte('executed_at', today + 'T00:00:00')
+      .order('executed_at', { ascending: false });
+
+    const calls = (todayLogs||[]).filter(l =>
+      String(l.action_type||'').includes('LLM') ||
+      String(l.details||'').includes('token') ||
+      String(l.details||'').includes('Gemini')).length;
+
+    const estCost = (calls * 0.0015).toFixed(4);
+    $id('c-tokens').textContent = calls;
+    $id('c-cost').textContent   = `$${estCost}`;
+
+    // 7일 누적
+    const w7 = new Date(Date.now() - 7*86400*1000).toISOString().slice(0,10);
+    const { data: weekLogs } = await sc
+      .from('action_logs').select('action_type,details')
+      .gte('executed_at', w7 + 'T00:00:00');
+    const wCalls = (weekLogs||[]).filter(l =>
+      String(l.action_type||'').includes('LLM') ||
+      String(l.details||'').includes('token') ||
+      String(l.details||'').includes('Gemini')).length;
+    $id('c-month').textContent = `$${(wCalls * 0.0015).toFixed(3)}`;
+
+    // Supabase row counts
+    const tables = ['agents','pending_approvals','dev_backlog','release_ledger',
+                    'action_logs','brief_employees','hr_staff_proposals','reports'];
+    const counts = await Promise.all(
+      tables.map(t => sc.from(t).select('id',{count:'exact',head:true}))
+    );
+    const total = counts.reduce((s,r) => s + (r.count||0), 0);
+    $id('c-rows').textContent = total.toLocaleString();
+
+    // 테이블별 상세
+    render('c-row-detail', `<table class="ledger-table">
+      <thead><tr><th>테이블</th><th>rows</th></tr></thead>
+      <tbody>${tables.map((t,i) =>
+        `<tr><td class="mono">${t}</td><td>${(counts[i].count||0).toLocaleString()}</td></tr>`
+      ).join('')}</tbody>
+    </table>`);
+
+    // 오늘 호출 유형별
+    const types = {};
+    (todayLogs||[]).forEach(l => {
+      const k = l.action_type || 'UNKNOWN';
+      types[k] = (types[k]||0) + 1;
+    });
+    render('c-breakdown', Object.keys(types).length
+      ? `<table class="ledger-table">
+          <thead><tr><th>유형</th><th>횟수</th></tr></thead>
+          <tbody>${Object.entries(types)
+            .sort((a,b)=>b[1]-a[1])
+            .map(([k,v])=>`<tr><td class="mono">${escHtml(k)}</td><td>${v}</td></tr>`)
+            .join('')}</tbody>
+        </table>`
+      : '<div class="empty">오늘 로그 없음</div>');
   } catch(e) {
-    toast('❌ 롤백 실행 실패: ' + e.message);
+    ['c-tokens','c-cost','c-month','c-rows'].forEach(id => {
+      if($id(id)) $id(id).textContent = '—';
+    });
+    render('c-breakdown', `<div class="empty">로드 실패: ${escHtml(e.message)}</div>`);
   }
 }
 
 /* ══════════════════════════════════════════
-   전략 탭
+   롤백
    ══════════════════════════════════════════ */
-async function loadHrDates() {
+async function triggerRollback(sha, runId) {
+  const token = getToken();
+  if (!token) return toast('❌ GHP 토큰을 먼저 저장하세요');
+  if (!confirm(`커밋 ${sha.slice(0,8)} 으로 롤백하시겠습니까?`)) return;
   try {
-    const { data } = await sc.from('reports').select('report_date').eq('user_id',me.id).order('report_date',{ascending:false});
-    const dates=[...new Set((data||[]).map(d=>d.report_date))];
-    if(!dates.length) { render('hr-content','<div style="color:#aaa;text-align:center;padding:40px">리포트 없음</div>'); return; }
-    render('hr-date', dates.map(d=>`<option value="${d}">${d}</option>`).join(''));
-    loadHrReport();
-  } catch(e) { console.error(e); }
-}
-async function loadHrReport() {
-  const date=$id('hr-date')?.value; if(!date) return;
-  try {
-    const { data } = await sc.from('reports').select('content').eq('report_date',date).eq('user_id',me.id).single();
-    const c=data?.content; let html='';
-    if(c?.hr_proposal)      html+=`<h2>👤 HR 제안</h2>${marked.parse(c.hr_proposal)}`;
-    if(c?.ba_brief)         html+=`<h2>🔍 BA 분석</h2>${marked.parse(c.ba_brief)}`;
-    if(c?.pm_brief)         html+=`<h2>🗂 PM 브리핑</h2>${marked.parse(c.pm_brief)}`;
-    if(c?.securities_brief) html+=`<h2>📈 증권 인사이트</h2>${marked.parse(c.securities_brief)}`;
-    render('hr-content', html||'<div style="color:#aaa;text-align:center;padding:40px">내용 없음</div>');
-  } catch(e) { render('hr-content',`<span style="color:#f55">로드 실패: ${e.message}</span>`); }
-}
-
-/* ══════════════════════════════════════════
-   VOC 탭
-   ══════════════════════════════════════════ */
-async function loadVoc() {
-  try {
-    const { data } = await sc.from('report_feedback').select('*').order('created_at',{ascending:false}).limit(15);
-    render('voc-list', (data||[]).length===0
-      ? `<div class="empty">VOC 없음</div>`
-      : (data||[]).map(v=>`<div class="card" style="border-left-color:${v.is_positive?'var(--success)':'var(--admin)'}">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:1.5rem">${v.is_positive?'👍':'👎'}</span>
-            <small style="color:#aaa">${v.created_at?.slice(0,10)||''}</small>
-          </div>
-          ${v.feedback_text?`<div class="box" style="margin-top:8px">${escHtml(v.feedback_text)}</div>`:'<div style="color:#aaa;font-size:.82rem;padding:6px 0">의견 없음</div>'}
-          ${v.target_agent?`<small style="color:#999">대상: ${v.target_agent}</small>`:''}
-        </div>`).join('')
+    const res = await fetch(
+      `https://api.github.com/repos/${CFG.owner}/${CFG.repo}/actions/workflows/rollback.yml/dispatches`,
+      { method:'POST',
+        headers:{ 'Authorization':`Bearer ${token}`,
+                  'Accept':'application/vnd.github.v3+json',
+                  'Content-Type':'application/json' },
+        body: JSON.stringify({ ref:'main', inputs:{ target_sha: sha } }) }
     );
-  } catch(e) { render('voc-list','<div class="card">⚠️ VOC 로드 실패</div>'); }
+    if (res.status === 204) toast(`↩️ 롤백 트리거 완료 (SHA: ${sha.slice(0,8)})`);
+    else { const e = await res.json().catch(()=>({})); throw new Error(`${res.status}: ${e.message||'오류'}`); }
+  } catch(e) { toast('❌ 롤백 실패: ' + e.message); }
 }
 
 /* ══════════════════════════════════════════
-   비용 탭
-   ══════════════════════════════════════════ */
-async function loadCost() {
-  try {
-    const todayFmt=new Date(Date.now()+9*60*60*1000).toISOString().slice(0,10);
-    const { data: todayLogs }=await sc.from('cost_log').select('call_type,call_count,cost_usd').eq('log_date',todayFmt);
-    const totalCalls=(todayLogs||[]).reduce((s,r)=>s+(r.call_count||0),0);
-    const totalCost =(todayLogs||[]).reduce((s,r)=>s+(r.cost_usd||0),0);
-    $id('c-calls').textContent=totalCalls.toLocaleString();
-    $id('c-cost').textContent=`$${totalCost.toFixed(4)}`;
-    const byType={};
-    (todayLogs||[]).forEach(r=>{byType[r.call_type]=(byType[r.call_type]||0)+(r.call_count||0);});
-    const typeIcon={text:'📝',json:'📊',batch:'🗞️'};
-    $id('c-breakdown').innerHTML=Object.keys(byType).length===0
-      ?'<span style="color:#aaa">오늘 데이터 없음</span>'
-      :`<table style="width:100%;border-collapse:collapse"><tr style="background:#f8fafc;font-weight:700"><td style="padding:8px">유형</td><td style="padding:8px;text-align:right">호출 수</td></tr>
-        ${Object.entries(byType).map(([k,v])=>`<tr style="border-top:1px solid #f0f0f0"><td style="padding:8px">${typeIcon[k]||'•'} ${k}</td><td style="padding:8px;text-align:right;font-weight:700">${v.toLocaleString()}회</td></tr>`).join('')}</table>`;
-    const since7=new Date(Date.now()+9*60*60*1000-6*86400*1000).toISOString().slice(0,10);
-    const { data: weekLogs }=await sc.from('cost_log').select('log_date,call_count,cost_usd').gte('log_date',since7);
-    $id('c-week').textContent=`$${((weekLogs||[]).reduce((s,r)=>s+(r.cost_usd||0),0)).toFixed(3)}`;
-    const days=Array.from({length:7},(_,i)=>{const d=new Date(Date.now()+9*60*60*1000-(6-i)*86400*1000);return d.toISOString().slice(0,10);});
-    const callByDay={};
-    (weekLogs||[]).forEach(r=>{callByDay[r.log_date]=(callByDay[r.log_date]||0)+(r.call_count||0);});
-    const ctx=$id('cost-chart').getContext('2d');
-    if(costChartInstance) costChartInstance.destroy();
-    costChartInstance=new Chart(ctx,{type:'bar',data:{labels:days.map(d=>d.slice(5)),datasets:[{label:'Gemini 호출 수',data:days.map(d=>callByDay[d]||0),backgroundColor:'rgba(245,158,11,0.7)',borderColor:'#f59e0b',borderWidth:2,borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1}}}}});
-    const { data: sbStats }=await sc.from('supabase_stats').select('row_counts,total_rows').eq('stat_date',todayFmt).maybeSingle();
-    if(sbStats) {
-      const total=sbStats.total_rows||0, pct=((total/500000)*100).toFixed(1);
-      const color=total>400000?'#dc2626':total>250000?'#d97706':'#16a34a';
-      $id('c-rows').textContent=total.toLocaleString(); $id('c-rows').style.color=color;
-      const counts=sbStats.row_counts||{};
-      $id('c-row-detail').innerHTML=`<div style="margin-bottom:10px"><div style="background:#f3f4f6;border-radius:8px;height:12px;overflow:hidden"><div style="background:${color};height:100%;width:${Math.min(pct,100)}%;border-radius:8px;transition:.5s"></div></div><div style="font-size:.8rem;color:#6b7280;margin-top:4px">${pct}% 사용 중</div></div>
-        <table style="width:100%;border-collapse:collapse;font-size:.88rem">${Object.entries(counts).map(([t,n])=>`<tr style="border-top:1px solid #f0f0f0"><td style="padding:6px 8px;color:#555">${t}</td><td style="padding:6px 8px;text-align:right;font-weight:700;color:${n>100000?'#dc2626':'#111'}">${n.toLocaleString()}</td></tr>`).join('')}</table>`;
-    } else { $id('c-rows').textContent='—'; $id('c-row-detail').innerHTML='<span style="color:#aaa">오늘 통계 없음</span>'; }
-  } catch(e) { console.error('loadCost 오류:',e); $id('c-breakdown').innerHTML=`<span style="color:#f55">로드 실패: ${e.message}</span>`; }
-}
-
-/* ══════════════════════════════════════════
-   전체 새로고침 / 초기화
+   초기화
    ══════════════════════════════════════════ */
 async function refreshAll() {
-  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadReleaseLedger(), loadLogs(), loadVoc()]);
-  toast('🔄 전체 데이터 새로고침 완료');
+  const curTab = document.querySelector('.tab.on')?.id?.replace('t-','') || 'hr';
+  if (curTab === 'hr')     await loadHrDates();
+  if (curTab === 'evo')    await loadEvo();
+  if (curTab === 'dev')  { await loadDev(); await loadReleaseLedger(); }
+  if (curTab === 'staff')  await loadStaffTab();
+  if (curTab === 'sites')  await loadSitesTab();
+  if (curTab === 'member') await loadMemberSettings();
+  if (curTab === 'log')    await loadLogs();
+  if (curTab === 'voc')    await loadVoc();
+  if (curTab === 'cost')   await loadCost();
+  toast('🔄 새로고침 완료');
 }
 
 async function init() {
+  // 저장된 키 복구
+  const savedToken = localStorage.getItem('ghp_token') || '';
+  const savedSr    = localStorage.getItem('sr_key')    || '';
+  if (savedToken) { $id('ghp-token').value = savedToken; updateTokenStatus(savedToken); }
+  if (savedSr)    { $id('sr-key-input').value = savedSr; CFG.service_role = savedSr; updateSrStatus(savedSr); }
+
+  // 로그인 확인
+  const { data:{ user } } = await sc.auth.getUser();
+  if (!user || user.email !== CFG.master) {
+    document.body.innerHTML =
+      `<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif">
+         <div style="text-align:center">
+           <div style="font-size:3rem;margin-bottom:16px">🔒</div>
+           <div style="font-size:1.2rem;font-weight:700;color:#ef4444">마스터 전용 페이지입니다.</div>
+           <a href="index.html" style="color:#2563eb;margin-top:12px;display:inline-block">← 홈으로</a>
+         </div>
+       </div>`;
+    return;
+  }
+  me = user;
+
   startClock();
-
-  // GHP 토큰 복원
-  const tok = getToken();
-  if(tok) { $id('ghp-token').value=tok; updateTokenStatus(tok); } else { updateTokenStatus(''); }
-
-  // SR 키 복원
-  const srk = localStorage.getItem('sr_key') || '';
-  if(srk) { $id('sr-key-input').value=srk; CFG.service_role=srk; updateSrStatus(srk); } else { updateSrStatus(''); }
-
-  try {
-    const { data:{ session } } = await sc.auth.getSession();
-    if(!session || session.user.email !== CFG.master) {
-      toast('❌ 마스터 권한 없음. 이동합니다.');
-      setTimeout(()=>location.href='app.html', 1500); return;
-    }
-    me = session.user;
-  } catch(e) { me={id:'master',email:CFG.master}; console.warn('세션 없음:', e.message); }
-
   startAutoApprovalTimer();
-  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadReleaseLedger(), loadLogs(), loadVoc()]);
-  loadAgentSelect();
-
-  // 실시간 구독
-  sc.channel('evo-updates').on('postgres_changes',{event:'*',schema:'public',table:'pending_approvals'},()=>loadEvo()).subscribe();
-  sc.channel('dev-updates').on('postgres_changes',{event:'*',schema:'public',table:'dev_backlog'},()=>loadDev()).subscribe();
-  sc.channel('agent-updates').on('postgres_changes',{event:'*',schema:'public',table:'agents'},()=>loadAgentSelect()).subscribe();
+  await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadAgentSelect()]);
 }
 
-init();
-</script>
-</body>
-</html>
+document.addEventListener('DOMContentLoaded', init);
