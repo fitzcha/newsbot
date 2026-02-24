@@ -612,6 +612,19 @@ function getSummary(b) {
 function getPoints(b)    { return (typeof b === 'object' && b?.points) ? b.points : []; }
 function getDeepLines(b) { return (typeof b === 'object' && b?.deep)   ? b.deep   : []; }
 
+/* ── 기사 요약 정제 ── **상황:**, **Situation:** 등 LLM 레이블 제거 */
+function cleanSummary(text) {
+  if (!text) return '';
+  return text
+    // **레이블:** 볼드 마크다운 패턴 제거 (예: **상황:**, **Situation:**)
+    .replace(/\*\*[^*:]{1,20}:\*\*\s*/g, '')
+    // **레이블** 단독 패턴 + 콜론 제거
+    .replace(/\*\*[^*]{1,20}\*\*\s*[:：]?\s*/g, '')
+    // 줄 앞 한글/영문 레이블: 콜론 패턴 제거
+    .replace(/^(상황|제안|배경|요약|분석|결론|Situation|Summary|Proposal|Background|Analysis|Conclusion)\s*[:：]\s*/i, '')
+    .trim();
+}
+
 /* ── 봉투 SVG ── */
 function makeSVG(a) {
   const c = AGENT_META[a]?.color || '#64748b';
@@ -811,7 +824,7 @@ function renderFeed() {
               <span class="hl-num">0${n+1}</span>
               <div>
                 <div class="hl-title">${escHtml(a.title)}</div>
-                <div class="hl-summary">${escHtml(a.pm_summary||a.description||'')}</div>
+                <div class="hl-summary">${escHtml(cleanSummary(a.pm_summary||a.description||''))}</div>
               </div>
             </div>`).join('')}
         </div>
