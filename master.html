@@ -472,6 +472,28 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
   </div>
 </div>
 
+<!-- 로그인 오버레이 -->
+<div id="login-overlay" style="display:none;position:fixed;inset:0;background:#0f172a;z-index:9999;align-items:center;justify-content:center;flex-direction:column">
+  <div style="background:#1e293b;border-radius:20px;padding:40px 36px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:2.5rem;margin-bottom:10px">🔒</div>
+      <div style="font-size:1.3rem;font-weight:800;color:#fff;letter-spacing:-0.5px">Sovereign HQ</div>
+      <div style="font-size:.82rem;color:#94a3b8;margin-top:4px">마스터 전용 대시보드</div>
+    </div>
+    <div id="login-error" style="display:none;background:#fee2e2;color:#b91c1c;border-radius:8px;padding:10px 14px;font-size:.83rem;margin-bottom:14px;font-weight:600"></div>
+    <input id="login-email" type="email" placeholder="이메일"
+      style="width:100%;padding:13px 16px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#fff;font-size:.95rem;font-family:inherit;margin-bottom:10px;outline:none"
+      onkeydown="if(event.key==='Enter')document.getElementById('login-pw').focus()">
+    <input id="login-pw" type="password" placeholder="비밀번호"
+      style="width:100%;padding:13px 16px;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#fff;font-size:.95rem;font-family:inherit;margin-bottom:18px;outline:none"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()" id="login-btn"
+      style="width:100%;padding:14px;background:#ef4444;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit">
+      로그인
+    </button>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1730,6 +1752,32 @@ async function refreshAll() {
   toast('🔄 새로고침 완료');
 }
 
+async function doLogin() {
+  const email = $id('login-email').value.trim();
+  const pw    = $id('login-pw').value;
+  const errEl = $id('login-error');
+  const btn   = $id('login-btn');
+  if (!email || !pw) { errEl.textContent='이메일과 비밀번호를 입력하세요'; errEl.style.display='block'; return; }
+  btn.textContent = '로그인 중...'; btn.disabled = true;
+  try {
+    const { data, error } = await sc.auth.signInWithPassword({ email, password: pw });
+    if (error) throw error;
+    if (data.user?.email !== CFG.master) {
+      await sc.auth.signOut();
+      throw new Error('마스터 계정으로만 접근 가능합니다');
+    }
+    me = data.user;
+    $id('login-overlay').style.display = 'none';
+    startClock();
+    startAutoApprovalTimer();
+    await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadAgentSelect()]);
+  } catch(e) {
+    errEl.textContent = e.message === 'Invalid login credentials' ? '이메일 또는 비밀번호가 올바르지 않습니다' : e.message;
+    errEl.style.display = 'block';
+    btn.textContent = '로그인'; btn.disabled = false;
+  }
+}
+
 async function init() {
   // 저장된 키 복구
   const savedToken = localStorage.getItem('ghp_token') || '';
@@ -1738,34 +1786,25 @@ async function init() {
   if (savedSr)    { $id('sr-key-input').value = savedSr; CFG.service_role = savedSr; updateSrStatus(savedSr); }
 
   try {
-    // 로그인 확인
     const { data, error } = await sc.auth.getUser();
     if (error) throw error;
     const user = data?.user;
+
     if (!user || user.email !== CFG.master) {
-      document.body.innerHTML =
-        `<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif">
-           <div style="text-align:center">
-             <div style="font-size:3rem;margin-bottom:16px">🔒</div>
-             <div style="font-size:1.2rem;font-weight:700;color:#ef4444">마스터 전용 페이지입니다.</div>
-             <a href="index.html" style="color:#2563eb;margin-top:12px;display:inline-block">← 홈으로</a>
-           </div>
-         </div>`;
+      // 로그인 오버레이 표시
+      const overlay = $id('login-overlay');
+      overlay.style.display = 'flex';
       return;
     }
     me = user;
-
     startClock();
     startAutoApprovalTimer();
     await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadAgentSelect()]);
   } catch(e) {
     console.error('init 오류:', e);
-    render('hr-content',
-      `<div style="color:#ef4444;text-align:center;padding:40px">
-         ⚠️ 초기화 실패: ${e.message}<br>
-         <small style="color:#888">페이지를 새로고침 하거나 다시 로그인해주세요.</small><br>
-         <button onclick="location.reload()" style="margin-top:12px;padding:8px 20px;border-radius:8px;border:1px solid #ddd;cursor:pointer;font-size:.9rem">🔄 새로고침</button>
-       </div>`);
+    // 에러 시에도 로그인 폼 표시
+    const overlay = $id('login-overlay');
+    if (overlay) overlay.style.display = 'flex';
   }
 }
 
