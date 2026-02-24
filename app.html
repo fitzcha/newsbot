@@ -907,7 +907,10 @@ async function submitFeedback() {
       report_date:   curDate,
       created_at:    new Date().toISOString()
     });
-  } catch(e) { console.error('피드백 저장 오류:', e); }
+  } catch(e) { 
+  console.error('피드백 저장 오류:', e);
+  console.error('에러 상세:', JSON.stringify(e));  // ← 이 줄 추가
+  alert(JSON.stringify(e));  // ← 이 줄 추가 (팝업으로 바로 보기)
   document.getElementById('feedback-form-view').style.display = 'none';
   document.getElementById('feedback-done-view').style.display = 'block';
 }
