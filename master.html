@@ -480,7 +480,7 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
    ══════════════════════════════════════════ */
 const CFG = {
   url:          'https://zrlpwmpbrvohautldcon.supabase.co',
-  key:          'sb_publishable_nIc584au5zdVZkC7uCe2kg_sEFEMD-G',
+  key:          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybHB3bXBicnZvaGF1dGxkY29uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyMjk3NjQsImV4cCI6MjA4NjgwNTc2NH0.Ox5OZh1jJuhxUMd8zcLph08B5fERgNExAZfYZ24anJk',
   service_role: '',
   master:       'positivecha@gmail.com',
   owner:        'fitzcha',
@@ -663,23 +663,21 @@ async function runAutoApproval(){
    ══════════════════════════════════════════ */
 async function loadHrDates(){
   try {
-    // me가 없으면 대기
-    if (!me) { render('hr-content','<div style="color:#aaa;text-align:center;padding:40px">인증 정보를 확인 중...</div>'); return; }
-    const {data, error}=await sc.from('reports').select('report_date').order('report_date',{ascending:false});
+    const {data,error}=await sc.from('reports').select('report_date').order('report_date',{ascending:false});
     if(error) throw error;
     const dates=[...new Set((data||[]).map(d=>d.report_date))];
     if(!dates.length){ render('hr-content','<div style="color:#aaa;text-align:center;padding:40px">리포트 없음</div>'); return; }
     render('hr-date',dates.map(d=>`<option value="${d}">${d}</option>`).join(''));
     loadHrReport();
   } catch(e){
-    console.error('loadHrDates error:', e);
-    render('hr-content',`<div style="color:#ef4444;text-align:center;padding:40px">⚠️ 리포트 로드 실패: ${escHtml(e.message)}<br><button class="btn" style="margin-top:12px" onclick="loadHrDates()">🔄 재시도</button></div>`);
+    console.error('loadHrDates 오류:', e);
+    render('hr-content',`<div style="color:#ef4444;text-align:center;padding:40px">⚠️ 리포트 로드 실패: ${e.message}<br><button onclick="loadHrDates()" style="margin-top:12px;padding:8px 20px;border-radius:8px;border:1px solid #ddd;cursor:pointer">🔄 재시도</button></div>`);
   }
 }
 async function loadHrReport(){
   const date=$id('hr-date')?.value; if(!date) return;
   try {
-    const {data,error}=await sc.from('reports').select('content').eq('report_date',date).order('created_at',{ascending:false}).limit(1).single();
+    const {data,error}=await sc.from('reports').select('content').eq('report_date',date).order('created_at',{ascending:false}).limit(1).maybeSingle();
     if(error) throw error;
     const c=data?.content; let html='';
     if(c?.hr_proposal)      html+=`<h2>👤 HR 제안</h2>${marked.parse(c.hr_proposal)}`;
@@ -1741,8 +1739,9 @@ async function init() {
 
   try {
     // 로그인 확인
-    const { data:{ user }, error } = await sc.auth.getUser();
+    const { data, error } = await sc.auth.getUser();
     if (error) throw error;
+    const user = data?.user;
     if (!user || user.email !== CFG.master) {
       document.body.innerHTML =
         `<div style="display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif">
@@ -1760,9 +1759,13 @@ async function init() {
     startAutoApprovalTimer();
     await Promise.all([loadHrDates(), loadEvo(), loadDev(), loadAgentSelect()]);
   } catch(e) {
-    console.error('init error:', e);
-    // Supabase 연결 실패 시에도 UI 기본 틀은 보여줌
-    render('hr-content', `<div style="color:#ef4444;text-align:center;padding:40px">⚠️ 초기화 실패: ${escHtml(e.message)}<br><small style="color:#aaa">Supabase 연결을 확인하거나 페이지를 새로고침 하세요.</small><br><button class="btn" style="margin-top:12px" onclick="location.reload()">🔄 새로고침</button></div>`);
+    console.error('init 오류:', e);
+    render('hr-content',
+      `<div style="color:#ef4444;text-align:center;padding:40px">
+         ⚠️ 초기화 실패: ${e.message}<br>
+         <small style="color:#888">페이지를 새로고침 하거나 다시 로그인해주세요.</small><br>
+         <button onclick="location.reload()" style="margin-top:12px;padding:8px 20px;border-radius:8px;border:1px solid #ddd;cursor:pointer;font-size:.9rem">🔄 새로고침</button>
+       </div>`);
   }
 }
 
