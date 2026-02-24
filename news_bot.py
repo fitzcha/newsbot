@@ -47,6 +47,9 @@ _MONITOR_TABLES = [
     "pending_approvals", "dev_backlog", "agents",
 ]
 
+# 절대 제거 불가 보호 역할
+_PROTECTED_ROLES = {"BRIEF", "HR", "MASTER", "DEV", "QA"}
+
 # ──────────────────────────────────────────────
 # 환경변수 체크
 # ──────────────────────────────────────────────
@@ -104,7 +107,6 @@ def record_performance(user_id, keyword, count):
 
 def record_cost(call_type: str, input_tokens: int, output_tokens: int,
                 model: str = _DEFAULT_MODEL, count: int = 1):
-    """Gemini 호출 1회의 토큰/비용을 cost_log에 기록"""
     try:
         price = _GEMINI_PRICE.get(model, _GEMINI_PRICE[_DEFAULT_MODEL])
         cost  = (input_tokens / 1000 * price["input"]
@@ -122,7 +124,6 @@ def record_cost(call_type: str, input_tokens: int, output_tokens: int,
         print(f"  ⚠️ [Cost] 기록 실패: {e}")
 
 def record_supabase_stats():
-    """하루 1회 — 테이블별 row 수를 supabase_stats에 스냅샷 저장"""
     try:
         counts = {}
         total  = 0
@@ -159,11 +160,10 @@ def call_agent(prompt, agent_info, persona_override=None, force_one_line=False):
 
     for attempt in range(3):
         try:
-            res    = google_genai.models.generate_content(
+            res = google_genai.models.generate_content(
                 model=_DEFAULT_MODEL,
                 contents=f"당신은 {role}입니다.\n지침: {agent_info['instruction']}\n\n입력: {fp}"
             )
-            # 비용 기록
             try:
                 usage = res.usage_metadata
                 record_cost(
@@ -210,7 +210,6 @@ def call_agent_json(prompt, agent_info, persona_override=None):
                 model=_DEFAULT_MODEL,
                 contents=f"당신은 {role}입니다.\n지침: {agent_info['instruction']}\n\n입력: {full_prompt}"
             )
-            # 비용 기록 — 파싱 성공/실패 무관하게 항상 기록
             try:
                 usage = res.usage_metadata
                 record_cost(
@@ -221,16 +220,13 @@ def call_agent_json(prompt, agent_info, persona_override=None):
             except: pass
 
             raw = res.text.strip()
-            # 마크다운 펜스 제거
             raw = re.sub(r"^```json\s*", "", raw)
             raw = re.sub(r"\s*```$",     "", raw)
             raw = raw.strip()
-            # { } 범위 직접 추출 (앞뒤 설명 텍스트 대비)
             brace_start = raw.find('{')
             brace_end   = raw.rfind('}')
             if brace_start != -1 and brace_end != -1:
                 raw = raw[brace_start:brace_end + 1]
-
             return json.loads(raw)
 
         except json.JSONDecodeError:
@@ -244,7 +240,6 @@ def call_agent_json(prompt, agent_info, persona_override=None):
                         "details":          f"3회 파싱 실패. 원문 앞 100자: {res.text[:100]}"
                     }).execute()
                 except: pass
-                print(f"  ❌ [JSON] [{role}] 3회 모두 파싱 실패 → fallback 반환")
                 return {"summary": res.text.strip().split('\n')[0][:80], "points": [], "deep": []}
             time.sleep(2)
             continue
@@ -430,7 +425,6 @@ def sync_data_to_github():
         _run_cmd('git config --global user.email "positivecha@gmail.com"')
         _run_cmd('git add data.json')
 
-        # 파일 변경이 없으면 불필요한 빈 커밋을 만들지 않는다.
         staged = subprocess.run(
             "git diff --cached --quiet -- data.json",
             shell=True
@@ -451,11 +445,8 @@ def sync_data_to_github():
 # ──────────────────────────────────────────────
 def _validate_generated_code(file_path: str, new_code: str):
     compile(new_code, file_path, "exec")
-
-    # 핵심 런타임 파일은 구조가 유지돼야 한다. (문법 통과만으로는 불충분)
     if os.path.basename(file_path) != "news_bot.py":
         return
-
     required = [
         "def run_autonomous_engine(",
         "def run_agent_initiative(",
@@ -464,7 +455,6 @@ def _validate_generated_code(file_path: str, new_code: str):
     missing = [sig for sig in required if sig not in new_code]
     if missing:
         raise ValueError(f"핵심 구조 누락: {', '.join(missing)}")
-
     if len(new_code.splitlines()) < 300:
         raise ValueError("핵심 런타임 코드가 비정상적으로 축소되어 배포 차단")
 
@@ -559,75 +549,39 @@ def run_self_evolution(backlog_id: str):
                 f"조치: 원본 코드로 자동 롤백 완료. GitHub push는 차단되었습니다.\n"
                 f"백업 ID는 Supabase code_backups 테이블에서 확인하세요."
             )
-            _notify(f"검증 오류 감지 — '{task['title']}' 롤백 완료", err_detail, is_fail=True)
-            try:
-                supabase.table("action_logs").insert({
-                    "action_type":      "DEV_VALIDATE_ROLLBACK",
-                    "target_word":      task['title'],
-                    "execution_method": "Auto",
-                    "details":          f"{type(syn_err).__name__}: {str(syn_err)}"[:200]
-                }).execute()
-            except: pass
+            _notify(f"검증 실패 — '{task['title']}' 롤백", err_detail, is_fail=True)
             supabase.table("dev_backlog").update({"status": "VALIDATION_ERROR"})\
                 .eq("id", task['id']).execute()
-            return
-
-        if new_code == cur_code:
-            print("ℹ️ [DEV] 코드 변경 없음 — 커밋/푸시 스킵")
-            supabase.table("dev_backlog").update({
-                "status":       "COMPLETED",
-                "completed_at": NOW.isoformat()
-            }).eq("id", task['id']).execute()
             return
 
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(new_code)
 
-        safe_title = re.sub(r"\s+", " ", str(task.get("title", "Untitled"))).strip()
-        safe_title = safe_title.replace('"', "'")[:70]
         _run_cmd('git config --global user.name "Fitz-Dev"')
         _run_cmd('git config --global user.email "positivecha@gmail.com"')
-        _run_cmd(f'git add "{file_path}"')
-        _run_cmd(f'git commit -m "🤖 [v17.6] {safe_title} (backlog:{backlog_id})"')
+        _run_cmd(f'git add {file_path}')
+        _run_cmd(f'git commit -m "🤖 [DEV] {task[\"title\"][:60]}"')
         branch = os.environ.get("GITHUB_REF_NAME") or "main"
         _run_cmd(f"git push origin HEAD:{branch}")
 
-        supabase.table("dev_backlog").update({
-            "status":       "COMPLETED",
-            "completed_at": NOW.isoformat()
-        }).eq("id", task['id']).execute()
-        print(f"✨ [DEV] 배포 완료: {task['title']}")
-
-        _notify(
-            f"코드 수정 배포 완료 — '{task['title']}'",
-            f"작업: {task['title']}\n"
-            f"파일: {file_path}\n"
-            f"시각: {NOW.strftime('%Y-%m-%d %H:%M')} KST\n\n"
-            f"요구사항:\n{task['task_detail'][:300]}\n\n"
-            f"문법 검사: 통과\n"
-            f"GitHub push: 완료\n"
-            f"백업: Supabase code_backups 저장 완료"
-        )
+        supabase.table("dev_backlog").update({"status": "DEPLOYED"})\
+            .eq("id", task['id']).execute()
+        print(f"  🚀 [DEV] 배포 완료: {task['title']}")
+        _notify(f"배포 완료 — '{task['title']}'", f"작업이 성공적으로 배포되었습니다.\n{task['task_detail'][:200]}")
 
     except Exception as e:
-        print(f"🚨 [DEV] 진화 실패: {e}")
-        if file_path and cur_code:
+        msg = f"작업: {task['title'] if task else '알 수 없음'}\n오류: {e}"
+        print(f"🚨 [DEV] 처리 실패: {e}")
+        _notify("DEV 처리 실패", msg, is_fail=True)
+        if task:
+            supabase.table("dev_backlog").update({"status": "DEPLOY_FAILED"})\
+                .eq("id", task['id']).execute()
+        if cur_code and file_path:
             try:
                 with open(file_path, "w", encoding="utf-8") as f:
                     f.write(cur_code)
-                print("  🔁 [DEV] 예외 발생으로 원본 코드 자동 복구 완료")
-            except Exception as rb_err:
-                print(f"  🚨 [DEV] 원본 코드 복구 실패: {rb_err}")
-        if task:
-            try:
-                supabase.table("dev_backlog").update({"status": "DEPLOY_FAILED"})\
-                    .eq("id", task["id"]).execute()
+                print(f"  ↩️ [DEV] 원본 코드로 롤백 완료")
             except: pass
-            _notify(
-                f"예상치 못한 오류 — '{task.get('title', '알 수 없음')}'",
-                f"오류 내용: {str(e)}\n\n원본 파일은 변경되지 않았습니다.",
-                is_fail=True
-            )
 
 # ──────────────────────────────────────────────
 # [2] 에이전트 자아 성찰
@@ -828,11 +782,52 @@ def send_email_report(user_email, report, yt_videos=None):
         print(f"  🚨 [Email] 발송 실패: {e}")
 
 # ──────────────────────────────────────────────
+# [BRIEF 역할 ①] 직원 수집 소스 지시 (리더 역할)
+# ──────────────────────────────────────────────
+def brief_get_source_directive(word: str, agents: dict) -> dict:
+    """
+    BRIEF가 키워드를 보고 BA/PM/STOCK/HR 각 직원에게
+    오늘 어떤 사이트·소스에서 집중 수집할지 지시한다.
+    반환 예: {"BA": ["reuters.com", "ft.com"], "STOCK": [...], "PM": [...], "HR": [...]}
+    """
+    brief_agent = agents.get('BRIEF')
+    if not brief_agent:
+        return {}
+
+    prompt = (
+        f"키워드: '{word}'\n\n"
+        "당신은 분석팀 리더(BRIEF)입니다. "
+        "오늘 이 키워드와 관련해 각 담당자(BA, STOCK, PM, HR)가 "
+        "어떤 사이트나 소스에서 콘텐츠를 집중 수집해야 하는지 지시하십시오.\n\n"
+        "반드시 아래 JSON 형식으로만 응답하라. 설명·마크다운 금지.\n"
+        "{\n"
+        '  "BA":    ["사이트1", "사이트2"],\n'
+        '  "STOCK": ["사이트1", "사이트2"],\n'
+        '  "PM":    ["사이트1", "사이트2"],\n'
+        '  "HR":    ["사이트1", "사이트2"]\n'
+        "}"
+    )
+
+    raw = call_agent(prompt, brief_agent, force_one_line=False)
+    try:
+        raw_clean = re.sub(r"```[a-z]*|```", "", raw).strip()
+        brace_s = raw_clean.find('{')
+        brace_e = raw_clean.rfind('}')
+        if brace_s != -1 and brace_e != -1:
+            raw_clean = raw_clean[brace_s:brace_e+1]
+        directive = json.loads(raw_clean)
+        print(f"  📋 [BRIEF→직원] '{word}' 수집 소스 지시 완료: {directive}")
+        return directive
+    except Exception as e:
+        print(f"  ⚠️ [BRIEF→직원] 파싱 실패 ({e}) — 기본 소스 사용")
+        return {}
+
+# ──────────────────────────────────────────────
 # [5] 자율 분석 엔진
 # ──────────────────────────────────────────────
 def run_autonomous_engine():
     agents = get_agents()
-    print(f"🚀 {TODAY} Sovereign Engine v17.5 가동")
+    print(f"🚀 {TODAY} Sovereign Engine v18.0 가동")
 
     user_res = supabase.table("user_settings").select("*").execute()
     for user in (user_res.data or []):
@@ -854,6 +849,14 @@ def run_autonomous_engine():
             all_yt       = []
 
             for word in keywords:
+                # ── [BRIEF 역할 ①] 수집 소스 지시 ──────────────────────
+                print(f"  📋 [{word}] BRIEF 수집 소스 지시 중...")
+                source_directive = brief_get_source_directive(word, agents)
+                ba_src  = source_directive.get('BA',    [])
+                pm_src  = source_directive.get('PM',    [])
+                stk_src = source_directive.get('STOCK', [])
+                # ─────────────────────────────────────────────────────────
+
                 print(f"  📰 [{word}] 뉴스 수집 중...")
                 is_korean = any(ord(c) > 0x1100 for c in word)
                 gn        = GNews(language='ko' if is_korean else 'en', max_results=10)
@@ -867,13 +870,15 @@ def run_autonomous_engine():
                         "ba_brief":         {"summary": "해당 키워드의 뉴스를 찾을 수 없습니다.", "points": [], "deep": []},
                         "securities_brief": {"summary": "해당 키워드의 뉴스를 찾을 수 없습니다.", "points": [], "deep": []},
                         "pm_brief":         {"summary": "해당 키워드의 뉴스를 찾을 수 없습니다.", "points": [], "deep": []},
-                        "articles":         []
+                        "articles":         [],
+                        "source_directive": source_directive,
                     }
                     continue
 
                 articles = []
                 kw_ctx   = []
                 for n in news_list:
+                    # ── [BRIEF 역할 ②] 뉴스 1줄 요약 (기존 유지) ────────
                     pm_summary = call_agent(f"뉴스: {n['title']}", agents['BRIEF'], force_one_line=True)
                     impact     = call_agent(
                         f"뉴스: {n['title']}\n전망 1줄.",
@@ -893,22 +898,28 @@ def run_autonomous_engine():
                 if yt_ctx:
                     ctx += f"\n\n{yt_ctx}"
 
+                # BRIEF 소스 지시 힌트를 각 직원 프롬프트에 추가
+                hint_ba  = f"\n\n[BRIEF 지시 — 오늘 중점 참고 소스: {', '.join(ba_src)}]"  if ba_src  else ""
+                hint_pm  = f"\n\n[BRIEF 지시 — 오늘 중점 참고 소스: {', '.join(pm_src)}]"  if pm_src  else ""
+                hint_stk = f"\n\n[BRIEF 지시 — 오늘 중점 참고 소스: {', '.join(stk_src)}]" if stk_src else ""
+
                 print(f"  🤖 [{word}] 에이전트 분석 중...")
                 by_keyword[word] = {
                     "ba_brief": call_agent_json(
-                        f"키워드 '{word}' 뉴스 및 유튜브 기반 비즈니스 수익 구조 및 경쟁 분석:\n{ctx}",
+                        f"키워드 '{word}' 뉴스 및 유튜브 기반 비즈니스 수익 구조 및 경쟁 분석:\n{ctx}{hint_ba}",
                         agents['BA']
                     ),
                     "securities_brief": call_agent_json(
-                        f"키워드 '{word}' 뉴스 및 유튜브 기반 주식 시장 반응 및 투자 인사이트:\n{ctx}",
+                        f"키워드 '{word}' 뉴스 및 유튜브 기반 주식 시장 반응 및 투자 인사이트:\n{ctx}{hint_stk}",
                         agents['STOCK']
                     ),
                     "pm_brief": call_agent_json(
-                        f"키워드 '{word}' 뉴스 및 유튜브 기반 전략적 서비스 기획 브리핑:\n{ctx}",
+                        f"키워드 '{word}' 뉴스 및 유튜브 기반 전략적 서비스 기획 브리핑:\n{ctx}{hint_pm}",
                         agents['PM']
                     ),
-                    "articles":       articles,
-                    "youtube_videos": yt_videos,
+                    "articles":         articles,
+                    "youtube_videos":   yt_videos,
+                    "source_directive": source_directive,
                 }
 
             if not by_keyword:
@@ -945,7 +956,7 @@ def run_autonomous_engine():
                 print(f"✅ [{user_email}] 리포트 저장 및 이메일 발송 완료 (YouTube {len(all_yt)}개 포함)")
 
         except Exception as e:
-            print(f"❌ 유저 에러 ({user_email}): {e}")
+            print(f"❌ 유저 에러 ({user.get('email','?')}): {e}")
             continue
 
     record_supabase_stats()
@@ -969,55 +980,40 @@ def _collect_all_by_keyword(users: list) -> dict:
 # ──────────────────────────────────────────────
 def run_industry_monitor():
     print("🏭 [Industry] 산업군 모니터링 시작...")
-    agents = get_agents()
-
     try:
-        industries = supabase.table("industry_list")\
-            .select("*").eq("is_active", True).execute()
-        if not industries.data:
-            print("  ⚠️ [Industry] 등록된 산업군 없음")
-            return
+        ind_map = supabase.table("industry_map")\
+            .select("industry, category, keywords")\
+            .eq("is_active", True).execute()
     except Exception as e:
-        print(f"  ❌ [Industry] 산업군 목록 로드 실패: {e}")
+        print(f"  ⚠️ [Industry] industry_map 조회 실패: {e}")
         return
 
-    for ind in industries.data:
-        industry = ind["industry"]
-        category = ind["category"]
-        keywords = ind["keywords"]
+    agents = get_agents()
 
-        try:
-            chk = supabase.table("industry_monitor")\
-                .select("id").eq("industry", industry)\
-                .eq("monitor_date", TODAY).execute()
-            if chk.data:
-                print(f"  ⏭️ [Industry] '{industry}' 오늘 이미 수집됨 — 스킵")
-                continue
-        except: pass
-
-        all_articles = []
-        for kw in keywords[:2]:
-            try:
-                gn   = GNews(language='ko', max_results=5)
-                news = gn.get_news(kw)
-                for n in (news or []):
-                    all_articles.append({
-                        "keyword": kw,
-                        "title":   n.get("title", ""),
-                        "url":     n.get("url", n.get("link", "")),
-                    })
-            except Exception as e:
-                print(f"  ⚠️ [Industry] '{kw}' 뉴스 수집 실패: {e}")
-
-        if not all_articles:
-            print(f"  ⚠️ [Industry] '{industry}' 뉴스 없음 — 스킵")
+    for row in (ind_map.data or []):
+        industry = row.get("industry", "")
+        category = row.get("category", "")
+        kws      = row.get("keywords", [])
+        if not industry or not kws:
             continue
 
-        ctx = "\n".join([f"- {a['title']}" for a in all_articles[:10]])
+        all_articles = []
+        for kw in kws[:3]:
+            try:
+                is_korean = any(ord(c) > 0x1100 for c in kw)
+                gn        = GNews(language='ko' if is_korean else 'en', max_results=3)
+                news      = gn.get_news(kw)
+                all_articles.extend([{"title": n["title"], "keyword": kw} for n in news])
+            except Exception as e:
+                print(f"  ⚠️ [Industry] '{kw}' 수집 실패: {e}")
+
+        if not all_articles:
+            continue
+
+        ctx = "\n".join([f"[{a['keyword']}] {a['title']}" for a in all_articles])
         try:
             summary = call_agent(
-                f"산업군: {industry} ({category})\n오늘 주요 뉴스:\n{ctx}\n\n"
-                f"위 뉴스를 바탕으로 {industry} 산업의 오늘 핵심 동향을 3줄로 요약하라.",
+                f"산업군 '{industry}' 오늘 뉴스 동향 3줄 요약:\n{ctx}",
                 agents.get("BA", agents.get("BRIEF")),
                 force_one_line=False
             )
@@ -1037,6 +1033,155 @@ def run_industry_monitor():
             print(f"  ❌ [Industry] '{industry}' 저장 실패: {e}")
 
     print("🏭 [Industry] 산업군 모니터링 완료")
+
+# ──────────────────────────────────────────────
+# [BRIEF 역할 ③] BRIEF→HR 에이전트 조직 파이프라인
+# ──────────────────────────────────────────────
+def run_brief_hr_org_pipeline(agents: dict, today_ctx: str, industry_ctx: str):
+    """
+    BRIEF가 현재 에이전트 현황 + 오늘 뉴스를 보고
+    새 전문가 추가 / 기존 제거를 제안하면,
+    HR이 타당성을 심사해 승인된 것만 pending_approvals에 등록한다.
+    BRIEF/HR/MASTER/DEV/QA는 코드 레벨에서 절대 제거 불가.
+    """
+    brief_agent = agents.get('BRIEF')
+    hr_agent    = agents.get('HR')
+    if not brief_agent or not hr_agent:
+        print("  ⚠️ [BRIEF→HR] BRIEF 또는 HR 에이전트 없음 — 파이프라인 스킵")
+        return
+
+    try:
+        agent_res     = supabase.table("agents").select("agent_role").execute()
+        current_roles = [a['agent_role'] for a in (agent_res.data or [])]
+        current_roles_str = ", ".join(current_roles) if current_roles else "없음"
+    except Exception as e:
+        print(f"  ⚠️ [BRIEF→HR] 에이전트 목록 조회 실패: {e}")
+        return
+
+    print("  🧠 [BRIEF] 에이전트 조직 구성 제안 생성 중...")
+
+    brief_prompt = (
+        f"오늘 뉴스 컨텍스트:\n{today_ctx}\n\n"
+        f"산업군 동향:\n{industry_ctx}\n\n"
+        f"현재 가동 중인 에이전트: {current_roles_str}\n\n"
+        "당신은 분석팀 리더(BRIEF)입니다. "
+        "오늘 뉴스와 산업 동향을 분석해, 현재 팀에서 부족하거나 새로 필요한 전문가 역할을 제안하고, "
+        "성과가 낮거나 중복되는 역할은 제거를 제안하십시오.\n\n"
+        "반드시 아래 형식으로만 응답하라:\n"
+        "[ADD_AGENT]역할명1:역할설명1|역할명2:역할설명2\n"
+        "[REMOVE_AGENT]역할명1:제거이유1|역할명2:제거이유2\n"
+        "[REASON]전체 판단 근거를 2~3줄로 설명\n\n"
+        "추가/제거가 필요 없으면 해당 태그 뒤에 '없음'이라고 적을 것.\n"
+        f"절대로 {', '.join(_PROTECTED_ROLES)} 역할은 제거 제안하지 말 것."
+    )
+
+    brief_proposal = call_agent(brief_prompt, brief_agent, force_one_line=False)
+
+    if not brief_proposal or brief_proposal in ["분석 지연 중", "분석 데이터 없음"]:
+        print("  ⚠️ [BRIEF] 에이전트 조직 제안 없음 — 스킵")
+        return
+
+    print(f"  ✅ [BRIEF] 조직 제안 완료")
+
+    # HR 심사
+    print("  👤 [HR] BRIEF 제안 심사 중...")
+    hr_prompt = (
+        f"BRIEF 리더의 에이전트 조직 개편 제안:\n{brief_proposal}\n\n"
+        f"현재 가동 중인 에이전트: {current_roles_str}\n"
+        f"오늘 뉴스 컨텍스트:\n{today_ctx}\n\n"
+        "당신은 HR 책임자입니다. "
+        "BRIEF의 제안을 항목별로 심사하여 타당한 것은 승인, 부적절한 것은 거부하십시오.\n\n"
+        "반드시 아래 형식으로만 응답하라:\n"
+        "[APPROVED_ADD]역할명1:역할설명1|역할명2:역할설명2  (없으면 '없음')\n"
+        "[APPROVED_REMOVE]역할명1:제거이유1  (없으면 '없음')\n"
+        "[REJECTED]거부 항목과 거부 이유\n"
+        "[HR_COMMENT]최종 심사 의견 1~2줄"
+    )
+
+    hr_decision = call_agent(hr_prompt, hr_agent, force_one_line=False)
+
+    if not hr_decision or hr_decision in ["분석 지연 중", "분석 데이터 없음"]:
+        print("  ⚠️ [HR] 심사 결과 없음 — 스킵")
+        return
+
+    print(f"  ✅ [HR] 심사 완료")
+
+    add_m     = re.search(r"\[APPROVED_ADD\](.*?)(?=\[APPROVED_REMOVE\]|\[REJECTED\]|\[HR_COMMENT\]|$)",  hr_decision, re.DOTALL)
+    remove_m  = re.search(r"\[APPROVED_REMOVE\](.*?)(?=\[APPROVED_ADD\]|\[REJECTED\]|\[HR_COMMENT\]|$)", hr_decision, re.DOTALL)
+    comment_m = re.search(r"\[HR_COMMENT\](.*?)$", hr_decision, re.DOTALL)
+
+    add_raw    = (add_m.group(1).strip()     if add_m     else "").strip()
+    remove_raw = (remove_m.group(1).strip()  if remove_m  else "").strip()
+    hr_comment = (comment_m.group(1).strip() if comment_m else "HR 심사 완료").strip()
+
+    approved_adds    = []
+    approved_removes = []
+
+    if add_raw and add_raw != "없음":
+        for item in add_raw.split("|"):
+            parts = item.strip().split(":", 1)
+            if len(parts) == 2:
+                approved_adds.append((parts[0].strip(), parts[1].strip()))
+
+    if remove_raw and remove_raw != "없음":
+        for item in remove_raw.split("|"):
+            parts = item.strip().split(":", 1)
+            if len(parts) == 2:
+                approved_removes.append((parts[0].strip(), parts[1].strip()))
+
+    # 승인된 추가 → pending_approvals 등록
+    for role_name, role_desc in approved_adds:
+        if role_name in current_roles:
+            print(f"  ⏭️  [BRIEF→HR] '{role_name}' 이미 존재 — 스킵")
+            continue
+        try:
+            content = (
+                f"[신규 에이전트 추가 제안]\n"
+                f"역할명: {role_name}\n"
+                f"역할 설명: {role_desc}\n\n"
+                f"[BRIEF 원본 제안]\n{brief_proposal}\n\n"
+                f"[HR 심사 의견]\n{hr_comment}"
+            )
+            supabase.table("pending_approvals").insert({
+                "agent_role":           role_name,
+                "proposed_instruction": content,
+                "proposal_reason":      f"{TODAY} BRIEF 제안 → HR 승인 — 신규 에이전트 추가",
+                "needs_dev":            False,
+                "status":               "PENDING",
+            }).execute()
+            print(f"  ✅ [BRIEF→HR] 신규 에이전트 '{role_name}' pending_approvals 등록 완료")
+        except Exception as e:
+            print(f"  ❌ [BRIEF→HR] '{role_name}' 등록 실패: {e}")
+
+    # 승인된 제거 → pending_approvals 등록
+    for role_name, remove_reason in approved_removes:
+        if role_name in _PROTECTED_ROLES:
+            print(f"  🛡️  [BRIEF→HR] '{role_name}'은 보호 역할 — 제거 불가")
+            continue
+        if role_name not in current_roles:
+            print(f"  ⏭️  [BRIEF→HR] '{role_name}' 존재하지 않음 — 스킵")
+            continue
+        try:
+            content = (
+                f"[에이전트 제거 제안]\n"
+                f"역할명: {role_name}\n"
+                f"제거 이유: {remove_reason}\n\n"
+                f"[BRIEF 원본 제안]\n{brief_proposal}\n\n"
+                f"[HR 심사 의견]\n{hr_comment}"
+            )
+            supabase.table("pending_approvals").insert({
+                "agent_role":           role_name,
+                "proposed_instruction": content,
+                "proposal_reason":      f"{TODAY} BRIEF 제안 → HR 승인 — 에이전트 제거",
+                "needs_dev":            False,
+                "status":               "PENDING",
+            }).execute()
+            print(f"  ✅ [BRIEF→HR] 에이전트 제거 제안 '{role_name}' pending_approvals 등록 완료")
+        except Exception as e:
+            print(f"  ❌ [BRIEF→HR] '{role_name}' 제거 제안 등록 실패: {e}")
+
+    if not approved_adds and not approved_removes:
+        print(f"  ℹ️  [BRIEF→HR] 승인된 변경 없음. HR 의견: {hr_comment}")
 
 # ──────────────────────────────────────────────
 # [7] 에이전트 자율 발의
@@ -1101,6 +1246,16 @@ def run_agent_initiative(by_keyword_all: dict):
             "오늘 비즈니스 분석에서 부족했던 점을 파악하고 "
             "더 날카로운 인사이트를 제공하기 위한 instruction 개선안을 제안하라."
         ),
+        # ── [BRIEF 역할 ③-b] BRIEF 자율 발의: 직원 지시 사항 ──────
+        "BRIEF": (
+            f"오늘 뉴스 컨텍스트:\n{today_ctx}\n\n"
+            f"산업군 동향:\n{industry_ctx}\n\n"
+            "당신은 분석팀 리더(BRIEF)입니다. "
+            "오늘 전체 분석 품질을 리더 시각으로 자체 평가하고, "
+            "BA·STOCK·PM·HR 각 담당자에게 내일 분석 개선을 위한 지시 사항을 제안하라.\n"
+            "형식: [ROLE]역할명 [DIRECTIVE]지시내용 (각 역할마다 한 줄)"
+        ),
+        # ──────────────────────────────────────────────────────────
         "MASTER": (
             f"오늘 전체 시스템 성과:\n키워드 성과:\n{perf_ctx}\n\n뉴스 컨텍스트:\n{today_ctx}\n\n"
             "전체 에이전트 시스템의 오늘 성과를 종합 평가하고, "
@@ -1173,6 +1328,19 @@ def run_agent_initiative(by_keyword_all: dict):
                     print(f"  📋 [MASTER] dev_backlog 자동 등록: {title}")
                 continue
 
+            # BRIEF 자율 발의 처리
+            if role == "BRIEF":
+                supabase.table("pending_approvals").insert({
+                    "agent_role":           "BRIEF",
+                    "proposed_instruction": proposal,
+                    "proposal_reason":      f"{TODAY} BRIEF 리더 자율 발의 — 직원 지시 사항",
+                    "needs_dev":            False,
+                    "status":               "PENDING",
+                }).execute()
+                print(f"  ✅ [BRIEF] 자율 발의 등록 완료")
+                continue
+
+            # 그 외 역할 (QA, DATA, BA 등)
             supabase.table("pending_approvals").insert({
                 "agent_role":           role,
                 "proposed_instruction": proposal,
@@ -1184,6 +1352,15 @@ def run_agent_initiative(by_keyword_all: dict):
 
         except Exception as e:
             print(f"  ❌ [{role}] 자율 발의 실패: {e}")
+
+    # ── [BRIEF 역할 ③] BRIEF→HR 에이전트 조직 파이프라인 ────────
+    # 자율 발의 루프 완료 후 반드시 실행 — 절대 삭제 금지
+    print("\n🏢 [BRIEF→HR] 에이전트 조직 구성 파이프라인 시작...")
+    try:
+        run_brief_hr_org_pipeline(agents, today_ctx, industry_ctx)
+    except Exception as e:
+        print(f"  ❌ [BRIEF→HR] 파이프라인 실패: {e}")
+    print("🏢 [BRIEF→HR] 파이프라인 완료\n")
 
     print("🧠 [Initiative] 자율 발의 완료 — HQ에서 확인하세요")
 
