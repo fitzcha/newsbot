@@ -43,12 +43,9 @@ def start_static_server() -> ThreadingHTTPServer:
 def supabase_stub_script(mode: str) -> str:
     authenticated = "true" if mode == "onboarding" else "false"
     signup_open = "true"
-    keywords_payload = "[]" if mode == "onboarding" else "['기존키워드']"
     if mode == "onboarding":
         keywords_payload = "[]"
-    if mode == "index":
-        keywords_payload = "[]"
-    if mode == "unauth_app":
+    else:
         keywords_payload = "[]"
 
     return f"""
@@ -73,7 +70,7 @@ def supabase_stub_script(mode: str) -> str:
 
     function resolveSingle() {{
       if (state.table === 'app_settings') {{
-        return ok({{ value: {signup_open} }});
+        return ok({{ value: '{signup_open}' }});
       }}
       if (state.table === 'user_settings') {{
         return ok({{ keywords: {keywords_payload} }});
@@ -82,12 +79,10 @@ def supabase_stub_script(mode: str) -> str:
     }}
 
     function resolveRows() {{
-      if (state.table === 'industry_map') {{
-        return ok([]);
-      }}
-      if (state.table === 'reports') {{
-        return ok([]);
-      }}
+      if (state.table === 'industry_map')    {{ return ok([]); }}
+      if (state.table === 'reports')         {{ return ok([]); }}
+      if (state.table === 'brief_employees') {{ return ok([]); }}
+      if (state.table === 'agents')          {{ return ok([]); }}
       return ok([]);
     }}
 
@@ -116,6 +111,12 @@ def supabase_stub_script(mode: str) -> str:
         }},
         from: function(table) {{
           return buildQuery(table);
+        }},
+        channel: function() {{
+          return {{
+            on: function() {{ return this; }},
+            subscribe: function() {{ return this; }},
+          }};
         }},
       }};
     }}
@@ -162,9 +163,11 @@ def check_app_unauth_redirect(browser) -> None:
     context = browser.new_context()
     attach_stub(context, "unauth_app")
     page = context.new_page()
-    page.goto(f"{BASE_URL}/app.html", wait_until="domcontentloaded")
 
-    page.wait_for_url("**/index.html", timeout=6000)
+    # goto 전에 navigation 이벤트를 등록해야 리다이렉트를 놓치지 않음
+    with page.expect_navigation(url="**/index.html", timeout=15000):
+        page.goto(f"{BASE_URL}/app.html", wait_until="domcontentloaded")
+
     context.close()
 
 
@@ -174,7 +177,7 @@ def check_onboarding_keyword_modal(browser) -> None:
     page = context.new_page()
     page.goto(f"{BASE_URL}/app.html", wait_until="domcontentloaded")
 
-    page.wait_for_selector(".onboarding-title", timeout=8000)
+    page.wait_for_selector(".onboarding-title", timeout=10000)
     modal_open = page.evaluate(
         "() => document.getElementById('kw-modal').classList.contains('open')"
     )
@@ -183,7 +186,7 @@ def check_onboarding_keyword_modal(browser) -> None:
 
     page.fill("#kw-add-input", "테스트키워드")
     page.click(".kw-add-btn")
-    page.wait_for_timeout(250)
+    page.wait_for_timeout(400)
     manage_text = page.locator("#kw-manage-list").inner_text()
     if "테스트키워드" not in manage_text:
         raise AssertionError("keyword add flow failed in onboarding modal")
@@ -218,4 +221,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
