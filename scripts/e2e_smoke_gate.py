@@ -164,11 +164,28 @@ def check_app_unauth_redirect(browser) -> None:
     attach_stub(context, "unauth_app")
     page = context.new_page()
 
-    # 1) app.html DOM 먼저 로드 (JS init() 실행 시작)
+    # 콘솔/에러 메시지 전부 출력 — 원인 파악용
+    page.on("console", lambda msg: print(f"[BROWSER:{msg.type}] {msg.text}", file=sys.stderr))
+    page.on("pageerror", lambda err: print(f"[BROWSER:pageerror] {err}", file=sys.stderr))
+
     page.goto(f"{BASE_URL}/app.html", wait_until="domcontentloaded")
-    # 2) init() 안의 location.href = 'index.html' 리다이렉트 완료를 별도로 대기
-    #    wait_until="domcontentloaded" 로 load 이벤트까지는 안 기다림
-    page.wait_for_url("**/index.html", timeout=15000, wait_until="domcontentloaded")
+
+    # JS 실행 완료까지 잠깐 대기 후 현재 URL 및 상태 출력
+    page.wait_for_timeout(3000)
+    current_url = page.url
+    print(f"[DEBUG] current url after 3s: {current_url}", file=sys.stderr)
+    session_result = page.evaluate("""
+        async () => {
+            try {
+                const sc = window._sc || null;
+                return 'no _sc exposed';
+            } catch(e) { return 'eval error: ' + e.message; }
+        }
+    """)
+    print(f"[DEBUG] session_result: {session_result}", file=sys.stderr)
+
+    if "index.html" not in current_url:
+        raise AssertionError(f"redirect did not happen. still on: {current_url}")
 
     context.close()
 
