@@ -43,29 +43,33 @@ def start_static_server() -> ThreadingHTTPServer:
 def supabase_stub_script(mode: str) -> str:
     authenticated = "true" if mode == "onboarding" else "false"
 
-    # f-string 중첩 이스케이프 오류 방지 — 템플릿 문자열로 분리
-    template = """
+    # Build the stub as a plain string — no nested f-string issues.
+    # Injected via add_init_script so it runs BEFORE any page JS,
+    # making network interception timing irrelevant.
+    return """
 (function() {
+  'use strict';
+
   function ok(data) {
     return Promise.resolve({ data: data, error: null });
   }
 
   function buildQuery(table) {
     var q = {
-      select: function() { return q; },
-      eq:     function() { return q; },
-      order:  function() { return resolveRows(); },
-      limit:  function() { return resolveRows(); },
+      select:      function() { return q; },
+      eq:          function() { return q; },
+      order:       function() { return resolveRows(); },
+      limit:       function() { return resolveRows(); },
       maybeSingle: function() { return resolveSingle(); },
       single:      function() { return resolveSingle(); },
-      upsert: function() { return ok(null); },
-      insert: function() { return ok(null); },
-      update: function() { return q; },
+      upsert:      function() { return ok(null); },
+      insert:      function() { return ok(null); },
+      update:      function() { return q; }
     };
 
     function resolveSingle() {
       if (table === 'app_settings')  { return ok({ value: 'true' }); }
-      if (table === 'user_settings') { return ok({ keywords: KEYWORDS_PAYLOAD }); }
+      if (table === 'user_settings') { return ok({ keywords: [] }); }
       return ok(null);
     }
 
@@ -76,43 +80,56 @@ def supabase_stub_script(mode: str) -> str:
     return q;
   }
 
-  window.supabase = {
-    createClient: function() {
-      return {
-        auth: {
-          getSession: async function() {
-            return {
-              data: {
-                session: IS_AUTHENTICATED ? {
-                  user: { id: 'test-user-1', email: 'smoke-user@example.com' }
-                } : null
-              },
-              error: null
-            };
+  var IS_AUTHENTICATED = """ + authenticated + """;
+
+  var fakeClient = {
+    auth: {
+      getSession: async function() {
+        return {
+          data: {
+            session: IS_AUTHENTICATED
+              ? { user: { id: 'test-user-1', email: 'smoke-user@example.com' } }
+              : null
           },
-          signOut:       async function() { return { error: null }; },
-          signInWithOtp: async function() { return { error: null }; },
-        },
-        from: function(table) { return buildQuery(table); },
-        channel: function() {
-          return {
-            on:        function() { return this; },
-            subscribe: function() { return this; },
-          };
-        },
+          error: null
+        };
+      },
+      signOut:       async function() { return { error: null }; },
+      signInWithOtp: async function() { return { error: null }; }
+    },
+    from: function(table) { return buildQuery(table); },
+    channel: function() {
+      return {
+        on:        function() { return this; },
+        subscribe: function() { return this; }
       };
     }
   };
+
+  // Expose via both the global supabase shim AND window.supabase
+  // so whatever import style app.html uses, it finds the stub.
+  var fakeModule = { createClient: function() { return fakeClient; } };
+  window.supabase = fakeModule;
+
+  // Intercept dynamic import / ES-module style by defining a
+  // non-writable property on window that shadows the CDN export.
+  try {
+    Object.defineProperty(window, '_supabaseStub', {
+      value: fakeClient,
+      writable: false
+    });
+  } catch (_) {}
 })();
-"""
-    script = template.replace("IS_AUTHENTICATED", authenticated)
-    script = script.replace("KEYWORDS_PAYLOAD", "[]")
-    return script
+""";
 
 
 def attach_stub(context, mode: str) -> None:
     script = supabase_stub_script(mode)
 
+    # ── 1. init_script: runs before ANY page JS, no timing race ──────────
+    context.add_init_script(script=script)
+
+    # ── 2. network interception: covers CDN <script> tags too ─────────────
     def _fulfill(route):
         route.fulfill(
             status=200,
@@ -120,7 +137,8 @@ def attach_stub(context, mode: str) -> None:
             body=script,
         )
 
-    context.route("**/@supabase/supabase-js@2*", _fulfill)
+    # Match both versioned and unversioned CDN URLs for supabase-js
+    context.route("**/*supabase*", _fulfill)
 
 
 def check_index_overlay(browser) -> None:
@@ -149,25 +167,19 @@ def check_app_unauth_redirect(browser) -> None:
     attach_stub(context, "unauth_app")
     page = context.new_page()
 
-    # 콘솔/에러 메시지 전부 출력 — 원인 파악용
     page.on("console", lambda msg: print(f"[BROWSER:{msg.type}] {msg.text}", file=sys.stderr))
     page.on("pageerror", lambda err: print(f"[BROWSER:pageerror] {err}", file=sys.stderr))
 
     page.goto(f"{BASE_URL}/app.html", wait_until="domcontentloaded")
 
-    # JS 실행 완료까지 잠깐 대기 후 현재 URL 및 상태 출력
-    page.wait_for_timeout(3000)
+    # Wait for the client-side redirect (JS location change), up to 5 s
+    try:
+        page.wait_for_url(f"{BASE_URL}/index.html", timeout=5000)
+    except PlaywrightTimeoutError:
+        pass  # fall through to assertion for a clear error message
+
     current_url = page.url
-    print(f"[DEBUG] current url after 3s: {current_url}", file=sys.stderr)
-    session_result = page.evaluate("""
-        async () => {
-            try {
-                const sc = window._sc || null;
-                return 'no _sc exposed';
-            } catch(e) { return 'eval error: ' + e.message; }
-        }
-    """)
-    print(f"[DEBUG] session_result: {session_result}", file=sys.stderr)
+    print(f"[DEBUG] current url after redirect wait: {current_url}", file=sys.stderr)
 
     if "index.html" not in current_url:
         raise AssertionError(f"redirect did not happen. still on: {current_url}")
