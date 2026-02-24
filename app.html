@@ -427,11 +427,85 @@ const sc = supabase.createClient(
 
 const MASTER_EMAIL = 'positivecha@gmail.com';
 
-const AGENT_META = {
+const AGENT_BRIEF_KEYS = { BA:'ba_brief', STOCK:'securities_brief', PM:'pm_brief' };
+const AGENT_DEFAULT_META = {
   BA:    { key:'ba_brief',         name:'비즈니스 분석', icon:'📊', color:'#2563eb' },
   STOCK: { key:'securities_brief', name:'주식 브리핑',   icon:'📈', color:'#0891b2' },
   PM:    { key:'pm_brief',         name:'기획 브리핑',   icon:'🎯', color:'#7c3aed' },
 };
+let AGENT_META = { ...AGENT_DEFAULT_META };
+
+const COLOR_POOL = ['#2563eb','#0891b2','#7c3aed','#10b981','#f59e0b','#ef4444','#06b6d4','#8b5cf6','#f97316','#ec4899'];
+const ICON_MAP   = { BA:'📊',STOCK:'📈',PM:'🎯',HR:'👤',BRIEF:'📰',KW:'🔑',DATA:'📉',INFO:'🌐',DEV:'💻',QA:'✅' };
+const NAME_MAP   = { BA:'비즈니스 분석',STOCK:'주식 브리핑',PM:'기획 브리핑',HR:'인사 분석',BRIEF:'뉴스 브리핑',KW:'키워드 분석',DATA:'데이터 분석',INFO:'정보 분석' };
+
+async function loadDynamicAgents() {
+  try {
+    const [empRes, agRes] = await Promise.all([
+      sc.from('brief_employees').select('agent_role').eq('status','ACTIVE'),
+      sc.from('agents').select('agent_role').order('agent_role'),
+    ]);
+    const activeRoles = new Set((empRes.data||[]).map(e => e.agent_role));
+    const newMeta = {};
+    let colorIdx = 3;
+    (agRes.data||[]).forEach(a => {
+      const role = a.agent_role;
+      if (AGENT_DEFAULT_META[role]) {
+        newMeta[role] = { ...AGENT_DEFAULT_META[role] };
+      } else if (activeRoles.has(role)) {
+        newMeta[role] = {
+          key:   AGENT_BRIEF_KEYS[role] || (role.toLowerCase() + '_brief'),
+          name:  NAME_MAP[role] || role,
+          icon:  ICON_MAP[role] || '🤖',
+          color: COLOR_POOL[colorIdx++ % COLOR_POOL.length],
+        };
+      }
+    });
+    ['BA','STOCK','PM'].forEach(r => { if (!newMeta[r]) newMeta[r] = AGENT_DEFAULT_META[r]; });
+    AGENT_META = newMeta;
+    if (!AGENT_META[curAgent]) curAgent = Object.keys(AGENT_META)[0] || 'BA';
+    rebuildAgentChips();
+  } catch(e) { console.warn('[app] loadDynamicAgents 실패:', e.message); }
+}
+
+function rebuildAgentChips() {
+  // 브리핑 필터 행 칩 재구성
+  const filterChips = document.querySelector('.filter-chips:has(.agent-chip)') 
+    || document.querySelectorAll('.filter-chips')[1];
+  if (filterChips) {
+    filterChips.innerHTML = Object.entries(AGENT_META).map(([role, meta]) =>
+      `<div class="agent-chip ${role===curAgent?'active':''}" data-a="${role}"
+            onclick="selectAgent('${role}','${meta.name}',this)">
+         <span class="agent-dot"></span>${meta.name}
+       </div>`
+    ).join('');
+  }
+  // collapsed bar DD 재구성
+  const ddAgent = document.getElementById('dd-agent');
+  if (ddAgent) {
+    ddAgent.innerHTML = Object.entries(AGENT_META).map(([role, meta]) =>
+      `<div class="c-dd-item ${role===curAgent?'active':''}"
+            onclick="selectAgentDD('${role}','${meta.name}',event)">
+         <span class="c-dd-dot" style="background:${meta.color}"></span>${meta.name}
+       </div>`
+    ).join('');
+  }
+  // 신규 에이전트 색상 동적 CSS 주입
+  Object.entries(AGENT_META).forEach(([role, meta]) => {
+    if (document.getElementById(`agent-color-${role}`)) return;
+    const s = document.createElement('style');
+    s.id = `agent-color-${role}`;
+    s.textContent = `
+      .agent-chip.active[data-a="${role}"] { background:${meta.color}11; color:${meta.color}; border-color:${meta.color}44; }
+      .brief-card[data-a="${role}"]        { border-top:3px solid ${meta.color}; }
+      .brief-agent-label[data-a="${role}"] { color:${meta.color}; }
+      .brief-dot[data-a="${role}"]         { background:${meta.color}; }
+      .secret-agent-badge[data-a="${role}"]{ background:${meta.color}11; color:${meta.color}; }
+      .c-chip.agent-c[data-a="${role}"]    { background:${meta.color}11; border-color:${meta.color}44; color:${meta.color}; }
+    `;
+    document.head.appendChild(s);
+  });
+}
 
 window.CURRENT_USER = { email:'', userName:'', id:'' };
 let curAgent      = 'BA';
@@ -845,15 +919,20 @@ function selectAgent(key, label, el) {
   const chip = document.getElementById('chip-agent');
   chip.setAttribute('data-a', key);
   document.getElementById('chip-agent-txt').textContent = label;
-  document.querySelectorAll('#dd-agent .c-dd-item').forEach((it,idx) =>
-    it.classList.toggle('active', ['BA','STOCK','PM'][idx] === key)
-  );
+  document.querySelectorAll('#dd-agent .c-dd-item').forEach(it =>
+  it.classList.toggle('active', it.querySelector('.c-dd-dot') 
+    ? it.textContent.trim() === (AGENT_META[key]?.name || key)
+    : false)
+);
   switchAgent();
 }
 
 function selectAgentDD(key, label, e) {
   e.stopPropagation(); closeAllDD();
-  selectAgent(key, label, document.querySelector(`.agent-chip[data-a="${key}"]`));
+  const chip = document.querySelector(`.agent-chip[data-a="${key}"]`);
+  if (chip) selectAgent(key, label, chip);
+  else { curAgent = key; rebuildAgentChips(); switchAgent(); }
+}
 }
 
 /* ── 키워드 DD ── */
@@ -1010,10 +1089,17 @@ async function init() {
     if (email === MASTER_EMAIL) document.getElementById('master-nav').style.display = 'flex';
     document.getElementById('logout-btn').style.display = 'block';
 
-    const [uSettingsRes] = await Promise.all([
+   const [uSettingsRes] = await Promise.all([
       sc.from('user_settings').select('keywords').eq('id', userId).maybeSingle(),
-      loadIndustryMap()
+      loadIndustryMap(),
+      loadDynamicAgents(),   // ← 추가
     ]);
+
+    // 실시간 직원 변경 구독 (채용/해고 시 칩 즉시 반영)
+    sc.channel('emp-updates')
+      .on('postgres_changes', { event:'*', schema:'public', table:'brief_employees' },
+          () => loadDynamicAgents())
+      .subscribe();           // ← 추가
     userKeywords = uSettingsRes?.data?.keywords || [];
 
     // ── 키워드 없는 신규 유저 → 온보딩 화면 표시
