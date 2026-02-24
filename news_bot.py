@@ -1062,7 +1062,7 @@ def run_industry_monitor():
     print("🏭 [Industry] 산업군 모니터링 시작...")
     try:
         ind_map = supabase.table("industry_map")\
-            .select("industry, category, keywords")\
+            .select("industry, keywords")\
             .eq("is_active", True).execute()
     except Exception as e:
         print(f"  ⚠️ [Industry] industry_map 조회 실패: {e}")
@@ -1072,7 +1072,6 @@ def run_industry_monitor():
 
     for row in (ind_map.data or []):
         industry = row.get("industry", "")
-        category = row.get("category", "")
         kws      = row.get("keywords", [])
         if not industry or not kws:
             continue
@@ -1102,12 +1101,11 @@ def run_industry_monitor():
 
         try:
             supabase.table("industry_monitor").upsert({
-                "industry":     industry,
-                "category":     category,
-                "articles":     all_articles,
-                "summary":      summary,
-                "monitor_date": TODAY,
-            }, on_conflict="industry,monitor_date").execute()
+            "industry":     industry,
+            "articles":     all_articles,
+            "summary":      summary,
+            "monitor_date": TODAY,
+        }, on_conflict="industry,monitor_date").execute()
             print(f"  ✅ [Industry] '{industry}' 동향 저장 완료 ({len(all_articles)}건)")
         except Exception as e:
             print(f"  ❌ [Industry] '{industry}' 저장 실패: {e}")
@@ -1197,17 +1195,25 @@ def run_brief_hr_org_pipeline(agents: dict, today_ctx: str, industry_ctx: str):
     approved_adds    = []
     approved_removes = []
 
+    def _clean_role(s: str) -> str:
+        """Gemini 마크다운 볼드(**) 및 공백 제거"""
+        return s.strip().replace("**", "").strip()
+
+    def _clean_role(s: str) -> str:
+        """Gemini 마크다운 볼드(**) 및 공백 제거"""
+        return s.strip().replace("**", "").strip()
+
     if add_raw and add_raw != "없음":
         for item in add_raw.split("|"):
             parts = item.strip().split(":", 1)
             if len(parts) == 2:
-                approved_adds.append((parts[0].strip(), parts[1].strip()))
+                approved_adds.append((_clean_role(parts[0]), parts[1].strip()))
 
     if remove_raw and remove_raw != "없음":
         for item in remove_raw.split("|"):
             parts = item.strip().split(":", 1)
             if len(parts) == 2:
-                approved_removes.append((parts[0].strip(), parts[1].strip()))
+                approved_removes.append((_clean_role(parts[0]), parts[1].strip()))
 
     # 승인된 추가 → pending_approvals 등록
     for role_name, role_desc in approved_adds:
