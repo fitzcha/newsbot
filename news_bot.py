@@ -33,7 +33,21 @@ YT_VIDEO_URL   = "https://www.googleapis.com/youtube/v3/videos"
 YT_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
 
 EXPERT_SUBSCRIBER_THRESHOLD = 100_000
-
+def strip_markdown(text: str) -> str:
+    import re
+    # **굵게** 등 마크다운 기호 제거
+    text = re.sub(r'\*{1,3}', '', text)
+    # "상황:", "제안:" 같이 AI가 붙이는 레이블 줄 제거
+    lines = text.splitlines()
+    clean = []
+    for line in lines:
+        stripped = line.strip()
+        if re.match(r'^[A-Za-z가-힣\s·]+:\s*$', stripped):
+            continue
+        if stripped == '' and clean and clean[-1] == '':
+            continue
+        clean.append(stripped)
+    return '\n'.join(clean).strip()
 # Gemini 토큰 단가 (USD / 1K tokens)
 _GEMINI_PRICE = {
     "gemini-1.5-flash": {"input": 0.000075, "output": 0.000300},
@@ -173,7 +187,10 @@ def call_agent(prompt, agent_info, persona_override=None, force_one_line=False):
                 )
             except: pass
             output = res.text.strip()
-            return output.split('\n')[0] if force_one_line else output
+            if force_one_line:
+                first_line = output.split('\n')[0]
+                return strip_markdown(first_line)
+            return output
         except Exception as e:
             err = str(e)
             if '429' in err and attempt < 2:
@@ -1102,6 +1119,7 @@ def run_industry_monitor():
         try:
             supabase.table("industry_monitor").upsert({
             "industry":     industry,
+            "category":     industry,
             "articles":     all_articles,
             "summary":      summary,
             "monitor_date": TODAY,
@@ -1398,12 +1416,17 @@ def run_agent_initiative(by_keyword_all: dict):
                 print(f"  ✅ [KW] 키워드 제안 등록 완료 — 추가 {len(add_kws)}개 / 제거 {len(remove_kws)}개")
                 continue
 
-            if role == "MASTER":
-                t = re.search(r"\[TITLE\](.*?)(?=\[DETAIL\]|$)",  proposal, re.DOTALL)
-                d = re.search(r"\[DETAIL\](.*?)$",                 proposal, re.DOTALL)
-                if t and d:
-                    title  = t.group(1).strip()
-                    detail = d.group(1).strip()
+            title  = strip_markdown(t.group(1).strip()).split('\n')[0]  # 첫 줄만
+                    detail = strip_markdown(d.group(1).strip())
+                    supabase.table("dev_backlog").insert({
+                        "title":         f"[AI발의] {title}",
+                        "task_detail":   detail,
+                        "affected_file": "news_bot.py",
+                        "priority":      5,
+                        "status":        "PENDING",
+                    }).execute()
+                    print(f"  📋 [MASTER] dev_backlog 자동 등록: {title}")
+                continue
                     supabase.table("dev_backlog").insert({
                         "title":         f"[AI발의] {title}",
                         "task_detail":   detail,
