@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os, json, time, re, subprocess, shutil, urllib.request, urllib.parse
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -33,22 +34,7 @@ YT_VIDEO_URL   = "https://www.googleapis.com/youtube/v3/videos"
 YT_CHANNEL_URL = "https://www.googleapis.com/youtube/v3/channels"
 
 EXPERT_SUBSCRIBER_THRESHOLD = 100_000
-def strip_markdown(text: str) -> str:
-    import re
-    # **굵게** 등 마크다운 기호 제거
-    text = re.sub(r'\*{1,3}', '', text)
-    # "상황:", "제안:" 같이 AI가 붙이는 레이블 줄 제거
-    lines = text.splitlines()
-    clean = []
-    for line in lines:
-        stripped = line.strip()
-        if re.match(r'^[A-Za-z가-힣\s·]+:\s*$', stripped):
-            continue
-        if stripped == '' and clean and clean[-1] == '':
-            continue
-        clean.append(stripped)
-    return '\n'.join(clean).strip()
-# Gemini 토큰 단가 (USD / 1K tokens)
+
 _GEMINI_PRICE = {
     "gemini-1.5-flash": {"input": 0.000075, "output": 0.000300},
     "gemini-1.5-pro":   {"input": 0.001250, "output": 0.005000},
@@ -61,8 +47,48 @@ _MONITOR_TABLES = [
     "pending_approvals", "dev_backlog", "agents",
 ]
 
-# 절대 제거 불가 보호 역할
 _PROTECTED_ROLES = {"BRIEF", "HR", "MASTER", "DEV", "QA"}
+
+# ──────────────────────────────────────────────
+# 마크다운 완전 제거 유틸
+# ──────────────────────────────────────────────
+def strip_markdown(text: str) -> str:
+    """
+    Gemini 출력에서 유저에게 노출되면 안 되는 마크다운/레이블을 제거한다.
+    - **굵게**, *기울임* 제거
+    - **상황:**, **Situation:**, **BEHAVIOR:**, **IMPACT:**, **제안:** 등 레이블 줄 제거
+    - 번호 목록(1. 2. 3.) → 내용만 유지
+    - 불필요한 빈 줄 정리
+    """
+    # 볼드/이탤릭 마크다운 기호 제거 (* ** ***)
+    text = re.sub(r'\*{1,3}', '', text)
+    # 헤더(## 제목) 제거
+    text = re.sub(r'^#{1,6}\s+', '', text, flags=re.MULTILINE)
+    # 번호 목록 기호 제거 (1. 2. 등)
+    text = re.sub(r'^\d+\.\s+', '', text, flags=re.MULTILINE)
+    # 글머리 기호 제거 (- * •)
+    text = re.sub(r'^[\-\*•]\s+', '', text, flags=re.MULTILINE)
+
+    lines = text.splitlines()
+    clean = []
+    for line in lines:
+        stripped = line.strip()
+        # "레이블:" 패턴만으로 이루어진 줄 제거
+        # 예: "상황:", "Situation:", "BEHAVIOR:", "IMPACT:", "제안:", "현황:"
+        if re.match(r'^[A-Za-z가-힣\s·\-_]+:\s*$', stripped):
+            continue
+        # 빈 줄 연속 2개 이상 → 1개로
+        if stripped == '' and clean and clean[-1] == '':
+            continue
+        clean.append(stripped)
+
+    return '\n'.join(clean).strip()
+
+
+def clean_role_name(s: str) -> str:
+    """Gemini가 역할명에 붙인 ** 등 마크다운 제거"""
+    return re.sub(r'\*+', '', s).strip()
+
 
 # ──────────────────────────────────────────────
 # 환경변수 체크
@@ -80,7 +106,6 @@ def _check_env():
             missing.append(key)
     if missing:
         print(f"🚨 [ENV] 필수 환경변수 누락: {', '.join(missing)}")
-        print("🚨 [ENV] 이메일 발송 및 일부 기능이 작동하지 않을 수 있습니다.")
     else:
         print("✅ [ENV] 환경변수 전체 확인 완료")
 
@@ -169,8 +194,8 @@ def get_agents():
 def call_agent(prompt, agent_info, persona_override=None, force_one_line=False):
     if not agent_info: return "분석 데이터 없음"
     role  = persona_override or agent_info.get('agent_role', 'Assistant')
-    guard = " (주의: 고객 리포트이므로 내부 학습 제안이나 '수정하겠습니다' 같은 말은 절대 포함하지 마십시오.)"
-    fp    = f"(경고: 반드시 '딱 1줄'로만 핵심을 작성하라) {prompt}" if force_one_line else prompt + guard
+    guard = " (주의: 고객 리포트이므로 내부 학습 제안이나 '수정하겠습니다' 같은 말은 절대 포함하지 마십시오. 마크다운 볼드(**), 헤더(##), 번호목록(1.) 등 마크다운 문법을 절대 사용하지 마십시오.)"
+    fp    = f"(경고: 반드시 '딱 1줄'로만 핵심을 작성하라. 마크다운 기호 절대 금지) {prompt}" if force_one_line else prompt + guard
 
     for attempt in range(3):
         try:
@@ -186,11 +211,10 @@ def call_agent(prompt, agent_info, persona_override=None, force_one_line=False):
                     output_tokens = getattr(usage, 'candidates_token_count', 0),
                 )
             except: pass
-            output = res.text.strip()
-            if force_one_line:
-                first_line = output.split('\n')[0]
-                return strip_markdown(first_line)
-            return output
+
+            output = strip_markdown(res.text.strip())
+            return output.split('\n')[0] if force_one_line else output
+
         except Exception as e:
             err = str(e)
             if '429' in err and attempt < 2:
@@ -208,15 +232,16 @@ def call_agent(prompt, agent_info, persona_override=None, force_one_line=False):
 def call_agent_json(prompt, agent_info, persona_override=None):
     if not agent_info: return {"summary": "분석 데이터 없음", "points": [], "deep": []}
     role  = persona_override or agent_info.get('agent_role', 'Assistant')
-    guard = " (주의: 고객 리포트이므로 내부 학습 제안이나 '수정하겠습니다' 같은 말은 절대 포함하지 마십시오.)"
+    guard = " (주의: 고객 리포트이므로 내부 학습 제안이나 '수정하겠습니다' 같은 말은 절대 포함하지 마십시오. JSON 값 안에도 마크다운 기호(**,##,*,- 등)를 절대 사용하지 마십시오.)"
 
     json_instruction = """
 
 반드시 아래 JSON 형식으로만 응답하라. 마크다운, 코드블록, 설명 텍스트 일절 금지.
+JSON 값 안에 **, *, ##, 번호목록(1. 2.) 등 마크다운 기호를 절대 사용하지 마라.
 {
-  "summary": "핵심 한 줄 요약 (40~60자)",
-  "points": ["포인트1 (1~2문장)", "포인트2 (1~2문장)", "포인트3 (1~2문장)"],
-  "deep": ["심층분석1 (1~2문장)", "심층분석2 (1~2문장)", "심층분석3 (1~2문장)", "심층분석4 (1~2문장)"]
+  "summary": "핵심 한 줄 요약 (40~60자, 마크다운 기호 없이 평문으로)",
+  "points": ["포인트1 (1~2문장, 평문)", "포인트2 (1~2문장, 평문)", "포인트3 (1~2문장, 평문)"],
+  "deep": ["심층분석1 (1~2문장, 평문)", "심층분석2", "심층분석3", "심층분석4"]
 }
 """
     full_prompt = prompt + guard + json_instruction
@@ -244,7 +269,13 @@ def call_agent_json(prompt, agent_info, persona_override=None):
             brace_end   = raw.rfind('}')
             if brace_start != -1 and brace_end != -1:
                 raw = raw[brace_start:brace_end + 1]
-            return json.loads(raw)
+            parsed = json.loads(raw)
+
+            # JSON 값 안에 남은 마크다운도 후처리로 제거
+            parsed['summary'] = strip_markdown(str(parsed.get('summary', '')))
+            parsed['points']  = [strip_markdown(str(p)) for p in parsed.get('points', [])]
+            parsed['deep']    = [strip_markdown(str(d)) for d in parsed.get('deep', [])]
+            return parsed
 
         except json.JSONDecodeError:
             print(f"  ⚠️ [JSON] [{role}] 파싱 실패 ({attempt+1}/3) — 재시도")
@@ -257,7 +288,7 @@ def call_agent_json(prompt, agent_info, persona_override=None):
                         "details":          f"3회 파싱 실패. 원문 앞 100자: {res.text[:100]}"
                     }).execute()
                 except: pass
-                return {"summary": res.text.strip().split('\n')[0][:80], "points": [], "deep": []}
+                return {"summary": strip_markdown(res.text.strip().split('\n')[0][:80]), "points": [], "deep": []}
             time.sleep(2)
             continue
 
@@ -467,7 +498,7 @@ def _validate_generated_code(file_path: str, new_code: str):
     required = [
         "def run_autonomous_engine(",
         "def run_agent_initiative(",
-        "if __name__ == \"__main__\":",
+        'if __name__ == "__main__":',
     ]
     missing = [sig for sig in required if sig not in new_code]
     if missing:
@@ -688,7 +719,7 @@ def _build_email_html(report, yt_videos=None):
         article_rows = ""
         for a in articles[:3]:
             title      = a.get("title", "")
-            pm_summary = a.get("pm_summary", "")
+            pm_summary = strip_markdown(a.get("pm_summary", ""))
             url        = a.get("url", a.get("link", "#"))
             article_rows += f"""
               <tr>
@@ -702,10 +733,10 @@ def _build_email_html(report, yt_videos=None):
         if isinstance(ba_brief, dict):
             ba_items = []
             if ba_brief.get("summary"):
-                ba_items.append(ba_brief["summary"])
-            ba_items += ba_brief.get("points", [])
+                ba_items.append(strip_markdown(ba_brief["summary"]))
+            ba_items += [strip_markdown(p) for p in ba_brief.get("points", [])]
         else:
-            ba_items = [l.strip() for l in str(ba_brief).split('\n') if l.strip()][:5]
+            ba_items = [strip_markdown(l.strip()) for l in str(ba_brief).split('\n') if l.strip()][:5]
 
         ba_html = "".join(
             f'<li style="margin-bottom:6px; color:#444; font-size:13px; line-height:1.6;">{l}</li>'
@@ -802,8 +833,6 @@ def send_email_report(user_email, report, yt_videos=None):
 # ──────────────────────────────────────────────
 # [BRIEF 역할 ①] 직원 수집 소스 지시 + 실제 크롤링
 # ──────────────────────────────────────────────
-
-# GNews가 지원하는 도메인→언어 힌트 매핑 (없으면 기본 GNews 사용)
 _DOMAIN_LANG = {
     "reuters.com": "en", "bloomberg.com": "en", "ft.com": "en",
     "techcrunch.com": "en", "wsj.com": "en", "cnbc.com": "en",
@@ -815,11 +844,6 @@ _DOMAIN_LANG = {
 }
 
 def brief_get_source_directive(word: str, agents: dict) -> dict:
-    """
-    BRIEF가 키워드를 보고 BA/STOCK/PM/HR 각 직원에게
-    오늘 어떤 사이트·소스에서 집중 수집할지 지시한다.
-    반환 예: {"BA": ["reuters.com", "ft.com"], "STOCK": [...], "PM": [...], "HR": [...]}
-    """
     brief_agent = agents.get('BRIEF')
     if not brief_agent:
         return {}
@@ -855,19 +879,12 @@ def brief_get_source_directive(word: str, agents: dict) -> dict:
 
 
 def collect_news_by_directive(word: str, directive: dict) -> list:
-    """
-    BRIEF의 소스 지시를 받아 각 도메인에서 실제로 뉴스를 수집한다.
-    모든 직원(BA/STOCK/PM/HR)의 소스를 합쳐서 중복 제거 후 반환.
-    소스 지시가 없으면 기본 GNews로 폴백.
-    """
-    # 모든 직원 소스를 합쳐서 유니크하게 수집
     all_sources = []
     for role_sources in directive.values():
         all_sources.extend(role_sources)
-    unique_sources = list(dict.fromkeys(all_sources))  # 순서 유지 중복 제거
+    unique_sources = list(dict.fromkeys(all_sources))
 
     if not unique_sources:
-        # 소스 지시 없으면 기본 GNews 폴백
         is_korean = any(ord(c) > 0x1100 for c in word)
         gn = GNews(language='ko' if is_korean else 'en', max_results=10)
         return gn.get_news(word) or []
@@ -877,13 +894,10 @@ def collect_news_by_directive(word: str, directive: dict) -> list:
 
     for domain in unique_sources:
         try:
-            # 도메인 힌트로 언어 결정
             lang = _DOMAIN_LANG.get(domain, None)
             if lang is None:
-                # 한글 도메인이면 ko, 아니면 en
                 lang = 'ko' if any(ord(c) > 0x1100 for c in domain) else 'en'
 
-            # GNews site: 쿼리로 특정 도메인 뉴스 수집
             site_query = f"{word} site:{domain}" if '.' in domain else word
             gn = GNews(language=lang, max_results=3)
             news = gn.get_news(site_query) or []
@@ -892,7 +906,7 @@ def collect_news_by_directive(word: str, directive: dict) -> list:
                 title = n.get("title", "")
                 if title and title not in seen_titles:
                     seen_titles.add(title)
-                    n['source_domain'] = domain  # 어느 소스에서 왔는지 태깅
+                    n['source_domain'] = domain
                     collected.append(n)
 
             if news:
@@ -902,7 +916,6 @@ def collect_news_by_directive(word: str, directive: dict) -> list:
             print(f"    ⚠️ [{domain}] 수집 실패: {e}")
             continue
 
-    # BRIEF 지시 소스로 충분히 못 모았으면 기본 GNews로 보충
     if len(collected) < 5:
         try:
             is_korean = any(ord(c) > 0x1100 for c in word)
@@ -948,14 +961,12 @@ def run_autonomous_engine():
             all_yt       = []
 
             for word in keywords:
-                # ── [BRIEF 역할 ①] 소스 지시 → 실제 수집 ───────────────
                 print(f"  📋 [{word}] BRIEF 수집 소스 지시 중...")
                 source_directive = brief_get_source_directive(word, agents)
                 ba_src  = source_directive.get('BA',    [])
                 pm_src  = source_directive.get('PM',    [])
                 stk_src = source_directive.get('STOCK', [])
 
-                # BRIEF가 결정한 소스로 실제 크롤링
                 print(f"  📰 [{word}] BRIEF 지시 소스 기반 뉴스 수집 중...")
                 news_list = collect_news_by_directive(word, source_directive)
 
@@ -975,13 +986,19 @@ def run_autonomous_engine():
                 articles = []
                 kw_ctx   = []
                 for n in news_list:
-                    # ── [BRIEF 역할 ②] 뉴스 1줄 요약 (기존 유지) ────────
-                    pm_summary = call_agent(f"뉴스: {n['title']}", agents['BRIEF'], force_one_line=True)
-                    impact     = call_agent(
+                    # pm_summary: 1줄 요약 후 마크다운 제거
+                    pm_summary_raw = call_agent(
+                        f"뉴스: {n['title']}", agents['BRIEF'], force_one_line=True
+                    )
+                    pm_summary = strip_markdown(pm_summary_raw).split('\n')[0]
+
+                    impact_raw = call_agent(
                         f"뉴스: {n['title']}\n전망 1줄.",
                         agents.get('STOCK', agents['BRIEF']),
                         force_one_line=True
                     )
+                    impact = strip_markdown(impact_raw).split('\n')[0]
+
                     articles.append({**n, "keyword": word, "pm_summary": pm_summary, "impact": impact})
                     kw_ctx.append(n['title'])
                     all_articles.append(f"[{word}] {n['title']}")
@@ -995,7 +1012,6 @@ def run_autonomous_engine():
                 if yt_ctx:
                     ctx += f"\n\n{yt_ctx}"
 
-                # BRIEF 소스 지시 힌트를 각 직원 프롬프트에 추가
                 hint_ba  = f"\n\n[BRIEF 지시 — 오늘 중점 참고 소스: {', '.join(ba_src)}]"  if ba_src  else ""
                 hint_pm  = f"\n\n[BRIEF 지시 — 오늘 중점 참고 소스: {', '.join(pm_src)}]"  if pm_src  else ""
                 hint_stk = f"\n\n[BRIEF 지시 — 오늘 중점 참고 소스: {', '.join(stk_src)}]" if stk_src else ""
@@ -1118,12 +1134,12 @@ def run_industry_monitor():
 
         try:
             supabase.table("industry_monitor").upsert({
-            "industry":     industry,
-            "category":     industry,
-            "articles":     all_articles,
-            "summary":      summary,
-            "monitor_date": TODAY,
-        }, on_conflict="industry,monitor_date").execute()
+                "industry":     industry,
+                "category":     industry,   # NOT NULL 제약 — industry 값으로 채움
+                "articles":     all_articles,
+                "summary":      summary,
+                "monitor_date": TODAY,
+            }, on_conflict="industry,monitor_date").execute()
             print(f"  ✅ [Industry] '{industry}' 동향 저장 완료 ({len(all_articles)}건)")
         except Exception as e:
             print(f"  ❌ [Industry] '{industry}' 저장 실패: {e}")
@@ -1134,12 +1150,6 @@ def run_industry_monitor():
 # [BRIEF 역할 ③] BRIEF→HR 에이전트 조직 파이프라인
 # ──────────────────────────────────────────────
 def run_brief_hr_org_pipeline(agents: dict, today_ctx: str, industry_ctx: str):
-    """
-    BRIEF가 현재 에이전트 현황 + 오늘 뉴스를 보고
-    새 전문가 추가 / 기존 제거를 제안하면,
-    HR이 타당성을 심사해 승인된 것만 pending_approvals에 등록한다.
-    BRIEF/HR/MASTER/DEV/QA는 코드 레벨에서 절대 제거 불가.
-    """
     brief_agent = agents.get('BRIEF')
     hr_agent    = agents.get('HR')
     if not brief_agent or not hr_agent:
@@ -1163,7 +1173,7 @@ def run_brief_hr_org_pipeline(agents: dict, today_ctx: str, industry_ctx: str):
         "당신은 분석팀 리더(BRIEF)입니다. "
         "오늘 뉴스와 산업 동향을 분석해, 현재 팀에서 부족하거나 새로 필요한 전문가 역할을 제안하고, "
         "성과가 낮거나 중복되는 역할은 제거를 제안하십시오.\n\n"
-        "반드시 아래 형식으로만 응답하라:\n"
+        "반드시 아래 형식으로만 응답하라. 마크다운 기호(**,*,## 등) 절대 사용 금지:\n"
         "[ADD_AGENT]역할명1:역할설명1|역할명2:역할설명2\n"
         "[REMOVE_AGENT]역할명1:제거이유1|역할명2:제거이유2\n"
         "[REASON]전체 판단 근거를 2~3줄로 설명\n\n"
@@ -1179,7 +1189,6 @@ def run_brief_hr_org_pipeline(agents: dict, today_ctx: str, industry_ctx: str):
 
     print(f"  ✅ [BRIEF] 조직 제안 완료")
 
-    # HR 심사
     print("  👤 [HR] BRIEF 제안 심사 중...")
     hr_prompt = (
         f"BRIEF 리더의 에이전트 조직 개편 제안:\n{brief_proposal}\n\n"
@@ -1187,7 +1196,7 @@ def run_brief_hr_org_pipeline(agents: dict, today_ctx: str, industry_ctx: str):
         f"오늘 뉴스 컨텍스트:\n{today_ctx}\n\n"
         "당신은 HR 책임자입니다. "
         "BRIEF의 제안을 항목별로 심사하여 타당한 것은 승인, 부적절한 것은 거부하십시오.\n\n"
-        "반드시 아래 형식으로만 응답하라:\n"
+        "반드시 아래 형식으로만 응답하라. 마크다운 기호(**,*,## 등) 절대 사용 금지:\n"
         "[APPROVED_ADD]역할명1:역할설명1|역할명2:역할설명2  (없으면 '없음')\n"
         "[APPROVED_REMOVE]역할명1:제거이유1  (없으면 '없음')\n"
         "[REJECTED]거부 항목과 거부 이유\n"
@@ -1213,27 +1222,18 @@ def run_brief_hr_org_pipeline(agents: dict, today_ctx: str, industry_ctx: str):
     approved_adds    = []
     approved_removes = []
 
-    def _clean_role(s: str) -> str:
-        """Gemini 마크다운 볼드(**) 및 공백 제거"""
-        return s.strip().replace("**", "").strip()
-
-    def _clean_role(s: str) -> str:
-        """Gemini 마크다운 볼드(**) 및 공백 제거"""
-        return s.strip().replace("**", "").strip()
-
     if add_raw and add_raw != "없음":
         for item in add_raw.split("|"):
             parts = item.strip().split(":", 1)
             if len(parts) == 2:
-                approved_adds.append((_clean_role(parts[0]), parts[1].strip()))
+                approved_adds.append((clean_role_name(parts[0]), parts[1].strip()))
 
     if remove_raw and remove_raw != "없음":
         for item in remove_raw.split("|"):
             parts = item.strip().split(":", 1)
             if len(parts) == 2:
-                approved_removes.append((_clean_role(parts[0]), parts[1].strip()))
+                approved_removes.append((clean_role_name(parts[0]), parts[1].strip()))
 
-    # 승인된 추가 → pending_approvals 등록
     for role_name, role_desc in approved_adds:
         if role_name in current_roles:
             print(f"  ⏭️  [BRIEF→HR] '{role_name}' 이미 존재 — 스킵")
@@ -1257,7 +1257,6 @@ def run_brief_hr_org_pipeline(agents: dict, today_ctx: str, industry_ctx: str):
         except Exception as e:
             print(f"  ❌ [BRIEF→HR] '{role_name}' 등록 실패: {e}")
 
-    # 승인된 제거 → pending_approvals 등록
     for role_name, remove_reason in approved_removes:
         if role_name in _PROTECTED_ROLES:
             print(f"  🛡️  [BRIEF→HR] '{role_name}'은 보호 역할 — 제거 불가")
@@ -1327,7 +1326,7 @@ def run_agent_initiative(by_keyword_all: dict):
             f"오늘 뉴스 컨텍스트:\n{today_ctx}\n\n"
             f"산업군 동향:\n{industry_ctx}\n\n"
             "위 데이터를 분석하여 유저 키워드를 관리하라.\n"
-            "반드시 아래 형식으로만 응답하라:\n"
+            "반드시 아래 형식으로만 응답하라. 마크다운 기호 절대 금지:\n"
             "[ADD]추가추천키워드1,추가추천키워드2,추가추천키워드3\n"
             "[REMOVE]제거추천키워드1,제거추천키워드2\n"
             "[REASON]추가/제거 이유를 각각 키워드별로 한 줄씩 설명\n\n"
@@ -1338,33 +1337,31 @@ def run_agent_initiative(by_keyword_all: dict):
             f"오늘 브리핑 데이터:\n{today_ctx}\n\n"
             "오늘 리포트의 품질을 100점 만점으로 평가하고, "
             "개선이 필요한 점을 instruction 업데이트 형태로 제안하라. "
-            "점수와 근거를 반드시 포함할 것."
+            "점수와 근거를 반드시 포함할 것. 마크다운 기호(**,## 등) 절대 사용 금지."
         ),
         "DATA": (
             f"오늘 뉴스 수집 성과:\n{perf_ctx}\n\n"
             "뉴스 수집량이 적은 키워드나 품질 이슈를 분석하고 "
-            "데이터 수집 전략 개선안을 instruction 업데이트 형태로 제안하라."
+            "데이터 수집 전략 개선안을 instruction 업데이트 형태로 제안하라. 마크다운 기호 절대 사용 금지."
         ),
         "BA": (
             f"오늘 분석 컨텍스트:\n{today_ctx}\n\n"
             "오늘 비즈니스 분석에서 부족했던 점을 파악하고 "
-            "더 날카로운 인사이트를 제공하기 위한 instruction 개선안을 제안하라."
+            "더 날카로운 인사이트를 제공하기 위한 instruction 개선안을 제안하라. 마크다운 기호 절대 사용 금지."
         ),
-        # ── [BRIEF 역할 ③-b] BRIEF 자율 발의: 직원 지시 사항 ──────
         "BRIEF": (
             f"오늘 뉴스 컨텍스트:\n{today_ctx}\n\n"
             f"산업군 동향:\n{industry_ctx}\n\n"
             "당신은 분석팀 리더(BRIEF)입니다. "
             "오늘 전체 분석 품질을 리더 시각으로 자체 평가하고, "
             "BA·STOCK·PM·HR 각 담당자에게 내일 분석 개선을 위한 지시 사항을 제안하라.\n"
-            "형식: [ROLE]역할명 [DIRECTIVE]지시내용 (각 역할마다 한 줄)"
+            "형식: [ROLE]역할명 [DIRECTIVE]지시내용 (각 역할마다 한 줄). 마크다운 기호 절대 사용 금지."
         ),
-        # ──────────────────────────────────────────────────────────
         "MASTER": (
             f"오늘 전체 시스템 성과:\n키워드 성과:\n{perf_ctx}\n\n뉴스 컨텍스트:\n{today_ctx}\n\n"
             "전체 에이전트 시스템의 오늘 성과를 종합 평가하고, "
             "가장 시급한 개발 또는 개선 안건 1가지를 dev_backlog 등록 형태로 제안하라. "
-            "제안 형식: [TITLE]안건제목 [DETAIL]상세요구사항"
+            "제안 형식: [TITLE]안건제목 [DETAIL]상세요구사항. 마크다운 기호(**,## 등) 절대 사용 금지."
         ),
     }
 
@@ -1393,7 +1390,7 @@ def run_agent_initiative(by_keyword_all: dict):
                     print(f"  ⚠️ [KW] 파싱 실패 — 원문 등록")
                     supabase.table("pending_approvals").insert({
                         "agent_role":           "KW",
-                        "proposed_instruction": proposal,
+                        "proposed_instruction": strip_markdown(proposal),
                         "proposal_reason":      f"{TODAY} KW 자율 발의 (파싱 실패)",
                         "needs_dev":            False,
                         "status":               "PENDING",
@@ -1402,9 +1399,9 @@ def run_agent_initiative(by_keyword_all: dict):
 
                 structured = (
                     f"[키워드 관리 제안]\n"
-                    f"✅ 추가 추천: {', '.join(add_kws) if add_kws else '없음'}\n"
-                    f"❌ 제거 추천: {', '.join(remove_kws) if remove_kws else '없음'}\n\n"
-                    f"[근거]\n{reason}"
+                    f"추가 추천: {', '.join(add_kws) if add_kws else '없음'}\n"
+                    f"제거 추천: {', '.join(remove_kws) if remove_kws else '없음'}\n\n"
+                    f"[근거]\n{strip_markdown(reason)}"
                 )
                 supabase.table("pending_approvals").insert({
                     "agent_role":           "KW",
@@ -1418,7 +1415,7 @@ def run_agent_initiative(by_keyword_all: dict):
 
             if role == "MASTER":
                 t = re.search(r"\[TITLE\](.*?)(?=\[DETAIL\]|$)",  proposal, re.DOTALL)
-                d = re.search(r"\[DETAIL\](.*?)$",                  proposal, re.DOTALL)
+                d = re.search(r"\[DETAIL\](.*?)$",                 proposal, re.DOTALL)
                 if t and d:
                     title  = strip_markdown(t.group(1).strip()).split('\n')[0]
                     detail = strip_markdown(d.group(1).strip())
@@ -1432,11 +1429,10 @@ def run_agent_initiative(by_keyword_all: dict):
                     print(f"  📋 [MASTER] dev_backlog 자동 등록: {title}")
                 continue
 
-            # BRIEF 자율 발의 처리
             if role == "BRIEF":
                 supabase.table("pending_approvals").insert({
                     "agent_role":           "BRIEF",
-                    "proposed_instruction": proposal,
+                    "proposed_instruction": strip_markdown(proposal),
                     "proposal_reason":      f"{TODAY} BRIEF 리더 자율 발의 — 직원 지시 사항",
                     "needs_dev":            False,
                     "status":               "PENDING",
@@ -1444,10 +1440,9 @@ def run_agent_initiative(by_keyword_all: dict):
                 print(f"  ✅ [BRIEF] 자율 발의 등록 완료")
                 continue
 
-            # 그 외 역할 (QA, DATA, BA 등)
             supabase.table("pending_approvals").insert({
                 "agent_role":           role,
-                "proposed_instruction": proposal,
+                "proposed_instruction": strip_markdown(proposal),
                 "proposal_reason":      f"{TODAY} 브리핑 데이터 기반 자율 발의",
                 "needs_dev":            False,
                 "status":               "PENDING",
@@ -1457,8 +1452,6 @@ def run_agent_initiative(by_keyword_all: dict):
         except Exception as e:
             print(f"  ❌ [{role}] 자율 발의 실패: {e}")
 
-    # ── [BRIEF 역할 ③] BRIEF→HR 에이전트 조직 파이프라인 ────────
-    # 자율 발의 루프 완료 후 반드시 실행 — 절대 삭제 금지
     print("\n🏢 [BRIEF→HR] 에이전트 조직 구성 파이프라인 시작...")
     try:
         run_brief_hr_org_pipeline(agents, today_ctx, industry_ctx)
