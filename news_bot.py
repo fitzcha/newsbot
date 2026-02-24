@@ -782,11 +782,23 @@ def send_email_report(user_email, report, yt_videos=None):
         print(f"  🚨 [Email] 발송 실패: {e}")
 
 # ──────────────────────────────────────────────
-# [BRIEF 역할 ①] 직원 수집 소스 지시 (리더 역할)
+# [BRIEF 역할 ①] 직원 수집 소스 지시 + 실제 크롤링
 # ──────────────────────────────────────────────
+
+# GNews가 지원하는 도메인→언어 힌트 매핑 (없으면 기본 GNews 사용)
+_DOMAIN_LANG = {
+    "reuters.com": "en", "bloomberg.com": "en", "ft.com": "en",
+    "techcrunch.com": "en", "wsj.com": "en", "cnbc.com": "en",
+    "naver.com": "ko", "naver_finance": "ko", "hankyung.com": "ko",
+    "mk.co.kr": "ko", "chosun.com": "ko", "joins.com": "ko",
+    "zdnet.co.kr": "ko", "platum.kr": "ko", "venturebeat.com": "en",
+    "investing.com": "en", "seekingalpha.com": "en",
+    "jobplanet.co.kr": "ko", "linkedin.com": "en",
+}
+
 def brief_get_source_directive(word: str, agents: dict) -> dict:
     """
-    BRIEF가 키워드를 보고 BA/PM/STOCK/HR 각 직원에게
+    BRIEF가 키워드를 보고 BA/STOCK/PM/HR 각 직원에게
     오늘 어떤 사이트·소스에서 집중 수집할지 지시한다.
     반환 예: {"BA": ["reuters.com", "ft.com"], "STOCK": [...], "PM": [...], "HR": [...]}
     """
@@ -800,6 +812,7 @@ def brief_get_source_directive(word: str, agents: dict) -> dict:
         "오늘 이 키워드와 관련해 각 담당자(BA, STOCK, PM, HR)가 "
         "어떤 사이트나 소스에서 콘텐츠를 집중 수집해야 하는지 지시하십시오.\n\n"
         "반드시 아래 JSON 형식으로만 응답하라. 설명·마크다운 금지.\n"
+        "사이트명은 도메인 형식(예: reuters.com, hankyung.com)으로 작성.\n"
         "{\n"
         '  "BA":    ["사이트1", "사이트2"],\n'
         '  "STOCK": ["사이트1", "사이트2"],\n'
@@ -821,6 +834,74 @@ def brief_get_source_directive(word: str, agents: dict) -> dict:
     except Exception as e:
         print(f"  ⚠️ [BRIEF→직원] 파싱 실패 ({e}) — 기본 소스 사용")
         return {}
+
+
+def collect_news_by_directive(word: str, directive: dict) -> list:
+    """
+    BRIEF의 소스 지시를 받아 각 도메인에서 실제로 뉴스를 수집한다.
+    모든 직원(BA/STOCK/PM/HR)의 소스를 합쳐서 중복 제거 후 반환.
+    소스 지시가 없으면 기본 GNews로 폴백.
+    """
+    # 모든 직원 소스를 합쳐서 유니크하게 수집
+    all_sources = []
+    for role_sources in directive.values():
+        all_sources.extend(role_sources)
+    unique_sources = list(dict.fromkeys(all_sources))  # 순서 유지 중복 제거
+
+    if not unique_sources:
+        # 소스 지시 없으면 기본 GNews 폴백
+        is_korean = any(ord(c) > 0x1100 for c in word)
+        gn = GNews(language='ko' if is_korean else 'en', max_results=10)
+        return gn.get_news(word) or []
+
+    collected = []
+    seen_titles = set()
+
+    for domain in unique_sources:
+        try:
+            # 도메인 힌트로 언어 결정
+            lang = _DOMAIN_LANG.get(domain, None)
+            if lang is None:
+                # 한글 도메인이면 ko, 아니면 en
+                lang = 'ko' if any(ord(c) > 0x1100 for c in domain) else 'en'
+
+            # GNews site: 쿼리로 특정 도메인 뉴스 수집
+            site_query = f"{word} site:{domain}" if '.' in domain else word
+            gn = GNews(language=lang, max_results=3)
+            news = gn.get_news(site_query) or []
+
+            for n in news:
+                title = n.get("title", "")
+                if title and title not in seen_titles:
+                    seen_titles.add(title)
+                    n['source_domain'] = domain  # 어느 소스에서 왔는지 태깅
+                    collected.append(n)
+
+            if news:
+                print(f"    📌 [{domain}] '{word}' → {len(news)}건 수집")
+
+        except Exception as e:
+            print(f"    ⚠️ [{domain}] 수집 실패: {e}")
+            continue
+
+    # BRIEF 지시 소스로 충분히 못 모았으면 기본 GNews로 보충
+    if len(collected) < 5:
+        try:
+            is_korean = any(ord(c) > 0x1100 for c in word)
+            gn = GNews(language='ko' if is_korean else 'en', max_results=10)
+            fallback = gn.get_news(word) or []
+            for n in fallback:
+                title = n.get("title", "")
+                if title and title not in seen_titles:
+                    seen_titles.add(title)
+                    n['source_domain'] = 'gnews_fallback'
+                    collected.append(n)
+            print(f"    🔄 [GNews 보충] '{word}' → {len(fallback)}건 추가")
+        except Exception as e:
+            print(f"    ⚠️ [GNews 보충] 실패: {e}")
+
+    print(f"  📰 [BRIEF 지시 수집] '{word}' 총 {len(collected)}건 (소스: {unique_sources})")
+    return collected
 
 # ──────────────────────────────────────────────
 # [5] 자율 분석 엔진
@@ -849,18 +930,16 @@ def run_autonomous_engine():
             all_yt       = []
 
             for word in keywords:
-                # ── [BRIEF 역할 ①] 수집 소스 지시 ──────────────────────
+                # ── [BRIEF 역할 ①] 소스 지시 → 실제 수집 ───────────────
                 print(f"  📋 [{word}] BRIEF 수집 소스 지시 중...")
                 source_directive = brief_get_source_directive(word, agents)
                 ba_src  = source_directive.get('BA',    [])
                 pm_src  = source_directive.get('PM',    [])
                 stk_src = source_directive.get('STOCK', [])
-                # ─────────────────────────────────────────────────────────
 
-                print(f"  📰 [{word}] 뉴스 수집 중...")
-                is_korean = any(ord(c) > 0x1100 for c in word)
-                gn        = GNews(language='ko' if is_korean else 'en', max_results=10)
-                news_list = gn.get_news(word)
+                # BRIEF가 결정한 소스로 실제 크롤링
+                print(f"  📰 [{word}] BRIEF 지시 소스 기반 뉴스 수집 중...")
+                news_list = collect_news_by_directive(word, source_directive)
 
                 record_performance(user_id, word, len(news_list))
 
