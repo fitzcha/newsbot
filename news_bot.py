@@ -560,7 +560,8 @@ def run_self_evolution(backlog_id: str):
         _run_cmd('git config --global user.name "Fitz-Dev"')
         _run_cmd('git config --global user.email "positivecha@gmail.com"')
         _run_cmd(f'git add {file_path}')
-        _run_cmd(f'git commit -m "🤖 [DEV] {task[\"title\"][:60]}"')
+        task_title = task["title"][:60]
+        _run_cmd(f'git commit -m "🤖 [DEV] {task_title}"')
         branch = os.environ.get("GITHUB_REF_NAME") or "main"
         _run_cmd(f"git push origin HEAD:{branch}")
 
