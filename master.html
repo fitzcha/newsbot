@@ -1408,13 +1408,13 @@ async function loadMemberSettings() {
     else             $id('sr-warn-member').classList.remove('show');
 
     const [openRes, maxRes, cntRes] = await Promise.all([
-      sc.from('app_settings').select('value').eq('key','signup_open').single(),
-      sc.from('app_settings').select('value').eq('key','max_members').single(),
-      sc.from('profiles').select('id', { count:'exact', head:true }),
+      sc.from('app_settings').select('value').eq('key','signup_open').maybeSingle(), // single() -> maybeSingle()
+      sc.from('app_settings').select('value').eq('key','max_members').maybeSingle(), // single() -> maybeSingle()
+      sc.from('member_count_view').select('total_members').maybeSingle(),            // profiles -> member_count_view
     ]);
     const isOpen  = openRes.data?.value === 'true';
     const maxVal  = Number(maxRes.data?.value ?? 999999);
-    const current = cntRes.count ?? 0;
+    const current = cntRes.data?.total_members ?? 0; // count 추출 방식 변경
 
     $id('m-cur-count').textContent = current;
     $id('m-max-count').textContent = maxVal === 999999 ? '무제한' : maxVal;
@@ -1430,13 +1430,13 @@ async function loadMemberSettings() {
 
 async function checkSignupAllowed() {
   const [openRes, maxRes, cntRes] = await Promise.all([
-    sc.from('app_settings').select('value').eq('key','signup_open').single(),
-    sc.from('app_settings').select('value').eq('key','max_members').single(),
-    sc.from('profiles').select('id', { count:'exact', head:true }),
+    sc.from('app_settings').select('value').eq('key','signup_open').maybeSingle(),
+    sc.from('app_settings').select('value').eq('key','max_members').maybeSingle(),
+    sc.from('member_count_view').select('total_members').maybeSingle(),
   ]);
   const isOpen  = openRes.data?.value === 'true';
   const maxVal  = Number(maxRes.data?.value ?? 999999);
-  const current = cntRes.count ?? 0;
+  const current = cntRes.data?.total_members ?? 0;
   return isOpen && current < maxVal;
 }
 
@@ -1626,17 +1626,17 @@ async function triggerRun() {
 async function loadVoc() {
   try {
     const { data } = await sc
-      .from('user_feedback').select('*')
+      .from('report_feedback').select('*') // user_feedback을 report_feedback으로 수정
       .order('created_at', { ascending: false }).limit(60);
     if (!data?.length) { render('voc-list','<div class="empty">피드백 없음</div>'); return; }
     render('voc-list', data.map(f => {
       const t = (f.created_at||'').slice(0,16).replace('T',' ');
-      const thumb = f.thumb === 'up' ? '👍' : f.thumb === 'down' ? '👎' : '—';
+      const thumb = f.is_positive === true ? '👍' : f.is_positive === false ? '👎' : '—'; // 엄지 상태 변수명도 DB에 맞게 수정
       return `<div class="card" style="border-left-color:#6366f1">
         <div style="font-size:.78rem;color:#94a3b8;margin-bottom:6px">
           ${t} · ${escHtml(f.user_email||'익명')} ${thumb}
         </div>
-        <div class="box">${escHtml(f.content||'(내용 없음)')}</div>
+        <div class="box">${escHtml(f.feedback_text||'(내용 없음)')}</div>
       </div>`;
     }).join(''));
   } catch(e) { render('voc-list',`<div class="card">⚠️ 로드 실패: ${escHtml(e.message)}</div>`); }
