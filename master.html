@@ -1462,7 +1462,7 @@ async function setSignupStatus(open) {
     await sc.from('app_settings')
       .upsert({ key:'signup_open', value: String(open) }, { onConflict:'key' });
     const allowed = await checkSignupAllowed();
-    await setSupabaseSignup(allowed);
+    // ❌ 404 에러를 내던 API 호출(setSupabaseSignup) 삭제 완료
     updateSignupStatusUI(open, allowed);
     toast(allowed ? '✅ 회원가입 허용' : '🔒 회원가입 제한');
   } catch(e) { toast('❌ 변경 실패: ' + e.message); }
@@ -1476,7 +1476,7 @@ async function saveMaxMembers() {
       .upsert({ key:'max_members', value: String(val) }, { onConflict:'key' });
     $id('m-max-count').textContent = val;
     const allowed = await checkSignupAllowed();
-    await setSupabaseSignup(allowed);
+    // ❌ 404 에러를 내던 API 호출(setSupabaseSignup) 삭제 완료
     toast(allowed ? `✅ 최대 ${val}명 저장 — 가입 허용` : `✅ 최대 ${val}명 저장 — 초과로 자동 제한`);
     loadMemberSettings();
   } catch(e) { toast('❌ 저장 실패: ' + e.message); }
