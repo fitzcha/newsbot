@@ -1403,18 +1403,18 @@ async function saveSites(role) {
    ══════════════════════════════════════════ */
 async function loadMemberSettings() {
   try {
-    // SR 경고 표시
     if (!hasSrKey()) $id('sr-warn-member').classList.add('show');
     else             $id('sr-warn-member').classList.remove('show');
 
     const [openRes, maxRes, cntRes] = await Promise.all([
-      sc.from('app_settings').select('value').eq('key','signup_open').maybeSingle(), // single() -> maybeSingle()
-      sc.from('app_settings').select('value').eq('key','max_members').maybeSingle(), // single() -> maybeSingle()
-      sc.from('member_count_view').select('total_members').maybeSingle(),            // profiles -> member_count_view
+      sc.from('app_settings').select('value').eq('key','signup_open').maybeSingle(),
+      sc.from('app_settings').select('value').eq('key','max_members').maybeSingle(),
+      // 뷰 대신 users 테이블에서 정확한 카운트만 가볍게 가져옵니다
+      sc.from('users').select('id', { count: 'exact', head: true }) 
     ]);
     const isOpen  = openRes.data?.value === 'true';
     const maxVal  = Number(maxRes.data?.value ?? 999999);
-    const current = cntRes.data?.total_members ?? 0; // count 추출 방식 변경
+    const current = cntRes.count ?? 0; // data 대신 count 속성을 씁니다
 
     $id('m-cur-count').textContent = current;
     $id('m-max-count').textContent = maxVal === 999999 ? '무제한' : maxVal;
@@ -1432,11 +1432,11 @@ async function checkSignupAllowed() {
   const [openRes, maxRes, cntRes] = await Promise.all([
     sc.from('app_settings').select('value').eq('key','signup_open').maybeSingle(),
     sc.from('app_settings').select('value').eq('key','max_members').maybeSingle(),
-    sc.from('member_count_view').select('total_members').maybeSingle(),
+    sc.from('users').select('id', { count: 'exact', head: true }) // 여기도 동일하게 수정
   ]);
   const isOpen  = openRes.data?.value === 'true';
   const maxVal  = Number(maxRes.data?.value ?? 999999);
-  const current = cntRes.data?.total_members ?? 0;
+  const current = cntRes.count ?? 0;
   return isOpen && current < maxVal;
 }
 
