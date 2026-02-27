@@ -253,7 +253,19 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .yt-title { font-size:14px; font-weight:600; color:#334155; line-height:1.5; margin-bottom:3px; }
 .yt-meta  { font-size:12px; color:#94a3b8; line-height:1.55; }
 .yt-empty { padding:32px 18px; text-align:center; color:#94a3b8; font-size:13px; }
-
+  
+/* ── 전문콘텐츠 탭 ── */
+.expert-tab { background:linear-gradient(135deg,#f3e8ff 0%,#e9d5ff 100%); color:#7c3aed; }
+.expert-tab.active { background:#7c3aed; color:#fff; box-shadow:0 3px 12px rgba(124,58,237,.25); }
+.expert-item { display:flex; gap:12px; padding:14px 18px; background:#fff; border-top:1px solid #f1f5f9; border-left:3px solid #7c3aed; cursor:pointer; transition:all .2s; }
+.expert-item:hover { background:#faf5ff; }
+.expert-item:active { background:#f3e8ff; }
+.expert-badge { display:inline-flex; align-items:center; padding:4px 10px; border-radius:20px; font-size:10px; font-weight:700; white-space:nowrap; flex-shrink:0; align-self:flex-start; }
+.expert-badge.deep { background:linear-gradient(135deg,#7c3aed 0%,#6d28d9 100%); color:#fff; box-shadow:0 2px 8px rgba(124,58,237,.3); }
+.expert-badge.normal { background:#f3f4f6; color:#6b7280; border:1px solid #e5e7eb; }
+.expert-title { font-size:14px; font-weight:700; color:#1e293b; line-height:1.5; margin-bottom:4px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.expert-source { font-size:11px; color:#94a3b8; font-weight:600; margin-bottom:4px; letter-spacing:.5px; }
+.expert-summary { font-size:12px; color:#64748b; line-height:1.6; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 /* ── FAB ── */
 .fab { position:fixed; bottom:32px; right:20px; background:#1e293b; color:#fff; border:none; border-radius:50px; padding:14px 20px; font-size:14px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 24px rgba(0,0,0,.18); z-index:100; min-height:50px; }
 .fab:active { transform:scale(.97); }
@@ -654,7 +666,21 @@ function buildYtItems(vids) {
       </div>
     </div>`).join('');
 }
-
+/* ── 전문 콘텐츠 아이템 빌드 ── */
+function buildExpertItems(contents) {
+  if (!contents?.length) return `<div class="yt-empty">수집된 전문 콘텐츠가 없습니다.</div>`;
+  return contents.map(c => `
+    <div class="expert-item" onclick="window.open('${escJsStr(c.url)}','_blank')">
+      <div class="expert-badge ${c.is_expert_content ? 'deep' : 'normal'}">
+        ${c.is_expert_content ? '🎓 심층 분석' : '📄 일반'}
+      </div>
+      <div>
+        <div class="expert-title">${escHtml(c.title)}</div>
+        <div class="expert-source">${escHtml(c.source_domain || 'Unknown')}</div>
+        ${c.expert_summary ? `<div class="expert-summary">${escHtml(c.expert_summary)}</div>` : ''}
+      </div>
+    </div>`).join('');
+}
 /* ── 산업군 ── */
 let INDUSTRY_MAP = [];
 async function loadIndustryMap() {
@@ -723,13 +749,17 @@ function buildKwSuggestCard(kw, kwData, i) {
     </div>`;
 }
 
-/* ── 탭 전환 ── */
+/* ── 탭 전환 (3탭) ── */
 function switchTab(i, type) {
-  const isNews = type === 'news';
-  document.getElementById(`panel-news-${i}`).style.display = isNews ? '' : 'none';
-  document.getElementById(`panel-yt-${i}`).style.display   = isNews ? 'none' : '';
+  const isNews   = type === 'news';
+  const isYt     = type === 'yt';
+  const isExpert = type === 'expert';
+  document.getElementById(`panel-news-${i}`).style.display   = isNews   ? '' : 'none';
+  document.getElementById(`panel-yt-${i}`).style.display     = isYt     ? '' : 'none';
+  document.getElementById(`panel-expert-${i}`).style.display = isExpert ? '' : 'none';
   document.getElementById(`tab-news-${i}`).classList.toggle('active', isNews);
-  document.getElementById(`tab-yt-${i}`).classList.toggle('active', !isNews);
+  document.getElementById(`tab-yt-${i}`).classList.toggle('active', isYt);
+  document.getElementById(`tab-expert-${i}`).classList.toggle('active', isExpert);
 }
 
 function buildCardInner(i, brief) {
@@ -779,9 +809,10 @@ function renderFeed() {
   kwNames.forEach((kw, i) => {
     const kwData   = reportData[kw];
     if (!kwData) return;
-    const brief    = kwData[AGENT_META[curAgent].key];
-    const arts     = kwData.articles || [];
-    const ytVideos = kwData.youtube_videos || [];
+    const brief          = kwData[AGENT_META[curAgent].key];
+    const arts           = kwData.articles        || [];
+    const ytVideos       = kwData.youtube_videos  || [];
+    const expertContents = kwData.expert_contents || [];
     const { labelHtml, summaryHtml, pointsHtml, secretHtml } = buildCardInner(i, brief);
 
     const sec = document.createElement('div');
@@ -815,7 +846,8 @@ function renderFeed() {
       <div class="headlines-card">
         <div class="content-tabs">
           <button class="tab-btn active" id="tab-news-${i}" onclick="switchTab(${i},'news')">📰 뉴스 ${arts.length}건</button>
-          <button class="tab-btn yt-tab"  id="tab-yt-${i}"   onclick="switchTab(${i},'yt')">🎬 YouTube ${ytVideos.length}개</button>
+          <button class="tab-btn yt-tab"     id="tab-yt-${i}"     onclick="switchTab(${i},'yt')">🎬 YouTube ${ytVideos.length}개</button>
+          <button class="tab-btn expert-tab" id="tab-expert-${i}" onclick="switchTab(${i},'expert')">🎓 전문콘텐츠 ${expertContents.length}건</button>
         </div>
         <div id="panel-news-${i}">
           <div class="hl-label">오늘의 헤드라인</div>
@@ -831,6 +863,10 @@ function renderFeed() {
         <div id="panel-yt-${i}" style="display:none;">
           <div class="hl-label">YouTube 인사이트</div>
           ${buildYtItems(ytVideos)}
+        </div>
+        <div id="panel-expert-${i}" style="display:none;">
+          <div class="hl-label">전문가 분석 & 심층 리포트</div>
+          ${buildExpertItems(expertContents)}
         </div>
       </div>`;
     feed.appendChild(sec);
