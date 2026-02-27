@@ -1266,11 +1266,18 @@ function openCollapsedCalendar(e) {
       inline: false,
       dateFormat: 'Y-m-d',
       defaultDate: curDate || allDates[0],
-      enable: allDates.filter(d => d), // undefined/null 제거
       locale: {
         firstDayOfWeek: 0,
         weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
         months: { shorthand: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'] }
+      },
+      onDayCreate: function(dObj, dStr, fp, dayElem) {
+        const dateStr = dayElem.dateObj.toISOString().split('T')[0];
+        if (!allDates.includes(dateStr)) {
+          dayElem.classList.add('flatpickr-disabled');
+          dayElem.style.opacity = '0.3';
+          dayElem.style.cursor = 'not-allowed';
+        }
       },
       onChange: async function(selectedDates, dateStr) {
         if (allDates.includes(dateStr)) {
@@ -1336,11 +1343,18 @@ function openExpandedCalendar() {
       inline: false,
       dateFormat: 'Y-m-d',
       defaultDate: curDate || allDates[0],
-      enable: allDates.filter(d => d), // undefined/null 제거
       locale: {
         firstDayOfWeek: 0,
         weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
         months: { shorthand: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'] }
+      },
+      onDayCreate: function(dObj, dStr, fp, dayElem) {
+        const dateStr = dayElem.dateObj.toISOString().split('T')[0];
+        if (!allDates.includes(dateStr)) {
+          dayElem.classList.add('flatpickr-disabled');
+          dayElem.style.opacity = '0.3';
+          dayElem.style.cursor = 'not-allowed';
+        }
       },
       onChange: async function(selectedDates, dateStr) {
         if (allDates.includes(dateStr)) {
