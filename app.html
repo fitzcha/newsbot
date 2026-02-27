@@ -1239,51 +1239,18 @@ init();
 let calendarInstance = null;
 
 // 접힌 상태: 날짜 칩 클릭 시 달력 팝업
-function openExpandedCalendar() {
-  if (calendarInstance) calendarInstance.destroy();
-  
-  const input = document.createElement('input');
-  input.style.display = 'none';
-  document.body.appendChild(input);
-  
-  calendarInstance = flatpickr(input, {
-    inline: false,
-    dateFormat: 'Y-m-d',
-    defaultDate: curDate,
-    enable: allDates,
-    locale: {
-      firstDayOfWeek: 0,
-      weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
-      months: { shorthand: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'] }
-    },
-    onChange: async function(selectedDates, dateStr) {
-      if (allDates.includes(dateStr)) {
-        curDate = dateStr;
-        document.getElementById('chip-date-txt').textContent = 
-          allDates.indexOf(dateStr) === 0 ? `${fmtDate(dateStr)} 오늘` : fmtDate(dateStr);
-        await fetchReport(window.CURRENT_USER.id, dateStr);
-        renderDateUI();
-        calendarInstance.close();
-        setTimeout(() => { input.remove(); calendarInstance = null; }, 100);
-      } else {
-        alert('⚠️ 해당 날짜의 리포트가 없습니다.\n다른 날짜를 선택해주세요.');
-      }
-    },
-    onClose: function() {
-      setTimeout(() => { input.remove(); calendarInstance = null; }, 100);
-    }
-  });
-  
-  calendarInstance.open();
-}
-
-// 펼쳐진 상태: 더보기 버튼 클릭 시 달력 팝업
 function openCollapsedCalendar(e) {
   e.stopPropagation();
   
+  // allDates가 없으면 달력 열지 않음
+  if (!allDates || allDates.length === 0) {
+    alert('⚠️ 조회 가능한 날짜가 없습니다.');
+    return;
+  }
+  
   // 기존 인스턴스 안전하게 제거
   if (calendarInstance && typeof calendarInstance.destroy === 'function') {
-    calendarInstance.destroy();
+    try { calendarInstance.destroy(); } catch(e) {}
   }
   calendarInstance = null;
   
@@ -1294,47 +1261,66 @@ function openCollapsedCalendar(e) {
   input.style.pointerEvents = 'none';
   document.body.appendChild(input);
   
-  calendarInstance = flatpickr(input, {
-    inline: false,
-    dateFormat: 'Y-m-d',
-    defaultDate: curDate,
-    enable: allDates,
-    locale: {
-      firstDayOfWeek: 0,
-      weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
-      months: { shorthand: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'] }
-    },
-    onChange: async function(selectedDates, dateStr) {
-      if (allDates.includes(dateStr)) {
-        curDate = dateStr;
-        document.getElementById('chip-date-txt').textContent = 
-          allDates.indexOf(dateStr) === 0 ? `${fmtDate(dateStr)} 오늘` : fmtDate(dateStr);
-        await fetchReport(window.CURRENT_USER.id, dateStr);
-        renderDateUI();
-        if (calendarInstance) calendarInstance.close();
+  try {
+    calendarInstance = flatpickr(input, {
+      inline: false,
+      dateFormat: 'Y-m-d',
+      defaultDate: curDate || allDates[0],
+      enable: allDates.filter(d => d), // undefined/null 제거
+      locale: {
+        firstDayOfWeek: 0,
+        weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
+        months: { shorthand: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'] }
+      },
+      onChange: async function(selectedDates, dateStr) {
+        if (allDates.includes(dateStr)) {
+          curDate = dateStr;
+          document.getElementById('chip-date-txt').textContent = 
+            allDates.indexOf(dateStr) === 0 ? `${fmtDate(dateStr)} 오늘` : fmtDate(dateStr);
+          await fetchReport(window.CURRENT_USER.id, dateStr);
+          renderDateUI();
+          if (calendarInstance) {
+            try { calendarInstance.close(); } catch(e) {}
+          }
+          setTimeout(() => { 
+            if (input.parentNode) input.remove(); 
+            calendarInstance = null; 
+          }, 100);
+        } else {
+          alert('⚠️ 해당 날짜의 리포트가 없습니다.\n다른 날짜를 선택해주세요.');
+        }
+      },
+      onClose: function() {
         setTimeout(() => { 
           if (input.parentNode) input.remove(); 
           calendarInstance = null; 
         }, 100);
-      } else {
-        alert('⚠️ 해당 날짜의 리포트가 없습니다.\n다른 날짜를 선택해주세요.');
       }
-    },
-    onClose: function() {
-      setTimeout(() => { 
-        if (input.parentNode) input.remove(); 
-        calendarInstance = null; 
-      }, 100);
+    });
+    
+    if (calendarInstance && typeof calendarInstance.open === 'function') {
+      calendarInstance.open();
+    } else {
+      throw new Error('달력 인스턴스 생성 실패');
     }
-  });
-  
-  calendarInstance.open();
+  } catch(err) {
+    console.error('달력 열기 오류:', err);
+    alert('⚠️ 달력을 열 수 없습니다.\n페이지를 새로고침 후 다시 시도해주세요.');
+    if (input.parentNode) input.remove();
+  }
 }
 
+// 펼쳐진 상태: 더보기 버튼 클릭 시 달력 팝업
 function openExpandedCalendar() {
+  // allDates가 없으면 달력 열지 않음
+  if (!allDates || allDates.length === 0) {
+    alert('⚠️ 조회 가능한 날짜가 없습니다.');
+    return;
+  }
+  
   // 기존 인스턴스 안전하게 제거
   if (calendarInstance && typeof calendarInstance.destroy === 'function') {
-    calendarInstance.destroy();
+    try { calendarInstance.destroy(); } catch(e) {}
   }
   calendarInstance = null;
   
@@ -1345,41 +1331,53 @@ function openExpandedCalendar() {
   input.style.pointerEvents = 'none';
   document.body.appendChild(input);
   
-  calendarInstance = flatpickr(input, {
-    inline: false,
-    dateFormat: 'Y-m-d',
-    defaultDate: curDate,
-    enable: allDates,
-    locale: {
-      firstDayOfWeek: 0,
-      weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
-      months: { shorthand: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'] }
-    },
-    onChange: async function(selectedDates, dateStr) {
-      if (allDates.includes(dateStr)) {
-        curDate = dateStr;
-        document.getElementById('chip-date-txt').textContent = 
-          allDates.indexOf(dateStr) === 0 ? `${fmtDate(dateStr)} 오늘` : fmtDate(dateStr);
-        await fetchReport(window.CURRENT_USER.id, dateStr);
-        renderDateUI();
-        if (calendarInstance) calendarInstance.close();
+  try {
+    calendarInstance = flatpickr(input, {
+      inline: false,
+      dateFormat: 'Y-m-d',
+      defaultDate: curDate || allDates[0],
+      enable: allDates.filter(d => d), // undefined/null 제거
+      locale: {
+        firstDayOfWeek: 0,
+        weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
+        months: { shorthand: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'] }
+      },
+      onChange: async function(selectedDates, dateStr) {
+        if (allDates.includes(dateStr)) {
+          curDate = dateStr;
+          document.getElementById('chip-date-txt').textContent = 
+            allDates.indexOf(dateStr) === 0 ? `${fmtDate(dateStr)} 오늘` : fmtDate(dateStr);
+          await fetchReport(window.CURRENT_USER.id, dateStr);
+          renderDateUI();
+          if (calendarInstance) {
+            try { calendarInstance.close(); } catch(e) {}
+          }
+          setTimeout(() => { 
+            if (input.parentNode) input.remove(); 
+            calendarInstance = null; 
+          }, 100);
+        } else {
+          alert('⚠️ 해당 날짜의 리포트가 없습니다.\n다른 날짜를 선택해주세요.');
+        }
+      },
+      onClose: function() {
         setTimeout(() => { 
           if (input.parentNode) input.remove(); 
           calendarInstance = null; 
         }, 100);
-      } else {
-        alert('⚠️ 해당 날짜의 리포트가 없습니다.\n다른 날짜를 선택해주세요.');
       }
-    },
-    onClose: function() {
-      setTimeout(() => { 
-        if (input.parentNode) input.remove(); 
-        calendarInstance = null; 
-      }, 100);
+    });
+    
+    if (calendarInstance && typeof calendarInstance.open === 'function') {
+      calendarInstance.open();
+    } else {
+      throw new Error('달력 인스턴스 생성 실패');
     }
-  });
-  
-  calendarInstance.open();
+  } catch(err) {
+    console.error('달력 열기 오류:', err);
+    alert('⚠️ 달력을 열 수 없습니다.\n페이지를 새로고침 후 다시 시도해주세요.');
+    if (input.parentNode) input.remove();
+  }
 }
 </script>
 </body>
