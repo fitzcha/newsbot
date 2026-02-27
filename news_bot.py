@@ -703,7 +703,7 @@ def manage_deadline_approvals():
             print(f"🚨 [Approvals] 처리 실패: {e}")
 
 # ──────────────────────────────────────────────
-# [4] 이메일 발송 — 뉴스레터 템플릿
+# [4] 이메일 발송 — 뉴스레터 템플릿 (전문 콘텐츠 포함)
 # ──────────────────────────────────────────────
 def _build_email_html(report, yt_videos=None):
     bk        = report.get("by_keyword", {})
@@ -714,8 +714,10 @@ def _build_email_html(report, yt_videos=None):
 
     for idx, (kw, kd) in enumerate(kw_list):
         articles = kd.get("articles", [])
+        expert_contents = kd.get("expert_contents", [])[:3]  # ← 추가
         ba_brief = kd.get("ba_brief", {})
 
+        # 기사 섹션
         article_rows = ""
         for a in articles[:3]:
             title      = a.get("title", "")
@@ -730,6 +732,28 @@ def _build_email_html(report, yt_videos=None):
                 </td>
               </tr>"""
 
+        # 전문 콘텐츠 섹션 (새로 추가)
+        expert_rows = ""
+        if expert_contents:
+            expert_rows = """
+            <tr><td style="padding-top:16px;">
+              <div style="font-size:11px;font-weight:700;color:#7c3aed;letter-spacing:1px;margin-bottom:10px;">🎓 EXPERT INSIGHTS</div>
+            </td></tr>"""
+            
+            for exp in expert_contents:
+                exp_title = exp.get("title", "")
+                exp_url = exp.get("url", "#")
+                exp_summary = exp.get("expert_summary", "")
+                exp_source = exp.get("source_domain", "")
+                
+                expert_rows += f"""
+                <tr><td style="padding:10px 0; border-bottom:1px solid #f3e8ff;">
+                  <a href="{exp_url}" style="color:#7c3aed;font-weight:600;font-size:14px;text-decoration:none;line-height:1.4;">{exp_title}</a>
+                  <div style="font-size:11px;color:#94a3b8;margin-top:3px;">{exp_source}</div>
+                  <div style="font-size:13px;color:#64748b;margin-top:6px;line-height:1.5;">{exp_summary}</div>
+                </td></tr>"""
+
+        # BA 브리핑 섹션
         if isinstance(ba_brief, dict):
             ba_items = []
             if ba_brief.get("summary"):
@@ -758,7 +782,8 @@ def _build_email_html(report, yt_videos=None):
             </td>
           </tr>
           <tr><td>{article_rows and f'<table width="100%" cellpadding="0" cellspacing="0">{article_rows}</table>' or ''}</td></tr>
-          {f'<tr><td style="padding-top:14px;"><ul style="margin:0; padding-left:18px;">{ba_html}</ul></td></tr>' if ba_html else ''}
+          {expert_rows and f'<tr><td><table width="100%" cellpadding="0" cellspacing="0">{expert_rows}</table></td></tr>' or ''}
+          {ba_html and f'<tr><td style="padding-top:14px;"><ul style="margin:0; padding-left:18px;">{ba_html}</ul></td></tr>' or ''}
         </table>
         {divider}"""
 
@@ -768,46 +793,36 @@ def _build_email_html(report, yt_videos=None):
           <tr>
             <td style="padding:28px 32px; text-align:center;">
               <p style="margin:0 0 16px 0; font-size:18px; font-weight:700; color:#fff;">오늘의 전체 인사이트 확인하기</p>
-              <a href="{DASHBOARD_URL}" style="display:inline-block; background:#e8472a; color:#fff; font-size:14px; font-weight:700; padding:14px 32px; border-radius:10px; text-decoration:none; letter-spacing:.5px;">📊 메인 바로가기 →</a>
+              <a href="{DASHBOARD_URL}" style="display:inline-block; background:#e8472a; color:#fff; font-size:14px; font-weight:700; padding:14px 32px; border-radius:10px; text-decoration:none;">대시보드 바로가기 →</a>
             </td>
           </tr>
         </table>"""
 
     return f"""<!DOCTYPE html>
-<html>
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0; padding:0; background:#f4f4f5; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5; padding:32px 0;">
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fitz 비즈니스 인사이트 리포트</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f9fafb; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb; padding:40px 20px;">
     <tr>
       <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px; background:#fff; border-radius:16px; box-shadow:0 4px 20px rgba(0,0,0,0.08);">
           <tr>
-            <td style="background:#0f172a; border-radius:12px 12px 0 0; padding:28px 32px;">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td>
-                    <span style="font-size:11px; font-weight:700; color:#64748b; letter-spacing:2px; text-transform:uppercase;">FITZ INTELLIGENCE</span>
-                    <h1 style="margin:6px 0 0 0; font-size:22px; font-weight:700; color:#fff;">Daily Briefing</h1>
-                  </td>
-                  <td align="right" style="vertical-align:top;">
-                    <span style="font-size:12px; color:#64748b;">{TODAY}</span>
-                  </td>
-                </tr>
-              </table>
+            <td style="padding:32px 32px 24px 32px;">
+              <h1 style="margin:0 0 8px 0; font-size:26px; font-weight:800; color:#111; letter-spacing:-0.5px;">📊 오늘의 비즈니스 인사이트</h1>
+              <p style="margin:0; font-size:14px; color:#94a3b8;">{TODAY}</p>
             </td>
           </tr>
+          <tr><td style="padding:0 32px 32px 32px;">{keyword_sections}</td></tr>
+          {yt_block and f'<tr><td style="padding:0 32px 32px 32px;">{yt_block}</td></tr>' or ''}
+          <tr><td style="padding:0 32px 32px 32px;">{dashboard_block}</td></tr>
           <tr>
-            <td style="background:#fff; padding:32px;">
-              {keyword_sections}
-              {yt_block}
-              {dashboard_block}
-            </td>
-          </tr>
-          <tr>
-            <td style="background:#f8faff; border-radius:0 0 12px 12px; padding:20px 32px; text-align:center;">
-              <p style="margin:0; font-size:11px; color:#94a3b8; line-height:1.6;">
-                Fitz Intelligence · 매일 오전 9시 자동 발송<br>
-                © 2026 Fitz. All rights reserved.
+            <td style="padding:24px 32px; background:#f8fafc; border-top:1px solid #e2e8f0; text-align:center;">
+              <p style="margin:0; font-size:12px; color:#94a3b8;">
+                © 2025 Fitz Intelligence. All rights reserved.
               </p>
             </td>
           </tr>
@@ -817,18 +832,6 @@ def _build_email_html(report, yt_videos=None):
   </table>
 </body>
 </html>"""
-
-def send_email_report(user_email, report, yt_videos=None):
-    try:
-        html = _build_email_html(report, yt_videos or [])
-        _send_gmail(
-            to      = user_email,
-            subject = f"[{TODAY}] Fitz 비즈니스 인사이트 리포트",
-            html    = html,
-        )
-        print(f"  📧 [Email] {user_email} 발송 완료")
-    except Exception as e:
-        print(f"  🚨 [Email] 발송 실패: {e}")
 
 # ──────────────────────────────────────────────
 # [BRIEF 역할 ①] 직원 수집 소스 지시 + 실제 크롤링
@@ -934,6 +937,7 @@ def collect_news_by_directive(word: str, directive: dict) -> list:
     print(f"  📰 [BRIEF 지시 수집] '{word}' 총 {len(collected)}건 (소스: {unique_sources})")
     return collected
 
+
 # ──────────────────────────────────────────────
 # [BRIEF 역할 ②] 전문 콘텐츠 크롤링
 # ──────────────────────────────────────────────
@@ -1007,6 +1011,7 @@ def collect_expert_contents(word: str, directive: dict) -> list:
     
     print(f"  🎓 [Expert Contents] '{word}' 총 {len(collected)}건 (소스: {unique_sources})")
     return collected
+
 # ──────────────────────────────────────────────
 # [5] 자율 분석 엔진
 # ──────────────────────────────────────────────
@@ -1052,6 +1057,8 @@ def run_autonomous_engine():
                         "securities_brief": {"summary": "해당 키워드의 뉴스를 찾을 수 없습니다.", "points": [], "deep": []},
                         "pm_brief":         {"summary": "해당 키워드의 뉴스를 찾을 수 없습니다.", "points": [], "deep": []},
                         "articles":         [],
+                        "youtube_videos":   [],
+                        "expert_contents":  [],
                         "source_directive": source_directive,
                     }
                     continue
@@ -1081,6 +1088,29 @@ def run_autonomous_engine():
                 all_yt.extend(yt_videos)
                 yt_ctx = build_youtube_context(yt_videos)
 
+                # ===== 전문 콘텐츠 수집 (추가) =====
+                print(f"  🎓 [{word}] 전문 콘텐츠 수집 중...")
+                expert_contents = collect_expert_contents(word, source_directive)
+                
+                # 전문 콘텐츠 요약 생성
+                expert_summaries = []
+                for content in expert_contents[:3]:  # 상위 3개만
+                    try:
+                        summary_raw = call_agent(
+                            f"전문 콘텐츠: {content['title']}\n핵심 인사이트 1줄로 요약",
+                            agents['BRIEF'],
+                            force_one_line=True
+                        )
+                        summary = strip_markdown(summary_raw).split('\n')[0]
+                        content['expert_summary'] = summary
+                        expert_summaries.append(content)
+                        time.sleep(1)  # Rate limiting
+                    except Exception as e:
+                        print(f"    ⚠️ 전문 콘텐츠 요약 실패: {e}")
+                        content['expert_summary'] = content.get('description', '')[:100]
+                        expert_summaries.append(content)
+
+                # 컨텍스트 구성
                 ctx = "\n".join(kw_ctx)
                 if yt_ctx:
                     ctx += f"\n\n{yt_ctx}"
@@ -1105,6 +1135,7 @@ def run_autonomous_engine():
                     ),
                     "articles":         articles,
                     "youtube_videos":   yt_videos,
+                    "expert_contents":  expert_summaries,  # ← 추가
                     "source_directive": source_directive,
                 }
 
@@ -1151,6 +1182,7 @@ def run_autonomous_engine():
 
 
 def _collect_all_by_keyword(users: list) -> dict:
+    """모든 유저의 by_keyword 데이터를 병합"""
     merged = {}
     try:
         res = supabase.table("reports").select("content").eq("report_date", TODAY).execute()
@@ -1539,6 +1571,7 @@ def run_agent_initiative(by_keyword_all: dict):
 # ──────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
+    import sys
     
     parser = argparse.ArgumentParser(description="Fitz News Bot - Sovereign Intelligence System")
     parser.add_argument('--mode', type=str, default='',
