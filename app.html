@@ -1,9 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head >
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/light.css">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script>
 (function() {
   var ua = navigator.userAgent || '';
@@ -1236,162 +1233,111 @@ async function init() {
 init();
 
 /* ── 달력 관련 함수 ── */
-let calendarInstance = null;
+let dateModal = null;
 
-// 접힌 상태: 날짜 칩 클릭 시 달력 팝업
 function openCollapsedCalendar(e) {
   e.stopPropagation();
-  
-  // allDates가 없으면 달력 열지 않음
+  showDateModal();
+}
+
+function openExpandedCalendar() {
+  showDateModal();
+}
+
+function showDateModal() {
   if (!allDates || allDates.length === 0) {
     alert('⚠️ 조회 가능한 날짜가 없습니다.');
     return;
   }
   
-  // 기존 인스턴스 안전하게 제거
-  if (calendarInstance && typeof calendarInstance.destroy === 'function') {
-    try { calendarInstance.destroy(); } catch(e) {}
+  // 기존 모달 제거
+  if (dateModal) {
+    document.body.removeChild(dateModal);
   }
-  calendarInstance = null;
   
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.style.position = 'absolute';
-  input.style.opacity = '0';
-  input.style.pointerEvents = 'none';
-  document.body.appendChild(input);
+  // 모달 생성
+  dateModal = document.createElement('div');
+  dateModal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  `;
   
-  try {
-    calendarInstance = flatpickr(input, {
-      inline: false,
-      dateFormat: 'Y-m-d',
-      defaultDate: curDate || allDates[0],
-      locale: {
-        firstDayOfWeek: 0,
-        weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
-        months: { shorthand: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'] }
-      },
-      onDayCreate: function(dObj, dStr, fp, dayElem) {
-        const dateStr = dayElem.dateObj.toISOString().split('T')[0];
-        if (!allDates.includes(dateStr)) {
-          dayElem.classList.add('flatpickr-disabled');
-          dayElem.style.opacity = '0.3';
-          dayElem.style.cursor = 'not-allowed';
-        }
-      },
-      onChange: async function(selectedDates, dateStr) {
-        if (allDates.includes(dateStr)) {
-          curDate = dateStr;
-          document.getElementById('chip-date-txt').textContent = 
-            allDates.indexOf(dateStr) === 0 ? `${fmtDate(dateStr)} 오늘` : fmtDate(dateStr);
-          await fetchReport(window.CURRENT_USER.id, dateStr);
-          renderDateUI();
-          if (calendarInstance) {
-            try { calendarInstance.close(); } catch(e) {}
-          }
-          setTimeout(() => { 
-            if (input.parentNode) input.remove(); 
-            calendarInstance = null; 
-          }, 100);
-        } else {
-          alert('⚠️ 해당 날짜의 리포트가 없습니다.\n다른 날짜를 선택해주세요.');
-        }
-      },
-      onClose: function() {
-        setTimeout(() => { 
-          if (input.parentNode) input.remove(); 
-          calendarInstance = null; 
-        }, 100);
-      }
-    });
-    
-    if (calendarInstance && typeof calendarInstance.open === 'function') {
-      calendarInstance.open();
-    } else {
-      throw new Error('달력 인스턴스 생성 실패');
+  const box = document.createElement('div');
+  box.style.cssText = `
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 400px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  `;
+  
+  box.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h3 style="font-size:18px; font-weight:700; color:#1e293b; margin:0;">📅 날짜 선택</h3>
+      <button onclick="closeDateModal()" style="background:none; border:none; font-size:24px; color:#94a3b8; cursor:pointer; padding:4px; line-height:1;">✕</button>
+    </div>
+    <div style="display:grid; gap:8px;">
+      ${allDates.map((date, i) => {
+        const isActive = date === curDate;
+        const label = i === 0 ? `${fmtDate(date)} 오늘` : fmtDate(date);
+        return `
+          <button onclick="selectDateFromModal('${date}')" style="
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1.5px solid ${isActive ? '#1e293b' : '#e2e8f0'};
+            background: ${isActive ? '#1e293b' : '#fff'};
+            color: ${isActive ? '#fff' : '#1e293b'};
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
+            transition: all 0.2s;
+          " onmouseover="if('${!isActive}'){this.style.background='#f8fafc';}" onmouseout="if('${!isActive}'){this.style.background='#fff';}">
+            ${label}
+          </button>
+        `;
+      }).join('')}
+    </div>
+  `;
+  
+  dateModal.appendChild(box);
+  document.body.appendChild(dateModal);
+  
+  // 모달 외부 클릭 시 닫기
+  dateModal.addEventListener('click', (e) => {
+    if (e.target === dateModal) {
+      closeDateModal();
     }
-  } catch(err) {
-    console.error('달력 열기 오류:', err);
-    alert('⚠️ 달력을 열 수 없습니다.\n페이지를 새로고침 후 다시 시도해주세요.');
-    if (input.parentNode) input.remove();
+  });
+}
+
+function closeDateModal() {
+  if (dateModal) {
+    document.body.removeChild(dateModal);
+    dateModal = null;
   }
 }
 
-// 펼쳐진 상태: 더보기 버튼 클릭 시 달력 팝업
-function openExpandedCalendar() {
-  // allDates가 없으면 달력 열지 않음
-  if (!allDates || allDates.length === 0) {
-    alert('⚠️ 조회 가능한 날짜가 없습니다.');
-    return;
-  }
-  
-  // 기존 인스턴스 안전하게 제거
-  if (calendarInstance && typeof calendarInstance.destroy === 'function') {
-    try { calendarInstance.destroy(); } catch(e) {}
-  }
-  calendarInstance = null;
-  
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.style.position = 'absolute';
-  input.style.opacity = '0';
-  input.style.pointerEvents = 'none';
-  document.body.appendChild(input);
-  
-  try {
-    calendarInstance = flatpickr(input, {
-      inline: false,
-      dateFormat: 'Y-m-d',
-      defaultDate: curDate || allDates[0],
-      locale: {
-        firstDayOfWeek: 0,
-        weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
-        months: { shorthand: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'] }
-      },
-      onDayCreate: function(dObj, dStr, fp, dayElem) {
-        const dateStr = dayElem.dateObj.toISOString().split('T')[0];
-        if (!allDates.includes(dateStr)) {
-          dayElem.classList.add('flatpickr-disabled');
-          dayElem.style.opacity = '0.3';
-          dayElem.style.cursor = 'not-allowed';
-        }
-      },
-      onChange: async function(selectedDates, dateStr) {
-        if (allDates.includes(dateStr)) {
-          curDate = dateStr;
-          document.getElementById('chip-date-txt').textContent = 
-            allDates.indexOf(dateStr) === 0 ? `${fmtDate(dateStr)} 오늘` : fmtDate(dateStr);
-          await fetchReport(window.CURRENT_USER.id, dateStr);
-          renderDateUI();
-          if (calendarInstance) {
-            try { calendarInstance.close(); } catch(e) {}
-          }
-          setTimeout(() => { 
-            if (input.parentNode) input.remove(); 
-            calendarInstance = null; 
-          }, 100);
-        } else {
-          alert('⚠️ 해당 날짜의 리포트가 없습니다.\n다른 날짜를 선택해주세요.');
-        }
-      },
-      onClose: function() {
-        setTimeout(() => { 
-          if (input.parentNode) input.remove(); 
-          calendarInstance = null; 
-        }, 100);
-      }
-    });
-    
-    if (calendarInstance && typeof calendarInstance.open === 'function') {
-      calendarInstance.open();
-    } else {
-      throw new Error('달력 인스턴스 생성 실패');
-    }
-  } catch(err) {
-    console.error('달력 열기 오류:', err);
-    alert('⚠️ 달력을 열 수 없습니다.\n페이지를 새로고침 후 다시 시도해주세요.');
-    if (input.parentNode) input.remove();
-  }
+async function selectDateFromModal(date) {
+  curDate = date;
+  document.getElementById('chip-date-txt').textContent = 
+    allDates.indexOf(date) === 0 ? `${fmtDate(date)} 오늘` : fmtDate(date);
+  await fetchReport(window.CURRENT_USER.id, date);
+  renderDateUI();
+  closeDateModal();
 }
 </script>
 </body>
