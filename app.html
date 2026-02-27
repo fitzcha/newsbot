@@ -862,7 +862,7 @@ function renderFeed() {
       <div class="headlines-card">
         <div class="content-tabs">
           <button class="tab-btn active"    id="tab-news-${i}"   onclick="switchTab(${i},'news')">📰 뉴스 ${arts.length}건</button>
-          <button class="tab-btn yt-tab"    id="tab-yt-${i}"     onclick="switchTab(${i},'yt')">🎬 YouTube ${ytVideos.length}개</button>
+          <button class="tab-btn yt-tab" id="tab-yt-${i}" onclick="switchTab(${i},'yt')"><span style="display:inline-block;width:20px;height:20px;vertical-align:middle;margin-right:4px;">▶</span>YouTube ${ytVideos.length}개</button>
           <button class="tab-btn expert-tab" id="tab-expert-${i}" onclick="switchTab(${i},'expert')">🎓 전문콘텐츠 ${expertContents.length}건</button>
         </div>
         <div id="panel-news-${i}">
