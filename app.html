@@ -428,16 +428,25 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
       <span class="modal-title">키워드 관리</span>
       <button class="modal-close" onclick="closeModal('kw-modal')">✕</button>
     </div>
-    <div class="modal-notice">⚠️ 키워드는 최대 5개. 변경사항은 다음 브리핑부터 반영됩니다.</div>
-    <div class="kw-list" id="kw-manage-list"></div>
-    <div class="kw-add-row">
-      <input class="kw-add-input" id="kw-add-input" placeholder="새 키워드 입력" maxlength="20"
-             onkeydown="if(event.key==='Enter')addKeyword()">
-      <button class="kw-add-btn" onclick="addKeyword()">추가</button>
+    <div id="kw-modal-content">
+      <div class="modal-notice" id="kw-notice">
+        ⚠️ 키워드는 최대 5개. 변경사항은 다음 브리핑부터 반영됩니다.
+      </div>
+      <div class="kw-progress" id="kw-progress" style="display:none;margin-bottom:16px;padding:12px 16px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;font-size:13px;color:#1e40af;font-weight:600;">
+        📝 <span id="kw-count">0</span>/5개 등록됨
+      </div>
+      <div class="kw-list" id="kw-manage-list"></div>
+      <div class="kw-add-row">
+        <input class="kw-add-input" id="kw-add-input" placeholder="새 키워드 입력" maxlength="20"
+               onkeydown="if(event.key==='Enter')addKeyword()">
+        <button class="kw-add-btn" onclick="addKeyword()">추가</button>
+      </div>
+      <button class="kw-complete-btn" id="kw-complete-btn" onclick="completeOnboarding()" style="display:none;width:100%;margin-top:16px;background:#10b981;color:#fff;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;">
+        ✅ 등록 완료
+      </button>
     </div>
   </div>
 </div>
-
 <script>
 const sc = supabase.createClient(
   'https://zrlpwmpbrvohautldcon.supabase.co',
@@ -1006,6 +1015,52 @@ function renderKwManage() {
       <span class="kw-manage-name"># ${escHtml(kw)}</span>
       <button class="kw-del-btn" onclick="removeKeyword('${escJsStr(kw)}')">✕</button>
     </div>`).join('');
+  
+  // 온보딩 중일 때만 진행 상황 표시
+  const isOnboarding = document.querySelector('.onboarding-wrap') !== null;
+  if (isOnboarding) {
+    const progressEl = document.getElementById('kw-progress');
+    const completeBtn = document.getElementById('kw-complete-btn');
+    const countEl = document.getElementById('kw-count');
+    const noticeEl = document.getElementById('kw-notice');
+    
+    if (userKeywords.length > 0) {
+      progressEl.style.display = 'block';
+      countEl.textContent = userKeywords.length;
+      completeBtn.style.display = 'block';
+      noticeEl.style.display = 'none';
+    } else {
+      progressEl.style.display = 'none';
+      completeBtn.style.display = 'none';
+      noticeEl.style.display = 'block';
+    }
+  }
+}
+
+async function completeOnboarding() {
+  if (userKeywords.length === 0) {
+    alert('최소 1개 이상의 키워드를 등록해주세요.');
+    return;
+  }
+  
+  closeModal('kw-modal');
+  
+  // 완료 메시지 표시
+  document.getElementById('feed-wrap').innerHTML = `
+    <div class="onboarding-wrap">
+      <div class="onboarding-emoji">🎉</div>
+      <div class="onboarding-title">키워드 등록 완료!</div>
+      <div class="onboarding-sub">
+        내일 오전 9시에 첫 브리핑이 도착합니다.<br>
+        <span style="color:#2563eb;font-weight:600;">${userKeywords.map(k => '#'+k).join(' ')}</span><br><br>
+        그동안 다른 사용자의 브리핑을 둘러보세요!
+      </div>
+    </div>`;
+  
+  // 3초 후 새로고침하여 일반 화면으로 전환
+  setTimeout(() => {
+    location.reload();
+  }, 3000);
 }
 
 async function removeKeyword(kw) {
