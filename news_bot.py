@@ -1465,13 +1465,62 @@ def run_agent_initiative(by_keyword_all: dict):
 # 엔트리포인트
 # ──────────────────────────────────────────────
 if __name__ == "__main__":
-    cron_type = os.environ.get("CRON_TYPE", "BRIEFING")
-
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Fitz News Bot - Sovereign Intelligence System")
+    parser.add_argument('--mode', type=str, default='',
+                        help='실행 모드: dev, BRIEFING, INDUSTRY, GOVERNANCE')
+    parser.add_argument('--backlog-id', type=str, default='',
+                        help='개발 백로그 ID (--mode dev 사용 시)')
+    
+    args = parser.parse_args()
+    
+    # 명령줄 인자로 모드 지정된 경우
+    if args.mode:
+        mode = args.mode.upper()
+        
+        if mode == 'DEV':
+            # DEV 배포 모드: 특정 백로그 ID 처리
+            backlog_id = args.backlog_id or os.environ.get("BACKLOG_ID", "")
+            if not backlog_id:
+                print("❌ [DEV] backlog_id가 지정되지 않았습니다")
+                sys.exit(1)
+            
+            print(f"🛠️ [DEV] 개발 배포 모드 실행: backlog_id={backlog_id}")
+            run_self_evolution(backlog_id)
+            sys.exit(0)
+            
+        elif mode == 'GOVERNANCE':
+            print("🌙 [GOVERNANCE] 23:30 마감 작업 모드")
+            manage_deadline_approvals()
+            sys.exit(0)
+            
+        elif mode == 'INDUSTRY':
+            print("🏭 [INDUSTRY] 06:00 산업군 모니터링 모드")
+            run_industry_monitor()
+            sys.exit(0)
+            
+        elif mode == 'BRIEFING':
+            print("☀️ [BRIEFING] 09:00 정기 브리핑 모드")
+            manage_deadline_approvals()
+            run_autonomous_engine()
+            sync_data_to_github()
+            sys.exit(0)
+        else:
+            print(f"⚠️ 알 수 없는 모드: {mode}")
+            sys.exit(1)
+    
+    # 환경 변수로 모드 지정 (기존 방식 호환)
+    cron_type = os.environ.get("CRON_TYPE", "BRIEFING").upper()
+    
     if cron_type == "GOVERNANCE":
         print("🌙 [GOVERNANCE] 23:30 마감 작업 모드")
         manage_deadline_approvals()
+    elif cron_type == "INDUSTRY":
+        print("🏭 [INDUSTRY] 06:00 산업군 모니터링 모드")
+        run_industry_monitor()
     else:
         print("☀️ [BRIEFING] 09:00 정기 브리핑 모드")
         manage_deadline_approvals()
-        run_self_evolution(CURRENT_BACKLOG_ID)
         run_autonomous_engine()
+        sync_data_to_github()
