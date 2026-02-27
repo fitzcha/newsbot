@@ -1647,70 +1647,199 @@ async function loadVoc() {
    ══════════════════════════════════════════ */
 async function loadCost() {
   try {
-    const today = new Date().toISOString().slice(0,10);
-    // 오늘 action_logs
-    const { data: todayLogs } = await sc
-      .from('action_logs').select('action_type,details,executed_at')
-      .gte('executed_at', today + 'T00:00:00')
-      .order('executed_at', { ascending: false });
+    // KST 기준 오늘 날짜 계산
+    const kst = new Date(Date.now() + (9*60 - new Date().getTimezoneOffset())*60000);
+    const today = kst.toISOString().slice(0,10);
+    const todayStart = today + 'T00:00:00+09:00';
+    
+    // 7일 전 날짜
+    const week7 = new Date(kst.getTime() - 7*86400*1000).toISOString().slice(0,10) + 'T00:00:00+09:00';
+    
+    // 이번 달 시작 날짜
+    const monthStart = `${today.slice(0,7)}-01T00:00:00+09:00`;
 
-    const calls = (todayLogs||[]).filter(l =>
-      String(l.action_type||'').includes('LLM') ||
-      String(l.details||'').includes('token') ||
-      String(l.details||'').includes('Gemini')).length;
+    // ===== 1. cost_log 테이블에서 실제 비용 집계 =====
+    let todayCost = 0, monthCost = 0, todayCalls = 0;
+    
+    try {
+      // 오늘 비용
+      const { data: todayCostData, error: todayCostError } = await sc
+        .from('cost_log')
+        .select('cost, call_type')
+        .gte('log_date', today)
+        .lte('log_date', today);
+        
+      if (!todayCostError && todayCostData) {
+        todayCost = todayCostData.reduce((sum, row) => sum + (row.cost || 0), 0);
+        todayCalls = todayCostData.length;
+      }
+      
+      // 이번 달 누적 비용
+      const monthStartDate = today.slice(0,7) + '-01';
+      const { data: monthCostData, error: monthCostError } = await sc
+        .from('cost_log')
+        .select('cost')
+        .gte('log_date', monthStartDate)
+        .lte('log_date', today);
+        
+      if (!monthCostError && monthCostData) {
+        monthCost = monthCostData.reduce((sum, row) => sum + (row.cost || 0), 0);
+      }
+    } catch(costErr) {
+      console.warn('cost_log 조회 실패, action_logs로 fallback:', costErr);
+      
+      // Fallback: action_logs 기반 추정
+      const { data: todayLogs } = await sc
+        .from('action_logs')
+        .select('action_type,details')
+        .gte('executed_at', todayStart)
+        .order('executed_at', { ascending: false });
 
-    const estCost = (calls * 0.0015).toFixed(4);
-    $id('c-tokens').textContent = calls;
-    $id('c-cost').textContent   = `$${estCost}`;
+      const todayCallsEstimate = (todayLogs||[]).filter(l =>
+        String(l.action_type||'').includes('LLM') ||
+        String(l.details||'').includes('token') ||
+        String(l.details||'').includes('Gemini')
+      ).length;
+      
+      todayCalls = todayCallsEstimate;
+      todayCost = todayCallsEstimate * 0.0015; // 평균 추정치
 
-    // 7일 누적
-    const w7 = new Date(Date.now() - 7*86400*1000).toISOString().slice(0,10);
-    const { data: weekLogs } = await sc
-      .from('action_logs').select('action_type,details')
-      .gte('executed_at', w7 + 'T00:00:00');
-    const wCalls = (weekLogs||[]).filter(l =>
-      String(l.action_type||'').includes('LLM') ||
-      String(l.details||'').includes('token') ||
-      String(l.details||'').includes('Gemini')).length;
-    $id('c-month').textContent = `$${(wCalls * 0.0015).toFixed(3)}`;
+      // 이번 달 추정
+      const { data: monthLogs } = await sc
+        .from('action_logs')
+        .select('action_type,details')
+        .gte('executed_at', monthStart);
+        
+      const monthCallsEstimate = (monthLogs||[]).filter(l =>
+        String(l.action_type||'').includes('LLM') ||
+        String(l.details||'').includes('token') ||
+        String(l.details||'').includes('Gemini')
+      ).length;
+      
+      monthCost = monthCallsEstimate * 0.0015;
+    }
 
-    // Supabase row counts
-    const tables = ['agents','pending_approvals','dev_backlog','release_ledger',
-                    'action_logs','brief_employees','hr_staff_proposals','reports'];
-    const counts = await Promise.all(
-      tables.map(t => sc.from(t).select('id',{count:'exact',head:true}))
-    );
-    const total = counts.reduce((s,r) => s + (r.count||0), 0);
-    $id('c-rows').textContent = total.toLocaleString();
+    // 화면 업데이트
+    $id('c-tokens').textContent = todayCalls.toLocaleString();
+    $id('c-cost').textContent = `$${todayCost.toFixed(4)}`;
+    $id('c-month').textContent = `$${monthCost.toFixed(3)}`;
 
-    // 테이블별 상세
+    // ===== 2. Supabase DB rows 집계 =====
+    const tables = [
+      'agents', 'pending_approvals', 'dev_backlog', 'release_ledger',
+      'action_logs', 'brief_employees', 'hr_staff_proposals', 'reports',
+      'cost_log', 'keyword_performance'
+    ];
+    
+    let totalRows = 0;
+    const tableCounts = {};
+    
+    for (const table of tables) {
+      try {
+        const { count, error } = await sc
+          .from(table)
+          .select('*', { count: 'exact', head: true });
+        
+        if (!error) {
+          tableCounts[table] = count || 0;
+          totalRows += count || 0;
+        } else {
+          tableCounts[table] = '?';
+        }
+      } catch(e) {
+        console.warn(`${table} count 실패:`, e);
+        tableCounts[table] = '?';
+      }
+    }
+    
+    $id('c-rows').textContent = totalRows.toLocaleString();
+
+    // ===== 3. 테이블별 상세 표시 =====
     render('c-row-detail', `<table class="ledger-table">
       <thead><tr><th>테이블</th><th>rows</th></tr></thead>
-      <tbody>${tables.map((t,i) =>
-        `<tr><td class="mono">${t}</td><td>${(counts[i].count||0).toLocaleString()}</td></tr>`
-      ).join('')}</tbody>
+      <tbody>${tables.map(t => {
+        const count = tableCounts[t];
+        const display = typeof count === 'number' ? count.toLocaleString() : count;
+        return `<tr><td class="mono">${t}</td><td>${display}</td></tr>`;
+      }).join('')}</tbody>
     </table>`);
 
-    // 오늘 호출 유형별
-    const types = {};
-    (todayLogs||[]).forEach(l => {
-      const k = l.action_type || 'UNKNOWN';
-      types[k] = (types[k]||0) + 1;
-    });
-    render('c-breakdown', Object.keys(types).length
-      ? `<table class="ledger-table">
+    // ===== 4. 오늘 호출 유형별 분석 (cost_log 우선) =====
+    let breakdownHtml = '';
+    
+    try {
+      const { data: costBreakdown } = await sc
+        .from('cost_log')
+        .select('call_type, cost, input_tokens, output_tokens, model')
+        .gte('log_date', today)
+        .lte('log_date', today);
+      
+      if (costBreakdown && costBreakdown.length > 0) {
+        const byType = {};
+        costBreakdown.forEach(row => {
+          const type = row.call_type || 'UNKNOWN';
+          if (!byType[type]) byType[type] = { count: 0, cost: 0, tokens: 0 };
+          byType[type].count++;
+          byType[type].cost += row.cost || 0;
+          byType[type].tokens += (row.input_tokens || 0) + (row.output_tokens || 0);
+        });
+        
+        const sorted = Object.entries(byType).sort((a,b) => b[1].cost - a[1].cost);
+        breakdownHtml = `<h4 style="font-size:.9rem;margin:20px 0 10px;color:#64748b">📊 오늘 호출 유형별 비용</h4>
+        <table class="ledger-table">
+          <thead><tr><th>유형</th><th>호출</th><th>토큰</th><th>비용</th></tr></thead>
+          <tbody>${sorted.map(([type, data]) =>
+            `<tr>
+              <td class="mono">${escHtml(type)}</td>
+              <td>${data.count}</td>
+              <td>${data.tokens.toLocaleString()}</td>
+              <td>$${data.cost.toFixed(4)}</td>
+            </tr>`
+          ).join('')}</tbody>
+        </table>`;
+      }
+    } catch(breakdownErr) {
+      console.warn('cost breakdown 실패:', breakdownErr);
+    }
+    
+    // Fallback: action_logs 기반 간단한 분석
+    if (!breakdownHtml) {
+      const { data: todayLogs } = await sc
+        .from('action_logs')
+        .select('action_type')
+        .gte('executed_at', todayStart)
+        .order('executed_at', { ascending: false });
+      
+      const types = {};
+      (todayLogs||[]).forEach(l => {
+        const k = l.action_type || 'UNKNOWN';
+        types[k] = (types[k]||0) + 1;
+      });
+      
+      if (Object.keys(types).length > 0) {
+        breakdownHtml = `<h4 style="font-size:.9rem;margin:20px 0 10px;color:#64748b">📊 오늘 액션 유형별</h4>
+        <table class="ledger-table">
           <thead><tr><th>유형</th><th>횟수</th></tr></thead>
           <tbody>${Object.entries(types)
             .sort((a,b)=>b[1]-a[1])
             .map(([k,v])=>`<tr><td class="mono">${escHtml(k)}</td><td>${v}</td></tr>`)
             .join('')}</tbody>
-        </table>`
-      : '<div class="empty">오늘 로그 없음</div>');
+        </table>`;
+      } else {
+        breakdownHtml = '<div class="empty">오늘 로그 없음</div>';
+      }
+    }
+    
+    render('c-breakdown', breakdownHtml);
+
   } catch(e) {
+    console.error('loadCost 오류:', e);
     ['c-tokens','c-cost','c-month','c-rows'].forEach(id => {
-      if($id(id)) $id(id).textContent = '—';
+      const el = $id(id);
+      if(el) el.textContent = '—';
     });
-    render('c-breakdown', `<div class="empty">로드 실패: ${escHtml(e.message)}</div>`);
+    render('c-breakdown', `<div class="empty" style="color:#ef4444">⚠️ 로드 실패: ${escHtml(e.message)}</div>`);
+    render('c-row-detail', '');
   }
 }
 
