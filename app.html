@@ -139,7 +139,8 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
 .filter-label { display:flex; align-items:center; font-size:10px; font-weight:700; color:#94a3b8; letter-spacing:.5px; padding:6px 0; white-space:nowrap; min-height:34px; }
 .filter-chips { display:flex; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:6px 0; align-items:center; }
 .filter-chips::-webkit-scrollbar { display:none; }
-#date-recent-chips { display:flex; gap:6px; flex-wrap:nowrap; }
+#date-recent-chips { display:flex; gap:6px; flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+#date-recent-chips::-webkit-scrollbar { display:none; }
 .date-chip { flex-shrink:0; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:600; color:#94a3b8; background:#f8fafc; border:1px solid #e2e8f0; cursor:pointer; min-height:34px; display:flex; align-items:center; }
 .date-chip.active { background:#1e293b; color:#fff; border-color:#1e293b; }
 .agent-chip { flex-shrink:0; display:flex; align-items:center; gap:5px; padding:6px 14px; border-radius:20px; font-size:12px; font-weight:700; color:#94a3b8; background:#f8fafc; border:1.5px solid #e2e8f0; cursor:pointer; min-height:34px; }
@@ -1183,8 +1184,7 @@ init();
 let calendarInstance = null;
 
 // 접힌 상태: 날짜 칩 클릭 시 달력 팝업
-function openCollapsedCalendar(e) {
-  e.stopPropagation();
+function openExpandedCalendar() {
   if (calendarInstance) calendarInstance.destroy();
   
   const input = document.createElement('input');
@@ -1223,11 +1223,20 @@ function openCollapsedCalendar(e) {
 }
 
 // 펼쳐진 상태: 더보기 버튼 클릭 시 달력 팝업
-function openExpandedCalendar() {
-  if (calendarInstance) calendarInstance.destroy();
+function openCollapsedCalendar(e) {
+  e.stopPropagation();
+  
+  // 기존 인스턴스 안전하게 제거
+  if (calendarInstance && typeof calendarInstance.destroy === 'function') {
+    calendarInstance.destroy();
+  }
+  calendarInstance = null;
   
   const input = document.createElement('input');
-  input.style.display = 'none';
+  input.type = 'text';
+  input.style.position = 'absolute';
+  input.style.opacity = '0';
+  input.style.pointerEvents = 'none';
   document.body.appendChild(input);
   
   calendarInstance = flatpickr(input, {
@@ -1247,14 +1256,71 @@ function openExpandedCalendar() {
           allDates.indexOf(dateStr) === 0 ? `${fmtDate(dateStr)} 오늘` : fmtDate(dateStr);
         await fetchReport(window.CURRENT_USER.id, dateStr);
         renderDateUI();
-        calendarInstance.close();
-        setTimeout(() => { input.remove(); calendarInstance = null; }, 100);
+        if (calendarInstance) calendarInstance.close();
+        setTimeout(() => { 
+          if (input.parentNode) input.remove(); 
+          calendarInstance = null; 
+        }, 100);
       } else {
         alert('⚠️ 해당 날짜의 리포트가 없습니다.\n다른 날짜를 선택해주세요.');
       }
     },
     onClose: function() {
-      setTimeout(() => { input.remove(); calendarInstance = null; }, 100);
+      setTimeout(() => { 
+        if (input.parentNode) input.remove(); 
+        calendarInstance = null; 
+      }, 100);
+    }
+  });
+  
+  calendarInstance.open();
+}
+
+function openExpandedCalendar() {
+  // 기존 인스턴스 안전하게 제거
+  if (calendarInstance && typeof calendarInstance.destroy === 'function') {
+    calendarInstance.destroy();
+  }
+  calendarInstance = null;
+  
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.style.position = 'absolute';
+  input.style.opacity = '0';
+  input.style.pointerEvents = 'none';
+  document.body.appendChild(input);
+  
+  calendarInstance = flatpickr(input, {
+    inline: false,
+    dateFormat: 'Y-m-d',
+    defaultDate: curDate,
+    enable: allDates,
+    locale: {
+      firstDayOfWeek: 0,
+      weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
+      months: { shorthand: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'] }
+    },
+    onChange: async function(selectedDates, dateStr) {
+      if (allDates.includes(dateStr)) {
+        curDate = dateStr;
+        document.getElementById('chip-date-txt').textContent = 
+          allDates.indexOf(dateStr) === 0 ? `${fmtDate(dateStr)} 오늘` : fmtDate(dateStr);
+        await fetchReport(window.CURRENT_USER.id, dateStr);
+        renderDateUI();
+        if (calendarInstance) calendarInstance.close();
+        setTimeout(() => { 
+          if (input.parentNode) input.remove(); 
+          calendarInstance = null; 
+        }, 100);
+      } else {
+        alert('⚠️ 해당 날짜의 리포트가 없습니다.\n다른 날짜를 선택해주세요.');
+      }
+    },
+    onClose: function() {
+      setTimeout(() => { 
+        if (input.parentNode) input.remove(); 
+        calendarInstance = null; 
+      }, 100);
     }
   });
   
