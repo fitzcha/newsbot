@@ -935,6 +935,79 @@ def collect_news_by_directive(word: str, directive: dict) -> list:
     return collected
 
 # ──────────────────────────────────────────────
+# [BRIEF 역할 ②] 전문 콘텐츠 크롤링
+# ──────────────────────────────────────────────
+def collect_expert_contents(word: str, directive: dict) -> list:
+    """
+    Brief가 지시한 소스에서 전문 콘텐츠를 크롤링한다.
+    뉴스와 달리 심층 분석, 리포트, 블로그 등을 수집한다.
+    """
+    # 모든 역할의 소스를 합쳐서 상위 3개 사이트 선정
+    all_sources = []
+    for role_sources in directive.values():
+        all_sources.extend(role_sources)
+    
+    unique_sources = list(dict.fromkeys(all_sources))[:3]  # 상위 3개만
+    
+    if not unique_sources:
+        print(f"  ℹ️ [Expert] '{word}' 지정된 소스 없음")
+        return []
+    
+    collected = []
+    seen_titles = set()
+    
+    for domain in unique_sources:
+        try:
+            # 전문 콘텐츠는 일반 뉴스보다 깊이 있는 키워드 조합 사용
+            search_queries = [
+                f"{word} analysis site:{domain}",
+                f"{word} report site:{domain}",
+                f"{word} insight site:{domain}",
+            ]
+            
+            lang = _DOMAIN_LANG.get(domain, 'en' if '.' in domain else 'ko')
+            
+            for query in search_queries:
+                try:
+                    gn = GNews(language=lang, max_results=2)
+                    results = gn.get_news(query) or []
+                    
+                    for item in results:
+                        title = item.get("title", "")
+                        url = item.get("url", "")
+                        
+                        # 중복 제거 및 품질 필터
+                        if title and title not in seen_titles and len(title) > 20:
+                            seen_titles.add(title)
+                            
+                            # 전문 콘텐츠 점수 계산 (제목 기반 휴리스틱)
+                            is_expert = any(keyword in title.lower() for keyword in [
+                                'analysis', 'report', 'insight', 'research', 'study',
+                                '분석', '리포트', '보고서', '연구', '심층'
+                            ])
+                            
+                            collected.append({
+                                **item,
+                                'source_domain': domain,
+                                'is_expert_content': is_expert,
+                                'keyword': word,
+                            })
+                    
+                    if results:
+                        print(f"    🎓 [{domain}] '{query}' → {len(results)}건 수집")
+                        time.sleep(1)  # Rate limiting
+                        
+                except Exception as e:
+                    print(f"    ⚠️ [{domain}] '{query}' 수집 실패: {e}")
+                    continue
+                    
+        except Exception as e:
+            print(f"    ⚠️ [{domain}] 전체 수집 실패: {e}")
+            continue
+    
+    print(f"  🎓 [Expert Contents] '{word}' 총 {len(collected)}건 (소스: {unique_sources})")
+    return collected
+# ──────────────────────────────────────────────
 # [5] 자율 분석 엔진
 # ──────────────────────────────────────────────
 def run_autonomous_engine():
