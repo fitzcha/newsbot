@@ -2,12 +2,9 @@ name: Daily News Analysis & Governance Bot
 
 on:
   schedule:
-    # 1. 한국 시간 오전 06:00 (KST) = UTC 21:00 전날 - 산업군 모니터링
-    - cron: '0 21 * * *'
-    # 2. 한국 시간 오전 09:00 (KST) = UTC 00:00 - 정기 브리핑 및 데이터 동기화
-    - cron: '0 0 * * *'
-    # 3. 한국 시간 밤 23:30 (KST) = UTC 14:30 - 지능 자동 승인 및 마감 작업
-    - cron: '30 14 * * *'
+    - cron: '0 21 * * *'    # 06:00 KST - 산업군 모니터링
+    - cron: '0 0 * * *'     # 09:00 KST - 정기 브리핑
+    - cron: '30 14 * * *'   # 23:30 KST - 지능 자동 승인
   workflow_dispatch:
     inputs:
       backlog_id:
@@ -42,13 +39,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0
+          fetch-depth: 100
           ref: ${{ github.ref_name }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
@@ -65,26 +63,36 @@ jobs:
         run: |
           python scripts/e2e_smoke_gate.py
 
-      # 실행 모드 결정: NORMAL(BOT_EXECUTION) / ROLLBACK
       - name: Determine execution mode
         id: cron_type
         run: |
           SCHEDULE="${{ github.event.schedule }}"
           FORCE="${{ github.event.inputs.force_cron_type }}"
           ROLLBACK_TO_SHA="$(echo '${{ github.event.inputs.rollback_to_sha }}' | xargs)"
+          BACKLOG_ID="${{ github.event.inputs.backlog_id }}"
 
-          if [ -n "$ROLLBACK_TO_SHA" ]; then
+          # DEV 배포 모드 (최우선)
+          if [ -n "$BACKLOG_ID" ]; then
+            echo "RUN_MODE=DEV_DEPLOY" >> $GITHUB_ENV
+            echo "RELEASE_TYPE=DEV_DEPLOY" >> $GITHUB_ENV
+            echo "CRON_TYPE=DEV" >> $GITHUB_ENV
+            echo "BACKLOG_ID=$BACKLOG_ID" >> $GITHUB_ENV
+            echo "✅ DEV 배포 모드: backlog_id=$BACKLOG_ID"
+          # 롤백 모드
+          elif [ -n "$ROLLBACK_TO_SHA" ]; then
             echo "RUN_MODE=ROLLBACK" >> $GITHUB_ENV
             echo "RELEASE_TYPE=ROLLBACK" >> $GITHUB_ENV
             echo "CRON_TYPE=ROLLBACK" >> $GITHUB_ENV
             echo "ROLLBACK_TO_SHA=$ROLLBACK_TO_SHA" >> $GITHUB_ENV
             echo "ROLLBACK_REASON=${{ github.event.inputs.rollback_reason }}" >> $GITHUB_ENV
             echo "✅ 롤백 모드 실행: target=$ROLLBACK_TO_SHA"
+          # 강제 실행 모드
           elif [ -n "$FORCE" ]; then
             echo "RUN_MODE=BOT_EXECUTION" >> $GITHUB_ENV
             echo "RELEASE_TYPE=BOT_EXECUTION" >> $GITHUB_ENV
             echo "CRON_TYPE=$FORCE" >> $GITHUB_ENV
             echo "✅ 강제 실행 타입: $FORCE"
+          # 스케줄 감지
           elif [ "$SCHEDULE" = "30 14 * * *" ]; then
             echo "RUN_MODE=BOT_EXECUTION" >> $GITHUB_ENV
             echo "RELEASE_TYPE=BOT_EXECUTION" >> $GITHUB_ENV
@@ -118,6 +126,7 @@ jobs:
             exit 0
           fi
           TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          BACKLOG_ID_VAL="${BACKLOG_ID:-}"
           PAYLOAD=$(cat <<JSON
           [{
             "run_id":"${GITHUB_RUN_ID}",
@@ -126,9 +135,9 @@ jobs:
             "cron_type":"${CRON_TYPE}",
             "branch":"${GITHUB_REF_NAME:-main}",
             "commit_sha":"${GITHUB_SHA}",
-            "backlog_id":"${{ github.event.inputs.backlog_id }}",
+            "backlog_id":"${BACKLOG_ID_VAL}",
             "status":"RUNNING",
-            "note":"workflow started (rollback_target=${ROLLBACK_TO_SHA:-none}, reason=${ROLLBACK_REASON:-none})",
+            "note":"workflow started (backlog_id=${BACKLOG_ID_VAL}, rollback=${ROLLBACK_TO_SHA:-none})",
             "released_at":"${TS}"
           }]
           JSON
@@ -186,7 +195,7 @@ jobs:
       - name: Commit and push rollback snapshot
         if: ${{ env.RUN_MODE == 'ROLLBACK' && env.ROLLBACK_NOOP != '1' }}
         run: |
-          git config --global user.name "Fitz Intelligence Bot"
+          git config --global user.name "Fitz-Dev"
           git config --global user.email "positivecha@gmail.com"
           REASON="${ROLLBACK_REASON:-manual rollback}"
           SAFE_REASON="$(printf '%s' "$REASON" | tr '\n\r' ' ' | sed 's/\"/ /g' | cut -c1-80)"
@@ -195,26 +204,41 @@ jobs:
           git push origin HEAD:${GITHUB_REF_NAME:-main}
           echo "ROLLBACK_COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-      - name: Run news_bot.py
-        if: ${{ env.RUN_MODE != 'ROLLBACK' }}
+      - name: Run Python Bot (DEV 배포 모드)
+        if: ${{ env.RUN_MODE == 'DEV_DEPLOY' && env.ROLLBACK_NOOP != '1' }}
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          CURRENT_BACKLOG_ID: ${{ github.event.inputs.backlog_id }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          echo "🛠️ DEV 배포 모드 실행: backlog_id=${BACKLOG_ID}"
+          python news_bot.py --mode dev --backlog-id "${BACKLOG_ID}"
+
+      - name: Run Python Bot (일반 모드)
+        if: ${{ env.RUN_MODE == 'BOT_EXECUTION' && env.ROLLBACK_NOOP != '1' }}
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           CRON_TYPE: ${{ env.CRON_TYPE }}
         run: |
-          echo "🚀 실행 타입: $CRON_TYPE"
-          python news_bot.py
+          echo "🤖 Bot 실행 모드: ${CRON_TYPE}"
+          python news_bot.py --mode "${CRON_TYPE}"
 
-      - name: Final Data Sync (safe)
-        if: ${{ env.RUN_MODE != 'ROLLBACK' }}
+      - name: Final Data Sync
+        if: ${{ env.ROLLBACK_NOOP != '1' }}
         run: |
-          git config --global user.name "Fitz Intelligence Bot"
+          git config --global user.name "Fitz-Dev"
           git config --global user.email "positivecha@gmail.com"
           if [ -f data.json ]; then
             git add data.json
@@ -237,12 +261,13 @@ jobs:
             exit 0
           fi
           TS=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          BACKLOG_ID_VAL="${BACKLOG_ID:-}"
           PAYLOAD=$(cat <<JSON
           {
             "status":"SUCCEEDED",
             "completed_at":"${TS}",
             "commit_sha":"$(git rev-parse HEAD)",
-            "note":"workflow completed successfully"
+            "note":"workflow completed successfully (backlog_id=${BACKLOG_ID_VAL})"
           }
           JSON
           )
@@ -280,9 +305,9 @@ jobs:
           -d "${PAYLOAD}" || echo "release_ledger failure write failed (non-blocking)"
 
       - name: Notify Sovereign HQ (Success)
-        if: success() && github.event.inputs.backlog_id != ''
+        if: success() && env.BACKLOG_ID != ''
         run: |
-          curl -X PATCH "${{ secrets.SUPABASE_URL }}/rest/v1/dev_backlog?id=eq.${{ github.event.inputs.backlog_id }}" \
+          curl -X PATCH "${{ secrets.SUPABASE_URL }}/rest/v1/dev_backlog?id=eq.${BACKLOG_ID}" \
           -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
           -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
           -H "Content-Type: application/json" \
@@ -292,12 +317,12 @@ jobs:
           -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
           -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
           -H "Content-Type: application/json" \
-          -d '{"action_type": "DEV_DEPLOY", "target_word": "SYSTEM", "details": "✅ AI 배포 완료: 백로그 #${{ github.event.inputs.backlog_id }}가 성공적으로 반영되었습니다."}'
+          -d '{"action_type": "DEV_DEPLOY", "target_word": "SYSTEM", "details": "✅ AI 배포 완료: 백로그 #'"${BACKLOG_ID}"'가 성공적으로 반영되었습니다."}'
 
       - name: Notify Sovereign HQ (Failure)
-        if: failure() && github.event.inputs.backlog_id != ''
+        if: failure() && env.BACKLOG_ID != ''
         run: |
-          curl -X PATCH "${{ secrets.SUPABASE_URL }}/rest/v1/dev_backlog?id=eq.${{ github.event.inputs.backlog_id }}" \
+          curl -X PATCH "${{ secrets.SUPABASE_URL }}/rest/v1/dev_backlog?id=eq.${BACKLOG_ID}" \
           -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
           -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
           -H "Content-Type: application/json" \
@@ -307,4 +332,4 @@ jobs:
           -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
           -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
           -H "Content-Type: application/json" \
-          -d '{"action_type": "DEV_DEPLOY", "target_word": "SYSTEM", "details": "❌ AI 배포 실패: 백로그 #${{ github.event.inputs.backlog_id }} 실행 중 오류 발생"}'
+          -d '{"action_type": "DEV_DEPLOY", "target_word": "SYSTEM", "details": "❌ AI 배포 실패: 백로그 #'"${BACKLOG_ID}"' 실행 중 오류 발생"}'
