@@ -416,6 +416,100 @@ def get_youtube_with_cache(keyword: str) -> list:
 
     return videos
 
+_EXPERT_DOMAINS = [
+    "kdi.re.kr", "nipa.kr", "iitp.kr", "kisdi.re.kr",
+    "kotra.or.kr", "kiet.re.kr", "kiep.go.kr", "kistep.re.kr",
+    "mckinsey.com", "bcg.com", "deloitte.com", "pwc.com",
+    "gartner.com", "hbr.org", "mit.edu", "stanford.edu",
+    "hankyung.com", "mk.co.kr", "sedaily.com",
+    "zdnet.co.kr", "etnews.com", "techcrunch.com",
+    "venturebeat.com", "bloomberg.com", "reuters.com", "ft.com",
+]
+
+_NORMAL_DOMAINS = [
+    "naver.com", "daum.net", "joins.com", "chosun.com",
+    "donga.com", "hani.co.kr", "yonhapnews.co.kr",
+]
+
+def collect_expert_contents(word: str, agents: dict, max_per_domain: int = 2) -> list:
+    print(f"  🎓 [{word}] 전문 콘텐츠 수집 시작...")
+    brief_agent = agents.get('BRIEF')
+    collected   = []
+    seen_titles = set()
+
+    def _scrape(domain: str, is_expert: bool):
+        try:
+            lang       = _DOMAIN_LANG.get(domain, 'en')
+            gn         = GNews(language=lang, max_results=max_per_domain)
+            news       = gn.get_news(f"{word} site:{domain}") or []
+            for n in news:
+                title = (n.get("title") or "").strip()
+                url   = n.get("url") or n.get("link") or ""
+                if not title or title in seen_titles or not url:
+                    continue
+                seen_titles.add(title)
+                expert_summary = ""
+                if brief_agent:
+                    try:
+                        raw = call_agent(
+                            f"아래 제목의 핵심을 40자 이내 1줄로 요약. 마크다운 금지.\n제목: {title}",
+                            brief_agent, force_one_line=True
+                        )
+                        expert_summary = strip_markdown(raw).split('\n')[0][:80]
+                    except: pass
+                collected.append({
+                    "title":             title,
+                    "url":               url,
+                    "source_domain":     domain,
+                    "is_expert_content": is_expert,
+                    "expert_summary":    expert_summary,
+                })
+            if news:
+                print(f"    📌 [Expert] [{domain}] '{word}' → {len(news)}건")
+        except Exception as e:
+            print(f"    ⚠️ [Expert] [{domain}] 실패: {e}")
+
+    for domain in _EXPERT_DOMAINS:
+        if len(collected) >= 10: break
+        _scrape(domain, is_expert=True)
+
+    if len(collected) < 3:
+        print(f"  📌 [Expert] 부족({len(collected)}건) — 일반 도메인 보충")
+        for domain in _NORMAL_DOMAINS:
+            if len(collected) >= 6: break
+            _scrape(domain, is_expert=False)
+
+    collected.sort(key=lambda x: (0 if x["is_expert_content"] else 1))
+    print(f"  ✅ [Expert] '{word}' → 총 {len(collected)}건 "
+          f"(심층:{sum(1 for c in collected if c['is_expert_content'])}건 / "
+          f"일반:{sum(1 for c in collected if not c['is_expert_content'])}건)")
+    return collected
+
+
+def get_expert_with_cache(word: str, agents: dict) -> list:
+    try:
+        cache = supabase.table("expert_cache") \
+            .select("contents").eq("keyword", word).eq("cache_date", TODAY).execute()
+        if cache.data:
+            print(f"  🎓 [Expert Cache] '{word}' → 캐시 재사용")
+            return cache.data[0]["contents"]
+    except Exception as e:
+        print(f"  ⚠️ [Expert Cache] 조회 실패: {e}")
+
+    contents = collect_expert_contents(word, agents)
+
+    try:
+        supabase.table("expert_cache").upsert({
+            "keyword":    word,
+            "cache_date": TODAY,
+            "contents":   contents,
+        }, on_conflict="keyword,cache_date").execute()
+        print(f"  💾 [Expert Cache] '{word}' → 저장 완료")
+    except Exception as e:
+        print(f"  ⚠️ [Expert Cache] 저장 실패: {e}")
+
+    return contents
+    
 def build_youtube_context(yt_videos: list) -> str:
     if not yt_videos:
         return ""
@@ -1087,7 +1181,9 @@ def run_autonomous_engine():
                 yt_videos = get_youtube_with_cache(word)
                 all_yt.extend(yt_videos)
                 yt_ctx = build_youtube_context(yt_videos)
-
+                print(f"  🎓 [{word}] 전문 콘텐츠 수집 중...")
+                expert_contents = get_expert_with_cache(word, agents)
+                
                 # ===== 전문 콘텐츠 수집 (추가) =====
                 print(f"  🎓 [{word}] 전문 콘텐츠 수집 중...")
                 expert_contents = collect_expert_contents(word, source_directive)
