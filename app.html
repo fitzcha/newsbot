@@ -1178,7 +1178,7 @@ async function init() {
 }
 
 init();
-</script>
+
 /* ── 달력 관련 함수 ── */
 let calendarInstance = null;
 
@@ -1195,7 +1195,7 @@ function openCollapsedCalendar(e) {
     inline: false,
     dateFormat: 'Y-m-d',
     defaultDate: curDate,
-    enable: allDates, // 리포트 있는 날짜만 활성화
+    enable: allDates,
     locale: {
       firstDayOfWeek: 0,
       weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
@@ -1203,13 +1203,11 @@ function openCollapsedCalendar(e) {
     },
     onChange: async function(selectedDates, dateStr) {
       if (allDates.includes(dateStr)) {
-        const chip = document.querySelector(`.date-chip[onclick*="${dateStr}"]`);
-        if (chip) {
-          await selectDate(dateStr, chip);
-        } else {
-          curDate = dateStr;
-          await fetchReport(window.CURRENT_USER.id, dateStr);
-        }
+        curDate = dateStr;
+        document.getElementById('chip-date-txt').textContent = 
+          allDates.indexOf(dateStr) === 0 ? `${fmtDate(dateStr)} 오늘` : fmtDate(dateStr);
+        await fetchReport(window.CURRENT_USER.id, dateStr);
+        renderDateUI();
         calendarInstance.close();
         setTimeout(() => { input.remove(); calendarInstance = null; }, 100);
       } else {
@@ -1244,14 +1242,11 @@ function openExpandedCalendar() {
     },
     onChange: async function(selectedDates, dateStr) {
       if (allDates.includes(dateStr)) {
-        const chip = document.querySelector(`.date-chip[onclick*="${dateStr}"]`);
-        if (chip) {
-          await selectDate(dateStr, chip);
-        } else {
-          curDate = dateStr;
-          await fetchReport(window.CURRENT_USER.id, dateStr);
-        }
-        renderDateUI(); // 최근 7일 칩 다시 렌더링
+        curDate = dateStr;
+        document.getElementById('chip-date-txt').textContent = 
+          allDates.indexOf(dateStr) === 0 ? `${fmtDate(dateStr)} 오늘` : fmtDate(dateStr);
+        await fetchReport(window.CURRENT_USER.id, dateStr);
+        renderDateUI();
         calendarInstance.close();
         setTimeout(() => { input.remove(); calendarInstance = null; }, 100);
       } else {
@@ -1265,5 +1260,6 @@ function openExpandedCalendar() {
   
   calendarInstance.open();
 }
+</script>
 </body>
 </html>
