@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head >
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/light.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script>
 (function() {
   var ua = navigator.userAgent || '';
@@ -330,9 +333,8 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
   </div>
 
   <div class="collapsed-bar hidden" id="collapsedBar">
-    <div class="c-chip date-c" id="chip-date" onclick="toggleDD('dd-date',event)">
-      <span id="chip-date-txt">불러오는 중...</span><span class="arrow">▼</span>
-      <div class="c-dropdown" id="dd-date"></div>
+    <div class="c-chip date-c" id="chip-date" onclick="openCollapsedCalendar(event)">
+      <span id="chip-date-txt">-</span><span class="arrow">📅</span>
     </div>
     <span class="c-sep">·</span>
     <div class="c-chip agent-c" id="chip-agent" data-a="BA" onclick="toggleDD('dd-agent',event)">
@@ -353,7 +355,10 @@ body { background:#f8fafc; color:#1e293b; font-family:-apple-system,BlinkMacSyst
   <div class="collapsible">
     <div class="filter-grid">
       <div class="filter-label">날짜</div>
-      <div class="filter-chips" id="date-row"></div>
+      <div class="filter-chips" style="display:flex;gap:8px;align-items:center;">
+        <div id="date-recent-chips"></div>
+        <button class="date-chip" onclick="openExpandedCalendar()" style="background:#eff6ff;color:#2563eb;border-color:#bfdbfe;">📅 더보기</button>
+      </div>
     </div>
     <div class="filter-grid">
       <div class="filter-label">브리핑</div>
@@ -909,14 +914,14 @@ async function loadDates(userId) {
 }
 
 function renderDateUI() {
-  document.getElementById('date-row').innerHTML = allDates.map((d,i) => {
+  // 펼쳐진 상태: 최근 7일만 칩으로 표시
+  const recent7 = allDates.slice(0, 7);
+  document.getElementById('date-recent-chips').innerHTML = recent7.map((d,i) => {
     const lbl = i===0 ? `${fmtDate(d)} 오늘` : fmtDate(d);
     return `<div class="date-chip${d===curDate?' active':''}" onclick="selectDate('${d}',this)">${lbl}</div>`;
   }).join('');
-  document.getElementById('dd-date').innerHTML = allDates.map((d,i) => {
-    const lbl = i===0 ? `${fmtDate(d)} 오늘` : fmtDate(d);
-    return `<div class="c-dd-item${d===curDate?' active':''}" onclick="selectDateDD('${d}',event)">${lbl}</div>`;
-  }).join('');
+  
+  // 접힌 상태: 현재 선택된 날짜 표시
   const idx = allDates.indexOf(curDate);
   document.getElementById('chip-date-txt').textContent = idx===0 ? `${fmtDate(curDate)} 오늘` : fmtDate(curDate);
 }
@@ -1173,5 +1178,91 @@ async function init() {
 
 init();
 </script>
+/* ── 달력 관련 함수 ── */
+let calendarInstance = null;
+
+// 접힌 상태: 날짜 칩 클릭 시 달력 팝업
+function openCollapsedCalendar(e) {
+  e.stopPropagation();
+  if (calendarInstance) calendarInstance.destroy();
+  
+  const input = document.createElement('input');
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  
+  calendarInstance = flatpickr(input, {
+    inline: false,
+    dateFormat: 'Y-m-d',
+    defaultDate: curDate,
+    enable: allDates, // 리포트 있는 날짜만 활성화
+    locale: {
+      firstDayOfWeek: 0,
+      weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
+      months: { shorthand: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'] }
+    },
+    onChange: async function(selectedDates, dateStr) {
+      if (allDates.includes(dateStr)) {
+        const chip = document.querySelector(`.date-chip[onclick*="${dateStr}"]`);
+        if (chip) {
+          await selectDate(dateStr, chip);
+        } else {
+          curDate = dateStr;
+          await fetchReport(window.CURRENT_USER.id, dateStr);
+        }
+        calendarInstance.close();
+        setTimeout(() => { input.remove(); calendarInstance = null; }, 100);
+      } else {
+        alert('⚠️ 해당 날짜의 리포트가 없습니다.\n다른 날짜를 선택해주세요.');
+      }
+    },
+    onClose: function() {
+      setTimeout(() => { input.remove(); calendarInstance = null; }, 100);
+    }
+  });
+  
+  calendarInstance.open();
+}
+
+// 펼쳐진 상태: 더보기 버튼 클릭 시 달력 팝업
+function openExpandedCalendar() {
+  if (calendarInstance) calendarInstance.destroy();
+  
+  const input = document.createElement('input');
+  input.style.display = 'none';
+  document.body.appendChild(input);
+  
+  calendarInstance = flatpickr(input, {
+    inline: false,
+    dateFormat: 'Y-m-d',
+    defaultDate: curDate,
+    enable: allDates,
+    locale: {
+      firstDayOfWeek: 0,
+      weekdays: { shorthand: ['일', '월', '화', '수', '목', '금', '토'] },
+      months: { shorthand: ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'] }
+    },
+    onChange: async function(selectedDates, dateStr) {
+      if (allDates.includes(dateStr)) {
+        const chip = document.querySelector(`.date-chip[onclick*="${dateStr}"]`);
+        if (chip) {
+          await selectDate(dateStr, chip);
+        } else {
+          curDate = dateStr;
+          await fetchReport(window.CURRENT_USER.id, dateStr);
+        }
+        renderDateUI(); // 최근 7일 칩 다시 렌더링
+        calendarInstance.close();
+        setTimeout(() => { input.remove(); calendarInstance = null; }, 100);
+      } else {
+        alert('⚠️ 해당 날짜의 리포트가 없습니다.\n다른 날짜를 선택해주세요.');
+      }
+    },
+    onClose: function() {
+      setTimeout(() => { input.remove(); calendarInstance = null; }, 100);
+    }
+  });
+  
+  calendarInstance.open();
+}
 </body>
 </html>
