@@ -580,8 +580,8 @@ def collect_expert_contents(word: str, agents: dict, max_per_domain: int = 2) ->
 3. 로그 확인
 """
 ```
-   💾 [DB] master.html에서 등록된 사이트 3개 로드
-   📌 [Expert] [yozm.wishket.com] 'AI' → 2건
+   # 💾 [DB] master.html에서 등록된 사이트 3개 로드
+   # 📌 [Expert] [yozm.wishket.com] 'AI' → 2건
 ```
 
 ### 작동 흐름:
