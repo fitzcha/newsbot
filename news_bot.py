@@ -485,15 +485,13 @@ def collect_expert_contents(word: str, agents: dict, max_per_domain: int = 2) ->
         for a in (agent_res.data or []):
             sites = a.get("crawl_sites") or []
             for site in sites:
-                # policy가 'allow'인 것만 사용
                 if isinstance(site, dict) and site.get("policy") == "allow":
                     url = site.get("url", "")
                     if url:
-                        # URL에서 도메인만 추출 (https:// 제거)
                         domain = url.replace("https://", "").replace("http://", "").split("/")[0]
                         db_domains.append(domain)
         
-        db_domains = list(dict.fromkeys(db_domains))  # 중복 제거
+        db_domains = list(dict.fromkeys(db_domains))
         if db_domains:
             print(f"    💾 [DB] master.html에서 등록된 사이트 {len(db_domains)}개 로드")
     except Exception as e:
@@ -502,9 +500,8 @@ def collect_expert_contents(word: str, agents: dict, max_per_domain: int = 2) ->
     # ═══ 2단계: DB + Fallback 병합 ═══
     expert_domains = []
     if db_domains:
-        expert_domains.extend(db_domains[:15])  # DB 최대 15개
+        expert_domains.extend(db_domains[:15])
     
-    # 부족하면 하드코딩으로 보충
     if len(expert_domains) < 5:
         needed = 10 - len(expert_domains)
         print(f"    🔄 [Fallback] DB 도메인 부족 — 하드코딩 {needed}개 보충")
@@ -567,35 +564,32 @@ def collect_expert_contents(word: str, agents: dict, max_per_domain: int = 2) ->
     print(f"  ✅ [Expert] '{word}' → 총 {len(collected)}건 "
           f"(심층:{expert_count}건 / 일반:{normal_count}건)")
     return collected
-```
 
----
 
-## ✅ 수정 후 확인사항
+# 다음 함수로 바로 이어짐 (설명 텍스트 없이)
+def get_expert_with_cache(word: str, agents: dict) -> list:
+    try:
+        cache = supabase.table("expert_cache") \
+            .select("contents").eq("keyword", word).eq("cache_date", TODAY).execute()
+        if cache.data:
+            print(f"  🎓 [Expert Cache] '{word}' → 캐시 재사용")
+            return cache.data[0]["contents"]
+    except Exception as e:
+        print(f"  ⚠️ [Expert Cache] 조회 실패: {e}")
 
-"""
-테스트 방법:
-1. master.html → 사이트 정책 탭 → BA 에이전트에 `yozm.wishket.com` 추가
-2. news_bot.py 실행
-3. 로그 확인
-"""
-```
-   # 💾 [DB] master.html에서 등록된 사이트 3개 로드
-   # 📌 [Expert] [yozm.wishket.com] 'AI' → 2건
-```
+    contents = collect_expert_contents(word, agents)
 
-### 작동 흐름:
-```
-master.html에서 추가
-     ↓
-agents.crawl_sites 저장
-     ↓
-news_bot.py가 DB 조회
-     ↓
-해당 사이트에서 크롤링
-     ↓
-app.html에 표시
-```
+    try:
+        supabase.table("expert_cache").upsert({
+            "keyword":    word,
+            "cache_date": TODAY,
+            "contents":   contents,
+        }, on_conflict="keyword,cache_date").execute()
+        print(f"  💾 [Expert Cache] '{word}' → 저장 완료")
+    except Exception as e:
+        print(f"  ⚠️ [Expert Cache] 저장 실패: {e}")
+
+    return contents
 
 def get_expert_with_cache(word: str, agents: dict) -> list:
     try:
