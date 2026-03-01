@@ -460,7 +460,8 @@ _EXPERT_DOMAINS = [
     "hankyung.com", "mk.co.kr", "sedaily.com",
     "zdnet.co.kr", "etnews.com", "techcrunch.com",
     "venturebeat.com", "bloomberg.com", "reuters.com", "ft.com",
-]
+    # 새로 추가
+    "yozm.wishket.com", "brunch.co.kr", "theverge.com",
 
 _NORMAL_DOMAINS = [
     "naver.com", "daum.net", "joins.com", "chosun.com",
@@ -1015,6 +1016,10 @@ _DOMAIN_LANG = {
     "zdnet.co.kr": "ko", "platum.kr": "ko", "venturebeat.com": "en",
     "investing.com": "en", "seekingalpha.com": "en",
     "jobplanet.co.kr": "ko", "linkedin.com": "en",
+    # 새로 추가
+    "yozm.wishket.com": "ko",
+    "brunch.co.kr": "ko",
+    "theverge.com": "en",
 }
 
 def brief_get_source_directive(word: str, agents: dict) -> dict:
