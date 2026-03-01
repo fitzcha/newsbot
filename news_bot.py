@@ -95,35 +95,71 @@ def clean_role_name(s: str) -> str:
 # ──────────────────────────────────────────────
 def _check_env():
     missing = []
-    for key, val in [
-        ("GEMINI_API_KEY",     GEMINI_KEY),
-        ("SUPABASE_URL",       SB_URL),
-        ("SUPABASE_KEY",       SB_KEY),
-        ("GMAIL_APP_PASSWORD", GMAIL_PASS),
-        ("YOUTUBE_API_KEY",    YOUTUBE_KEY),
-    ]:
+    critical_missing = []
+    
+    checks = [
+        ("GEMINI_API_KEY",     GEMINI_KEY,  True),   # 치명적
+        ("SUPABASE_URL",       SB_URL,      True),   # 치명적
+        ("SUPABASE_KEY",       SB_KEY,      True),   # 치명적
+        ("GMAIL_APP_PASSWORD", GMAIL_PASS,  False),  # 경고만
+        ("YOUTUBE_API_KEY",    YOUTUBE_KEY, False),  # 경고만
+    ]
+    
+    for key, val, is_critical in checks:
         if not val:
             missing.append(key)
+            if is_critical:
+                critical_missing.append(key)
+    
+    if critical_missing:
+        error_msg = f"🚨 [ENV] 치명적 환경변수 누락: {', '.join(critical_missing)}"
+        print(error_msg)
+        print("❌ 시스템을 안전하게 종료합니다.")
+        raise EnvironmentError(error_msg)
+    
     if missing:
-        print(f"🚨 [ENV] 필수 환경변수 누락: {', '.join(missing)}")
-    else:
-        print("✅ [ENV] 환경변수 전체 확인 완료")
+        print(f"⚠️  [ENV] 선택적 환경변수 누락 (기능 제한): {', '.join(missing)}")
+    
+    print("✅ [ENV] 필수 환경변수 확인 완료")
 
 _check_env()
 
 # ──────────────────────────────────────────────
 # Gmail SMTP
 # ──────────────────────────────────────────────
-def _send_gmail(to, subject: str, html: str):
+def _send_gmail(to, subject: str, html: str) -> bool:
+    """
+    Gmail SMTP로 이메일 발송
+    
+    Returns:
+        bool: 발송 성공 여부
+    """
+    if not GMAIL_PASS:
+        print("  ⚠️ [Email] GMAIL_APP_PASSWORD 미설정 — 메일 발송 스킵")
+        return False
+    
     recipients = [to] if isinstance(to, str) else to
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"]    = f"Fitz Intelligence <{GMAIL_USER}>"
     msg["To"]      = ", ".join(recipients)
     msg.attach(MIMEText(html, "html", "utf-8"))
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
-        s.login(GMAIL_USER, GMAIL_PASS)
-        s.sendmail(GMAIL_USER, recipients, msg.as_string())
+    
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as s:
+            s.login(GMAIL_USER, GMAIL_PASS)
+            s.sendmail(GMAIL_USER, recipients, msg.as_string())
+        print(f"  ✅ [Email] 발송 성공: {recipients}")
+        return True
+    except smtplib.SMTPAuthenticationError as e:
+        print(f"  🚨 [Email] 인증 실패 (계정/비밀번호 확인 필요): {e}")
+        return False
+    except smtplib.SMTPException as e:
+        print(f"  🚨 [Email] SMTP 오류: {e}")
+        return False
+    except Exception as e:
+        print(f"  🚨 [Email] 발송 실패: {e}")
+        return False
 
 # ──────────────────────────────────────────────
 # 로그 / 성과 / 비용 기록
@@ -1260,13 +1296,35 @@ def run_autonomous_engine():
             if res.data:
                 report_id = res.data[0]['id']
                 run_agent_self_reflection(report_id)
-                send_email_report(user_email, final_report, all_yt)
-                try:
-                    supabase.table("reports").update({"email_sent": True})\
-                        .eq("id", report_id).execute()
-                except Exception as e:
-                    print(f"  ⚠️ [Email] email_sent 업데이트 실패: {e}")
-                print(f"✅ [{user_email}] 리포트 저장 및 이메일 발송 완료 (YouTube {len(all_yt)}개 포함)")
+                
+                # 이메일 발송 및 성공 여부 확인
+                email_success = send_email_report(user_email, final_report, all_yt)
+                
+                # email_sent 플래그 업데이트 (재시도 3회)
+                for retry in range(3):
+                    try:
+                        supabase.table("reports").update({"email_sent": email_success})\
+                            .eq("id", report_id).execute()
+                        print(f"  ✅ [DB] email_sent={email_success} 업데이트 완료")
+                        break
+                    except Exception as e:
+                        if retry < 2:
+                            print(f"  ⏳ [DB] email_sent 업데이트 재시도 ({retry + 1}/3)...")
+                            time.sleep(1)
+                        else:
+                            print(f"  🚨 [DB] email_sent 업데이트 최종 실패: {e}")
+                            # 최종 실패 시 관리자에게 알림
+                            try:
+                                _send_gmail(
+                                    to="positivecha@gmail.com",
+                                    subject="🚨 [시스템] email_sent 업데이트 실패",
+                                    html=f"<pre>report_id: {report_id}\nuser: {user_email}\nerror: {e}</pre>"
+                                )
+                            except:
+                                pass
+                
+                status_msg = "이메일 발송 완료" if email_success else "이메일 발송 실패 (DB에 기록됨)"
+                print(f"✅ [{user_email}] 리포트 저장 완료 (YouTube {len(all_yt)}개 포함) — {status_msg}")
 
         except Exception as e:
             print(f"❌ 유저 에러 ({user.get('email','?')}): {e}")
