@@ -595,7 +595,7 @@ news_bot.py가 DB 조회
 해당 사이트에서 크롤링
      ↓
 app.html에 표시
-
+```
 
 def get_expert_with_cache(word: str, agents: dict) -> list:
     try:
