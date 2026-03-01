@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 import os, json, time, re, subprocess, shutil, urllib.request, urllib.parse
 import smtplib
+import traceback              # ← 이 줄 추가
+import functools              # ← 이 줄 추가
+from contextlib import contextmanager  # ← 이 줄 추가
+from typing import Optional, Dict, Any  # ← 이 줄 추가
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from google import genai
 from gnews import GNews
 from supabase import create_client, Client
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone datetime, timedelta, timezone
 
 # ──────────────────────────────────────────────
 # 기본 설정
@@ -48,6 +52,175 @@ _MONITOR_TABLES = [
 ]
 
 _PROTECTED_ROLES = {"BRIEF", "HR", "MASTER", "DEV", "QA"}
+
+
+# ──────────────────────────────────────────────
+# ErrorMonitor 클래스 (에러 자동 기록 시스템)
+# ──────────────────────────────────────────────
+class ErrorMonitor:
+    """
+    시스템 에러를 자동으로 기록하고 모니터링하는 클래스
+    """
+    
+    @staticmethod
+    def log_error(
+        error_type: str,
+        message: str,
+        stack_trace: Optional[str] = None,
+        context: Optional[Dict[str, Any]] = None,
+        severity: str = "ERROR",
+        source: Optional[str] = None
+    ) -> None:
+        """에러를 Supabase error_logs 테이블에 기록"""
+        try:
+            error_data = {
+                "error_type": error_type[:100],
+                "error_message": message,
+                "stack_trace": stack_trace,
+                "context": context or {},
+                "severity": severity,
+                "source": source,
+                "occurred_at": NOW.isoformat(),
+                "resolved": False
+            }
+            
+            supabase.table("error_logs").insert(error_data).execute()
+            
+            severity_emoji = {
+                "DEBUG": "🐛", "INFO": "ℹ️", "WARNING": "⚠️",
+                "ERROR": "❌", "CRITICAL": "🚨"
+            }
+            emoji = severity_emoji.get(severity, "❌")
+            print(f"{emoji} [{severity}] {error_type}: {message}")
+            
+            if severity == "CRITICAL":
+                ErrorMonitor._send_critical_alert(error_type, message, context)
+                
+        except Exception as log_err:
+            print(f"⚠️ [ErrorMonitor] 에러 기록 실패: {log_err}")
+    
+    @staticmethod
+    def _send_critical_alert(error_type: str, message: str, context: Optional[Dict] = None) -> None:
+        """CRITICAL 에러 발생 시 이메일 알림 전송"""
+        try:
+            subject = f"🚨 CRITICAL ERROR: {error_type}"
+            body = f"""
+<div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
+    <div style="background:#dc2626;color:white;padding:20px;border-radius:8px 8px 0 0;">
+        <h2 style="margin:0;">🚨 크리티컬 에러 발생</h2>
+    </div>
+    <div style="background:#f9fafb;padding:20px;border:1px solid #e5e7eb;">
+        <p><strong>에러 유형:</strong> {error_type}</p>
+        <p><strong>메시지:</strong> {message}</p>
+        <p><strong>발생 시각:</strong> {NOW.strftime("%Y-%m-%d %H:%M:%S KST")}</p>
+        {f'<p><strong>컨텍스트:</strong></p><pre style="background:#fff;padding:10px;border-radius:4px;overflow-x:auto;">{json.dumps(context, indent=2, ensure_ascii=False)}</pre>' if context else ''}
+    </div>
+    <div style="background:#f3f4f6;padding:15px;border-radius:0 0 8px 8px;text-align:center;">
+        <a href="{DASHBOARD_URL}" style="display:inline-block;background:#1e293b;color:white;padding:10px 20px;text-decoration:none;border-radius:6px;">
+            🔍 대시보드에서 확인
+        </a>
+    </div>
+</div>
+"""
+            _send_email(GMAIL_USER, subject, body)
+            print(f"  📧 크리티컬 알림 이메일 발송 완료")
+        except Exception as mail_err:
+            print(f"  ⚠️ 크리티컬 알림 이메일 발송 실패: {mail_err}")
+    
+    @staticmethod
+    def capture(source: str, severity: str = "ERROR"):
+        """함수 데코레이터: 함수 실행 중 발생한 에러를 자동으로 기록"""
+        def decorator(func):
+            @functools.wraps(func)
+            def wrapper(*args, **kwargs):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    error_type = type(e).__name__
+                    error_message = str(e)
+                    stack = traceback.format_exc()
+                    
+                    context = {
+                        "function": func.__name__,
+                        "args_count": len(args),
+                        "kwargs_keys": list(kwargs.keys()) if kwargs else []
+                    }
+                    
+                    ErrorMonitor.log_error(
+                        error_type=error_type,
+                        message=error_message,
+                        stack_trace=stack,
+                        context=context,
+                        severity=severity,
+                        source=source
+                    )
+                    raise
+            return wrapper
+        return decorator
+    
+    @staticmethod
+    @contextmanager
+    def capture_block(source: str, severity: str = "ERROR", suppress: bool = False):
+        """컨텍스트 관리자: with 블록 내의 에러를 자동으로 기록"""
+        try:
+            yield
+        except Exception as e:
+            error_type = type(e).__name__
+            error_message = str(e)
+            stack = traceback.format_exc()
+            
+            ErrorMonitor.log_error(
+                error_type=error_type,
+                message=error_message,
+                stack_trace=stack,
+                context={"block": source},
+                severity=severity,
+                source=source
+            )
+            
+            if not suppress:
+                raise
+    
+    @staticmethod
+    def get_error_stats(days: int = 7) -> Dict[str, Any]:
+        """최근 N일간 에러 통계를 조회"""
+        try:
+            cutoff = (NOW - timedelta(days=days)).isoformat()
+            
+            total_res = supabase.table("error_logs")\
+                .select("id", count="exact")\
+                .gte("occurred_at", cutoff)\
+                .execute()
+            
+            severity_res = supabase.table("error_logs")\
+                .select("severity")\
+                .gte("occurred_at", cutoff)\
+                .execute()
+            
+            severity_counts = {}
+            for row in (severity_res.data or []):
+                sev = row.get("severity", "UNKNOWN")
+                severity_counts[sev] = severity_counts.get(sev, 0) + 1
+            
+            unresolved_res = supabase.table("error_logs")\
+                .select("id", count="exact")\
+                .eq("resolved", False)\
+                .gte("occurred_at", cutoff)\
+                .execute()
+            
+            return {
+                "days": days,
+                "total_errors": total_res.count or 0,
+                "by_severity": severity_counts,
+                "unresolved": unresolved_res.count or 0,
+                "resolution_rate": round(
+                    (1 - (unresolved_res.count or 0) / max(total_res.count or 1, 1)) * 100, 
+                    1
+                )
+            }
+        except Exception as e:
+            print(f"⚠️ [ErrorMonitor] 통계 조회 실패: {e}")
+            return {"error": str(e)}
 
 # ──────────────────────────────────────────────
 # 마크다운 완전 제거 유틸
@@ -1838,9 +2011,13 @@ def run_agent_initiative(by_keyword_all: dict):
 # ──────────────────────────────────────────────
 # 엔트리포인트
 # ──────────────────────────────────────────────
-if __name__ == "__main__":
+def main():
+    """메인 실행 함수 (ErrorMonitor 적용)"""
+    print(f"\n{'='*50}")
+    print(f"🤖 News Bot v3.0 — {NOW.strftime('%Y-%m-%d %H:%M KST')}")
+    print(f"{'='*50}\n")
+    
     import argparse
-    import sys
     
     parser = argparse.ArgumentParser(description="Fitz News Bot - Sovereign Intelligence System")
     parser.add_argument('--mode', type=str, default='',
@@ -1850,52 +2027,109 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
     
-    # 명령줄 인자로 모드 지정된 경우
-    if args.mode:
-        mode = args.mode.upper()
+    try:
+        # 명령줄 인자로 모드 지정된 경우
+        if args.mode:
+            mode = args.mode.upper()
+            
+            if mode == 'DEV':
+                # DEV 배포 모드: 특정 백로그 ID 처리
+                backlog_id = args.backlog_id or os.environ.get("BACKLOG_ID", "")
+                if not backlog_id:
+                    print("❌ [DEV] BACKLOG_ID가 필요합니다")
+                    return
+                
+                with ErrorMonitor.capture_block("dev_deployment", severity="CRITICAL"):
+                    print(f"🛠️ [DEV] 백로그 ID {backlog_id} 배포 시작...")
+                    run_self_evolution(backlog_id)
+                    print(f"✅ [DEV] 배포 완료")
+                return
+            
+            elif mode == 'BRIEFING':
+                # 일일 브리핑 모드
+                with ErrorMonitor.capture_block("daily_briefing", severity="CRITICAL"):
+                    send_daily_brief()
+                    
+                with ErrorMonitor.capture_block("cost_recording", suppress=True):
+                    record_cost()
+                    
+                with ErrorMonitor.capture_block("stats_recording", suppress=True):
+                    record_supabase_stats()
+                    
+                with ErrorMonitor.capture_block("github_sync", suppress=True):
+                    sync_data_to_github()
+                return
+            
+            elif mode == 'INDUSTRY':
+                # 산업군 모니터링 모드
+                with ErrorMonitor.capture_block("industry_monitor", severity="ERROR"):
+                    run_industry_monitor()
+                return
+            
+            elif mode == 'GOVERNANCE':
+                # 거버넌스 모드
+                with ErrorMonitor.capture_block("governance", severity="ERROR"):
+                    user_res = supabase.table("users").select("id, keywords").execute()
+                    all_by_keyword = _collect_all_by_keyword(user_res.data or [])
+                    run_agent_initiative(by_keyword_all=all_by_keyword)
+                return
         
-        if mode == 'DEV':
-            # DEV 배포 모드: 특정 백로그 ID 처리
-            backlog_id = args.backlog_id or os.environ.get("BACKLOG_ID", "")
-            if not backlog_id:
-                print("❌ [DEV] backlog_id가 지정되지 않았습니다")
-                sys.exit(1)
-            
-            print(f"🛠️ [DEV] 개발 배포 모드 실행: backlog_id={backlog_id}")
-            run_self_evolution(backlog_id)
-            sys.exit(0)
-            
-        elif mode == 'GOVERNANCE':
-            print("🌙 [GOVERNANCE] 23:30 마감 작업 모드")
-            manage_deadline_approvals()
-            sys.exit(0)
-            
-        elif mode == 'INDUSTRY':
-            print("🏭 [INDUSTRY] 06:00 산업군 모니터링 모드")
-            run_industry_monitor()
-            sys.exit(0)
-            
-        elif mode == 'BRIEFING':
-            print("☀️ [BRIEFING] 09:00 정기 브리핑 모드")
-            manage_deadline_approvals()
-            run_autonomous_engine()
+        # 기본 모드: 통합 실행
+        print("🤖 [통합 모드] 모든 작업 실행")
+        
+        # 1. 일일 브리핑 발송 (에러 발생 시 전체 중단)
+        with ErrorMonitor.capture_block("daily_briefing", severity="CRITICAL"):
+            send_daily_brief()
+        
+        # 2. 비용 기록 (실패해도 계속 진행)
+        with ErrorMonitor.capture_block("cost_recording", suppress=True):
+            record_cost()
+        
+        # 3. 통계 기록 (실패해도 계속 진행)
+        with ErrorMonitor.capture_block("stats_recording", suppress=True):
+            record_supabase_stats()
+        
+        # 4. GitHub 동기화 (실패해도 계속 진행)
+        with ErrorMonitor.capture_block("github_sync", suppress=True):
             sync_data_to_github()
-            sys.exit(0)
+        
+        # 5. 에이전트 이니셔티브 (실패해도 계속 진행)
+        user_res = supabase.table("users").select("id, keywords").execute()
+        all_by_keyword = _collect_all_by_keyword(user_res.data or [])
+        
+        with ErrorMonitor.capture_block("agent_initiative", suppress=True):
+            run_agent_initiative(by_keyword_all=all_by_keyword)
+        
+        # 6. 오늘의 에러 통계 출력
+        stats = ErrorMonitor.get_error_stats(days=1)
+        if stats.get("total_errors", 0) > 0:
+            print(f"\n📊 [Today Errors] {stats['total_errors']}건 발생")
+            print(f"   미해결: {stats['unresolved']}건")
+            print(f"   해결률: {stats['resolution_rate']}%")
+            
+            # 심각도별 집계
+            by_sev = stats.get("by_severity", {})
+            if by_sev:
+                severity_str = " | ".join([f"{k}: {v}" for k, v in by_sev.items()])
+                print(f"   분포: {severity_str}")
         else:
-            print(f"⚠️ 알 수 없는 모드: {mode}")
-            sys.exit(1)
-    
-    # 환경 변수로 모드 지정 (기존 방식 호환)
-    cron_type = os.environ.get("CRON_TYPE", "BRIEFING").upper()
-    
-    if cron_type == "GOVERNANCE":
-        print("🌙 [GOVERNANCE] 23:30 마감 작업 모드")
-        manage_deadline_approvals()
-    elif cron_type == "INDUSTRY":
-        print("🏭 [INDUSTRY] 06:00 산업군 모니터링 모드")
-        run_industry_monitor()
-    else:
-        print("☀️ [BRIEFING] 09:00 정기 브리핑 모드")
-        manage_deadline_approvals()
-        run_autonomous_engine()
-        sync_data_to_github()
+            print(f"\n✅ [Today] 에러 없음")
+        
+        print("\n✅ 모든 작업 완료\n")
+        
+    except Exception as e:
+        # 최상위 레벨 에러는 CRITICAL로 기록
+        ErrorMonitor.log_error(
+            error_type=type(e).__name__,
+            message=str(e),
+            stack_trace=traceback.format_exc(),
+            severity="CRITICAL",
+            source="main"
+        )
+        print(f"\n🚨 치명적 오류 발생: {e}\n")
+        raise
+
+
+if __name__ == "__main__":
+    main()
+
