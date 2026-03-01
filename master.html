@@ -571,8 +571,6 @@ function render(id, html){ const el=$id(id); if(el) el.innerHTML=html; }
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escJsStr(s){ return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,'\\n').replace(/\r/g,''); }
 function statusLabel(s){ return STATUS_KO[s]||s; }
-function getSrKey(){ return CFG.service_role||localStorage.getItem('sr_key')||''; }
-function hasSrKey(){ return !!getSrKey(); }
 function shortSha(v){ const s=String(v||'').trim(); return s?s.slice(0,8):'-'; }
 function summarizeText(raw, maxLen=130){
   const txt=String(raw||'').replace(/\[PROPOSAL\]|\[REASON\]|\[NEEDS_DEV\]/gi,' ').replace(/\s+/g,' ').trim();
@@ -612,18 +610,6 @@ function getToken(){ return localStorage.getItem('ghp_token')||''; }
 function updateTokenStatus(t){
   $id('token-status').textContent=t?'✅ GHP 활성':'⚠️ 미입력';
   $id('token-status').style.color=t?'#50fa7b':'#ffb86c';
-}
-function saveSrKey(){
-  const v=$id('sr-key-input').value.trim();
-  if(!v) return toast('❌ service_role 키를 입력하세요');
-  localStorage.setItem('sr_key',v); CFG.service_role=v; updateSrStatus(v); toast('✅ Service Role 키 저장 완료');
-  $id('sr-warn-member').classList.remove('show');
-}
-function updateSrStatus(k){
-  const has=!!k;
-  $id('sr-status').textContent=has?'✅ SR 활성':'⚠️ 미입력';
-  $id('sr-status').style.color=has?'#a78bfa':'#ffb86c';
-  $id('sr-badge').style.display=has?'':'none';
 }
 
 /* ── 탭 ── */
