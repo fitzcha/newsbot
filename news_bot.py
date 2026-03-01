@@ -573,10 +573,12 @@ def collect_expert_contents(word: str, agents: dict, max_per_domain: int = 2) ->
 
 ## ✅ 수정 후 확인사항
 
-### 테스트 방법:
+"""
+테스트 방법:
 1. master.html → 사이트 정책 탭 → BA 에이전트에 `yozm.wishket.com` 추가
 2. news_bot.py 실행
-3. 로그에서 확인:
+3. 로그 확인
+"""
 ```
    💾 [DB] master.html에서 등록된 사이트 3개 로드
    📌 [Expert] [yozm.wishket.com] 'AI' → 2건
