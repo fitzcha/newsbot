@@ -462,7 +462,8 @@ _EXPERT_DOMAINS = [
     "venturebeat.com", "bloomberg.com", "reuters.com", "ft.com",
     # 새로 추가
     "yozm.wishket.com", "brunch.co.kr", "theverge.com",
-
+]
+    
 _NORMAL_DOMAINS = [
     "naver.com", "daum.net", "joins.com", "chosun.com",
     "donga.com", "hani.co.kr", "yonhapnews.co.kr",
