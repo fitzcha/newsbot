@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 import os, json, time, re, subprocess, shutil, urllib.request, urllib.parse
 import smtplib
-import traceback              # ← 이 줄 추가
-import functools              # ← 이 줄 추가
-from contextlib import contextmanager  # ← 이 줄 추가
-from typing import Optional, Dict, Any  # ← 이 줄 추가
+import traceback
+import functools
+from contextlib import contextmanager
+from typing import Optional, Dict, Any
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from google import genai
 from gnews import GNews
 from supabase import create_client, Client
-from datetime import datetime, timedelta, timezone datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 
 # ──────────────────────────────────────────────
 # 기본 설정
@@ -18,6 +18,7 @@ from datetime import datetime, timedelta, timezone datetime, timedelta, timezone
 KST   = timezone(timedelta(hours=9))
 NOW   = datetime.now(KST)
 TODAY = NOW.strftime("%Y-%m-%d")
+
 
 GEMINI_KEY  = os.environ.get("GEMINI_API_KEY")
 SB_URL      = os.environ.get("SUPABASE_URL")
