@@ -469,22 +469,61 @@ _NORMAL_DOMAINS = [
 ]
 
 def collect_expert_contents(word: str, agents: dict, max_per_domain: int = 2) -> list:
+    """
+    master.html의 agents.crawl_sites를 우선 사용하고, 
+    부족하면 하드코딩 도메인으로 보충
+    """
     print(f"  🎓 [{word}] 전문 콘텐츠 수집 시작...")
     brief_agent = agents.get('BRIEF')
     collected   = []
     seen_titles = set()
-
+    
+    # ═══ 1단계: DB에서 crawl_sites 로드 ═══
+    db_domains = []
+    try:
+        agent_res = supabase.table("agents").select("agent_role, crawl_sites").execute()
+        for a in (agent_res.data or []):
+            sites = a.get("crawl_sites") or []
+            for site in sites:
+                # policy가 'allow'인 것만 사용
+                if isinstance(site, dict) and site.get("policy") == "allow":
+                    url = site.get("url", "")
+                    if url:
+                        # URL에서 도메인만 추출 (https:// 제거)
+                        domain = url.replace("https://", "").replace("http://", "").split("/")[0]
+                        db_domains.append(domain)
+        
+        db_domains = list(dict.fromkeys(db_domains))  # 중복 제거
+        if db_domains:
+            print(f"    💾 [DB] master.html에서 등록된 사이트 {len(db_domains)}개 로드")
+    except Exception as e:
+        print(f"    ⚠️ [DB] crawl_sites 조회 실패 ({e}) — 하드코딩 사용")
+    
+    # ═══ 2단계: DB + Fallback 병합 ═══
+    expert_domains = []
+    if db_domains:
+        expert_domains.extend(db_domains[:15])  # DB 최대 15개
+    
+    # 부족하면 하드코딩으로 보충
+    if len(expert_domains) < 5:
+        needed = 10 - len(expert_domains)
+        print(f"    🔄 [Fallback] DB 도메인 부족 — 하드코딩 {needed}개 보충")
+        expert_domains.extend(_EXPERT_DOMAINS[:needed])
+    
+    # ═══ 3단계: 크롤링 함수 ═══
     def _scrape(domain: str, is_expert: bool):
         try:
-            lang       = _DOMAIN_LANG.get(domain, 'en')
-            gn         = GNews(language=lang, max_results=max_per_domain)
-            news       = gn.get_news(f"{word} site:{domain}") or []
+            lang = _DOMAIN_LANG.get(domain, 'en')
+            gn = GNews(language=lang, max_results=max_per_domain)
+            news = gn.get_news(f"{word} site:{domain}") or []
+            
             for n in news:
                 title = (n.get("title") or "").strip()
-                url   = n.get("url") or n.get("link") or ""
+                url = n.get("url") or n.get("link") or ""
                 if not title or title in seen_titles or not url:
                     continue
                 seen_titles.add(title)
+                
                 expert_summary = ""
                 if brief_agent:
                     try:
@@ -494,33 +533,66 @@ def collect_expert_contents(word: str, agents: dict, max_per_domain: int = 2) ->
                         )
                         expert_summary = strip_markdown(raw).split('\n')[0][:80]
                     except: pass
+                
                 collected.append({
-                    "title":             title,
-                    "url":               url,
-                    "source_domain":     domain,
+                    "title": title,
+                    "url": url,
+                    "source_domain": domain,
                     "is_expert_content": is_expert,
-                    "expert_summary":    expert_summary,
+                    "expert_summary": expert_summary,
                 })
+            
             if news:
                 print(f"    📌 [Expert] [{domain}] '{word}' → {len(news)}건")
         except Exception as e:
             print(f"    ⚠️ [Expert] [{domain}] 실패: {e}")
-
-    for domain in _EXPERT_DOMAINS:
+    
+    # ═══ 4단계: Expert 도메인 크롤링 ═══
+    for domain in expert_domains:
         if len(collected) >= 10: break
         _scrape(domain, is_expert=True)
-
+    
+    # ═══ 5단계: 부족 시 일반 도메인 보충 ═══
     if len(collected) < 3:
         print(f"  📌 [Expert] 부족({len(collected)}건) — 일반 도메인 보충")
         for domain in _NORMAL_DOMAINS:
             if len(collected) >= 6: break
             _scrape(domain, is_expert=False)
-
+    
+    # ═══ 6단계: 정렬 및 결과 출력 ═══
     collected.sort(key=lambda x: (0 if x["is_expert_content"] else 1))
+    expert_count = sum(1 for c in collected if c["is_expert_content"])
+    normal_count = len(collected) - expert_count
+    
     print(f"  ✅ [Expert] '{word}' → 총 {len(collected)}건 "
-          f"(심층:{sum(1 for c in collected if c['is_expert_content'])}건 / "
-          f"일반:{sum(1 for c in collected if not c['is_expert_content'])}건)")
+          f"(심층:{expert_count}건 / 일반:{normal_count}건)")
     return collected
+```
+
+---
+
+## ✅ 수정 후 확인사항
+
+### 테스트 방법:
+1. master.html → 사이트 정책 탭 → BA 에이전트에 `yozm.wishket.com` 추가
+2. news_bot.py 실행
+3. 로그에서 확인:
+```
+   💾 [DB] master.html에서 등록된 사이트 3개 로드
+   📌 [Expert] [yozm.wishket.com] 'AI' → 2건
+```
+
+### 작동 흐름:
+```
+master.html에서 추가
+     ↓
+agents.crawl_sites 저장
+     ↓
+news_bot.py가 DB 조회
+     ↓
+해당 사이트에서 크롤링
+     ↓
+app.html에 표시
 
 
 def get_expert_with_cache(word: str, agents: dict) -> list:
