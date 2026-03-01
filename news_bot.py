@@ -582,6 +582,47 @@ def build_youtube_email_block(yt_videos: list) -> str:
           {cards}
         </table>"""
 
+def send_email_report(to_email: str, report: dict, yt_videos: list) -> bool:
+    """
+    이메일 리포트 발송 (재시도 로직 포함)
+    
+    Args:
+        to_email: 수신자 이메일
+        report: 리포트 데이터
+        yt_videos: YouTube 영상 리스트
+    
+    Returns:
+        bool: 발송 성공 여부
+    """
+    html = _build_email_html(report, yt_videos)
+    subject = f"📊 {TODAY} Fitz Intelligence 일일 브리핑"
+    
+    # 최대 3회 재시도
+    for attempt in range(3):
+        try:
+            success = _send_gmail(to_email, subject, html)
+            
+            if success:
+                print(f"  ✅ [{to_email}] 이메일 발송 성공 (시도 {attempt + 1}/3)")
+                return True
+            else:
+                if attempt < 2:
+                    wait_time = 2 ** attempt  # 1초, 2초
+                    print(f"  ⏳ [{to_email}] {wait_time}초 후 재시도...")
+                    time.sleep(wait_time)
+                else:
+                    print(f"  ❌ [{to_email}] 이메일 발송 최종 실패")
+                    return False
+                    
+        except Exception as e:
+            print(f"  🚨 [{to_email}] 발송 중 예외 발생: {e}")
+            if attempt < 2:
+                time.sleep(2 ** attempt)
+            else:
+                return False
+    
+    return False
+
 # ──────────────────────────────────────────────
 # GitHub 동기화
 # ──────────────────────────────────────────────
