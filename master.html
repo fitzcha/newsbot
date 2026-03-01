@@ -503,7 +503,6 @@ h3{margin:0 0 14px;font-size:1rem;color:#444}
 const CFG = {
   url:          'https://zrlpwmpbrvohautldcon.supabase.co',
   key:          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpybHB3bXBicnZvaGF1dGxkY29uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEyMjk3NjQsImV4cCI6MjA4NjgwNTc2NH0.Ox5OZh1jJuhxUMd8zcLph08B5fERgNExAZfYZ24anJk',
-  service_role: '',
   master:       'positivecha@gmail.com',
   owner:        'fitzcha',
   repo:         'newsbot',
@@ -1403,9 +1402,6 @@ async function saveSites(role) {
    ══════════════════════════════════════════ */
 async function loadMemberSettings() {
   try {
-    if (!hasSrKey()) $id('sr-warn-member').classList.add('show');
-    else             $id('sr-warn-member').classList.remove('show');
-
     const [openRes, maxRes, cntRes] = await Promise.all([
       sc.from('app_settings').select('value').eq('key','signup_open').maybeSingle(),
       sc.from('app_settings').select('value').eq('key','max_members').maybeSingle(),
@@ -1501,19 +1497,11 @@ function updateSignupStatusUI(lever1Open, allowed) {
 }
 
 async function loadMemberList() {
-  const srKey = getSrKey();
-  if (!srKey) return toast('❌ SR 키가 필요합니다.');
   render('member-table-wrap', '<div class="empty" style="padding:30px">불러오는 중... ⏳</div>');
   try {
-    const res = await fetch(`${CFG.url}/auth/v1/admin/users?page=1&per_page=200`, {
-      headers: { 'apikey': srKey, 'Authorization': `Bearer ${srKey}` },
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(()=>({}));
-      throw new Error(`Auth API 오류: ${err.msg || err.message || res.status}`);
-    }
-    const json = await res.json();
-    allMembers = json.users || json || [];
+    const result = await callMasterFunction('list-users', {});
+    if (!result.success) throw new Error(result.error || '회원 목록 로드 실패');
+    allMembers = result.users || [];
     renderMemberTable(allMembers);
   } catch(e) {
     render('member-table-wrap', `<div class="empty" style="color:#ef4444">❌ ${escHtml(e.message)}</div>`);
@@ -1557,28 +1545,41 @@ function filterMembers() {
 }
 
 async function toggleBan(userId, email, ban) {
-  const srKey = getSrKey();
-  if (!srKey) return toast('❌ SR 키가 필요합니다.');
   if (!confirm(`${email} 을(를) ${ban?'차단':'해제'}하시겠습니까?`)) return;
   try {
-    const res = await fetch(`${CFG.url}/auth/v1/admin/users/${userId}`, {
-      method: 'PUT',
+    const result = await callMasterFunction('toggle-ban', { userId, ban });
+    if (!result.success) throw new Error(result.error || '처리 실패');
+    toast(ban ? `🚫 ${email} 차단 완료` : `✅ ${email} 차단 해제 완료`);
+    // 회원 목록 새로고침
+    await loadMemberList();
+  } catch(e) { toast('❌ 실패: ' + e.message); }
+}
+
+/* ── Edge Function 호출 헬퍼 ── */
+async function callMasterFunction(action, payload) {
+  try {
+    const { data: { session } } = await sc.auth.getSession();
+    if (!session) throw new Error('로그인이 필요합니다');
+    
+    const res = await fetch(`${CFG.url}/functions/v1/master-admin`, {
+      method: 'POST',
       headers: {
-        'apikey': srKey, 'Authorization': `Bearer ${srKey}`,
+        'Authorization': `Bearer ${session.access_token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ ban_duration: ban ? '876000h' : 'none' }),
+      body: JSON.stringify({ action, ...payload })
     });
+    
     if (!res.ok) {
-      const err = await res.json().catch(()=>({}));
-      throw new Error(`Auth API 오류: ${err.msg || err.message || res.status}`);
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
     }
-    toast(ban ? `🚫 ${email} 차단 완료` : `✅ ${email} 차단 해제 완료`);
-    const updated = await res.json();
-    const idx = allMembers.findIndex(u => u.id === userId);
-    if (idx >= 0) allMembers[idx] = updated;
-    renderMemberTable(allMembers);
-  } catch(e) { toast('❌ 실패: ' + e.message); }
+    
+    return await res.json();
+  } catch(e) {
+    console.error('callMasterFunction 오류:', e);
+    throw e;
+  }
 }
 
 /* ══════════════════════════════════════════
@@ -1907,12 +1908,15 @@ async function doLogin() {
   }
 }
 
-async function init() {
+aasync function init() {
   // 저장된 키 복구
   const savedToken = localStorage.getItem('ghp_token') || '';
-  const savedSr    = localStorage.getItem('sr_key')    || '';
+  
+  // 🔒 보안: SR 키 사용 중단 - Edge Function으로 대체
+  localStorage.removeItem('service_role');
+  localStorage.removeItem('sr_key');
+  
   if (savedToken) { $id('ghp-token').value = savedToken; updateTokenStatus(savedToken); }
-  if (savedSr)    { $id('sr-key-input').value = savedSr; CFG.service_role = savedSr; updateSrStatus(savedSr); }
 
   try {
     const { data, error } = await sc.auth.getUser();
